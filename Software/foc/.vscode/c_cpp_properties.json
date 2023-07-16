@@ -1,0 +1,39 @@
+{
+    "configurations": [
+        {
+            "name": "Win32",
+            "includePath": [
+                "${workspaceFolder}/**",
+                "${workspaceFolder}/Drivers/STM32F1xx_HAL_Driver/Inc",
+                "${workspaceFolder}/Drivers/CMSIS/Device/ST/STM32F1xx/Include",
+                "${workspaceFolder}/Drivers/CMSIS/Include",
+                "${workspaceFolder}/Core/Inc",
+                "${workspaceFolder}/Hardware/Inc"
+                // "${workspaceFolder}/Components/Inc"
+            ],
+            "defines": [
+                "_DEBUG",
+                "UNICODE",
+                "_UNICODE",
+                "USE_FULL_LL_DRIVER",
+                "STM32F103xB",
+                "USE_FULL_LL_DRIVER",
+                "HSE_VALUE=8000000",
+                "HSE_STARTUP_TIMEOUT=100",
+                "LSE_STARTUP_TIMEOUT=5000",
+                "LSE_VALUE=32768",
+                "HSI_VALUE=8000000",
+                "LSI_VALUE=40000",
+                "VDD_VALUE=3300",
+                "PREFETCH_ENABLE=1"
+            ],
+            "windowsSdkVersion": "10.0.17763.0",
+            "compilerPath": "C:/Program Files (x86)/GNU Arm Embedded Toolchain/10 2021.10/bin/arm-none-eabi-gcc.exe",
+            "cStandard": "c11",
+            "cppStandard": "c++11",
+            "intelliSenseMode": "windows-gcc-arm",
+            "configurationProvider": "go2sh.cmake-integration"
+        }
+    ],
+    "version": 4
+}

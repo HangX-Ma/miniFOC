@@ -1,0 +1,11 @@
+{
+    "files.associations": {
+        "*.s": "arm",
+        "*.c": "c",
+        "*.cfg": "tcl",
+        "README": "plaintext",
+        "*.spl": "makefile",
+        "led.h": "c"
+    },
+    "cmake.configureOnOpen": true,
+}

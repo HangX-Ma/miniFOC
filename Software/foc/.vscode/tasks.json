@@ -1,0 +1,78 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+        {
+            "label": "cmake configure",
+            "type": "shell",
+            "command": "cmake",
+            "args": [
+                "-S .",
+                "-B build",
+                "-DCMAKE_BUILD_TYPE=Debug"
+            ],
+            "detail": "CMake configure task [CMAKE_BUILD_TYPE=Debug]",
+            "problemMatcher": [
+                "$gcc"
+            ]
+        },
+        {
+            "label": "cmake build",
+            "type": "cmake",
+            "command": "build",
+            "targets": [
+                "all"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": [],
+            "detail": "CMake template build task"
+        },
+        {
+            "label": "cmake clean",
+            "type": "cmake",
+            "command": "build",
+            "targets": [
+                "clean"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": [],
+            "detail": "CMake template clean task"
+        },
+        {
+            "label": "cortex-download",
+            "type": "shell",
+            "command": "openocd",
+            "args": [
+                "-f",
+                "stlink.cfg",
+                "-c",
+                "init",
+                "-c",
+                "reset halt",
+                "-c",
+                "flash write_image erase build/miniFOC.bin 0x08000000",
+                "-c",
+                "reset run",
+                "-c",
+                "shutdown"
+            ],
+            "detail": "cortex flash download",
+            "problemMatcher": []
+        },
+        {
+            "label": "cortex-build",
+            "dependsOrder": "sequence",
+            "dependsOn": [
+                "cmake configure",
+                "cmake build"
+            ],
+            "detail": "Cortex configure and build task",
+            "problemMatcher": []
+        }
+    ]
+}
