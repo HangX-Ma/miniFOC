@@ -1,14 +1,3 @@
-/**
- * @file led.c
- * @author MContour (m-contour@qq.com)
- * @brief led fundamental functions
- * @version 0.1
- * @date 2022-08-05
- *
- * @copyright Copyright (c) 2022
- *
- */
-
 #include "led.h"
 #include "stm32f1xx_ll_bus.h"
 #include "stm32f1xx_ll_gpio.h"

@@ -24,6 +24,7 @@ So _**DON'T USE ANY MATERIALS DIRECTLY!**_ I won't response for any mistakes.
 - :book: Create a mind map about _miniFOC_ design.
 - :rocket: Finish the board design but haven't check the details. Prepare for further checking and BOM selections.
     > :heavy_check_mark: BOM and board have been checked. Waiting for all materials to arrive.
+- Remove `TIM1_CH1N`, `TIM1_CH2N`, `TIM1_CH3N` settings， because they are not used in this driver.
 
 ### 2023-07-15
 

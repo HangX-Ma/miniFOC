@@ -19,6 +19,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "gpio.h"
+#include "spi.h"
 #include "tim.h"
 
 /* Private includes ----------------------------------------------------------*/
@@ -104,18 +105,21 @@ int main(void) {
     /* Initialize all configured peripherals */
     MX_GPIO_Init();
     MX_TIM1_Init();
+    MX_SPI1_Init();
     /* USER CODE BEGIN 2 */
+
+    // LED Blinking Test
     LED_GPIO_Config();
 
+    // TIM1 PWM Generation
     LL_TIM_CC_EnableChannel(TIM1, LL_TIM_CHANNEL_CH1);
-    LL_TIM_CC_EnableChannel(TIM1, LL_TIM_CHANNEL_CH1N);
     LL_TIM_CC_EnableChannel(TIM1, LL_TIM_CHANNEL_CH2);
-    LL_TIM_CC_EnableChannel(TIM1, LL_TIM_CHANNEL_CH2N);
     LL_TIM_CC_EnableChannel(TIM1, LL_TIM_CHANNEL_CH3);
-    LL_TIM_CC_EnableChannel(TIM1, LL_TIM_CHANNEL_CH3N);
-    LL_TIM_EnableUpdateEvent(TIM1);
     LL_TIM_EnableCounter(TIM1);
     LL_TIM_EnableAllOutputs(TIM1);
+
+    // Enable SPI1
+    LL_SPI_Enable(SPI1);
     /* USER CODE END 2 */
 
     /* Infinite loop */

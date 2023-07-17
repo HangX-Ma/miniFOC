@@ -5,7 +5,8 @@
         "*.cfg": "tcl",
         "README": "plaintext",
         "*.spl": "makefile",
-        "led.h": "c"
+        "led.h": "c",
+        "spi.h": "c"
     },
     "cmake.configureOnOpen": true,
 }

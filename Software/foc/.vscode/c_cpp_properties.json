@@ -9,7 +9,6 @@
                 "${workspaceFolder}/Drivers/CMSIS/Include",
                 "${workspaceFolder}/Core/Inc",
                 "${workspaceFolder}/Hardware/Inc"
-                // "${workspaceFolder}/Components/Inc"
             ],
             "defines": [
                 "_DEBUG",

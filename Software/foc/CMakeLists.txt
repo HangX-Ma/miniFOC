@@ -64,13 +64,13 @@ add_definitions(
 
 # collect all files in the following directories and put them into 'SOURCES' variable
 file(GLOB_RECURSE SOURCES
-    "Startup/*.*"
     "Drivers/*.*"
     "Core/*.*"
     "Hardware/*.*"
     # "Components/*.*"
 )
-
+# append startup file
+set(STARTUP_ASM ${CMAKE_SOURCE_DIR}/startup_stm32f103xb.s)
 set(LINKER_SCRIPT ${CMAKE_SOURCE_DIR}/STM32F103C8Tx_FLASH.ld)
 
 add_link_options(
@@ -79,7 +79,7 @@ add_link_options(
     LINKER:-Map=${PROJECT_BINARY_DIR}/${PROJECT_NAME}.map
 )
 
-add_executable(${PROJECT_NAME} ${SOURCES} ${LINKER_SCRIPT})
+add_executable(${PROJECT_NAME} ${STARTUP_ASM} ${SOURCES} ${LINKER_SCRIPT})
 
 set_target_properties(${PROJECT_NAME} PROPERTIES
     SUFFIX .elf
