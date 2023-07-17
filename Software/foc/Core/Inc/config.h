@@ -25,6 +25,6 @@
 
 //? SC60228DC Magnetic encoder
 #define ENCODER_GPIO_PORT       GPIOA
-#define ENCODER_CS              LL_GPIO_PIN_4
+#define ENCODER_CS_PIN          LL_GPIO_PIN_4
 
 #endif  //!__CONFIG__H__

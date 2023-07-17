@@ -25,8 +25,12 @@
 
 #include "config.h"
 
-#define ENCODER_RESOLUTION      4096
-#define ENCODER_DATA_LENGTH     12
+#define ENCODER_RESOLUTION          4096
+#define ENCODER_DATA_LENGTH         12
+
+typedef struct {
+    void (*select_chip)();
+} Encoder_t;
 
 void encoder_init();
 
