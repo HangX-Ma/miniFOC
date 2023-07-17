@@ -2,3 +2,5 @@
 *.SchDoc filter=lfs diff=lfs merge=lfs -text
 *.PcbLib filter=lfs diff=lfs merge=lfs -text
 *.SchLib filter=lfs diff=lfs merge=lfs -text
+*.pdf filter=lfs diff=lfs merge=lfs -text
+*.PDF filter=lfs diff=lfs merge=lfs -text
