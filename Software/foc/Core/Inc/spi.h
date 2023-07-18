@@ -44,7 +44,7 @@ void MX_SPI1_Init(void);
  * @brief Read SPI one word (16 bits)
  * @return received value from salve device
  */
-uint16_t SPI1_ReadWord();
+uint16_t spi_transmit_receive();
 
 /* USER CODE END Prototypes */
 

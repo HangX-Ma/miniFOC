@@ -117,9 +117,6 @@ int main(void) {
     LL_TIM_CC_EnableChannel(TIM1, LL_TIM_CHANNEL_CH3);
     LL_TIM_EnableCounter(TIM1);
     LL_TIM_EnableAllOutputs(TIM1);
-
-    // Enable SPI1
-    LL_SPI_Enable(SPI1);
     /* USER CODE END 2 */
 
     /* Infinite loop */

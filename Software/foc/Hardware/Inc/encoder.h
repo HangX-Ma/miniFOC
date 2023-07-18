@@ -4,6 +4,8 @@
  * @brief SC60228DC Magnetic encoder
  * @version 0.1
  * @date 2023-07-17
+ * @ref https://github.com/simplefoc/Arduino-FOC-drivers/tree/master/src/encoders/sc60228
+ * @ref https://blog.csdn.net/weixin_43593122/article/details/119253544
  *
  * @copyright Copyright (c) 2023
  *
@@ -23,14 +25,29 @@
 #ifndef __GMR__H__
 #define __GMR__H__
 
-#include "config.h"
+#include "utils.h"
 
 #define ENCODER_RESOLUTION          4096
 #define ENCODER_DATA_LENGTH         12
 
-typedef struct {
-    void (*select_chip)();
-} Encoder_t;
+typedef union {
+    struct {
+        uint16_t parity:1;
+        uint16_t df2:1;
+        uint16_t df1:1;
+        uint16_t err:1;
+        uint16_t angle:12;
+    };
+    uint16_t reg;
+} SC60228Angle;
+
+typedef struct Encoder {
+    float (* get_angle)();      ///< read current magnetic absolute angle value
+    float (* get_velocity)();   ///< get current motor velocity
+    BOOL (* is_error)();        ///< check if the senor is too far away with the magnetic
+} Encoder;
+extern Encoder g_encoder;
+
 
 void encoder_init();
 

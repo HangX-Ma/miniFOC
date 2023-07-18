@@ -22,9 +22,10 @@
 
 /* USER CODE BEGIN 0 */
 
-uint16_t SPI1_ReadWord() {
-
-
+uint16_t spi_transmit_receive() {
+    // wait for 16 bits data receiving complete
+    while (LL_SPI_IsActiveFlag_RXNE(SPI1) == RESET) {}
+    return LL_SPI_ReceiveData16(SPI1);
 }
 
 /* USER CODE END 0 */
@@ -48,9 +49,8 @@ void MX_SPI1_Init(void)
   /**SPI1 GPIO Configuration
   PA5   ------> SPI1_SCK
   PA6   ------> SPI1_MISO
-  PA7   ------> SPI1_MOSI
   */
-  GPIO_InitStruct.Pin = LL_GPIO_PIN_5|LL_GPIO_PIN_7;
+  GPIO_InitStruct.Pin = LL_GPIO_PIN_5;
   GPIO_InitStruct.Mode = LL_GPIO_MODE_ALTERNATE;
   GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_HIGH;
   GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
@@ -63,7 +63,7 @@ void MX_SPI1_Init(void)
   /* USER CODE BEGIN SPI1_Init 1 */
 
   /* USER CODE END SPI1_Init 1 */
-  SPI_InitStruct.TransferDirection = LL_SPI_FULL_DUPLEX;
+  SPI_InitStruct.TransferDirection = LL_SPI_SIMPLEX_RX;
   SPI_InitStruct.Mode = LL_SPI_MODE_MASTER;
   SPI_InitStruct.DataWidth = LL_SPI_DATAWIDTH_16BIT;
   SPI_InitStruct.ClockPolarity = LL_SPI_POLARITY_LOW;

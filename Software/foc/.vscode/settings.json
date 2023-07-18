@@ -6,7 +6,10 @@
         "README": "plaintext",
         "*.spl": "makefile",
         "led.h": "c",
-        "spi.h": "c"
+        "spi.h": "c",
+        "encoder.h": "c",
+        "main.h": "c",
+        "stm32f1xx_ll_system.h": "c"
     },
     "cmake.configureOnOpen": true,
 }

@@ -1,9 +1,7 @@
 /**
- * @file config.h
+ * @file utils.h
  * @author HangX-Ma (contour.9x@gmail.com)
- * @brief MCU and other devices configurations. It is clear to manage those
- *        hardware definitions in one single file. However, I cannot manage
- *        the auto-generated STM32CubeMX code.
+ * @brief basic utilities
  * @version 0.1
  * @date 2023-07-17
  *
@@ -22,11 +20,13 @@
  * limitations under the License.
  */
 
-#ifndef __CONFIG__H__
-#define __CONFIG__H__
+#ifndef __UTILS__H__
+#define __UTILS__H__
 
-//? SC60228DC Magnetic encoder
-#define ENCODER_GPIO_PORT GPIOA
-#define ENCODER_CS_PIN LL_GPIO_PIN_4
+typedef uint8_t BOOL;
+typedef enum {
+    FALSE = 0,
+    TRUE = !FALSE,
+} BOOL_INNER;
 
-#endif //!__CONFIG__H__
+#endif  //!__UTILS__H__

@@ -45,7 +45,7 @@ include_directories(
     ./
     Core/Inc
     Hardware/Inc
-    # Components/Inc
+    Components/Inc
     Drivers/STM32F1xx_HAL_Driver/Inc
     Drivers/CMSIS/Device/ST/STM32F1xx/Include
     Drivers/CMSIS/Include
@@ -67,7 +67,7 @@ file(GLOB_RECURSE SOURCES
     "Drivers/*.*"
     "Core/*.*"
     "Hardware/*.*"
-    # "Components/*.*"
+    "Components/*.*"
 )
 # append startup file
 set(STARTUP_ASM ${CMAKE_SOURCE_DIR}/startup_stm32f103xb.s)
