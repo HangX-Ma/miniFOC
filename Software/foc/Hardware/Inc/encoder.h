@@ -22,8 +22,8 @@
  * limitations under the License.
  */
 
-#ifndef __GMR__H__
-#define __GMR__H__
+#ifndef __ENCODER__H__
+#define __ENCODER__H__
 
 #include "utils.h"
 
@@ -51,4 +51,4 @@ extern Encoder g_encoder;
 
 void encoder_init();
 
-#endif  //!__GMR__H__
+#endif  //!__ENCODER__H__
