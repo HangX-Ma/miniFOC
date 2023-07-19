@@ -32,6 +32,8 @@ So _**DON'T USE ANY MATERIALS DIRECTLY!**_ I won't response for any mistakes.
     > I use cortex-debug plugin and it shows that Qfplib-M3 is visibly faster than software float-point calculation.
 - Add Vofa+ communication protocol and configure USART1.
     > :question: Cough... It seems that my CH340 serial communication device breaks down. Need further checking.
+    >
+    > :heavy_check_mark: I use logic analyzer to capture output of _**PB6(Tx)**_ and it actually gives me different waveforms, which means that the CH340 is actually broken.
 
 ### 2023-07-18
 
