@@ -24,8 +24,8 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "led.h"
 #include "encoder.h"
+#include "led.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -88,9 +88,9 @@ int main(void) {
     /* SysTick_IRQn interrupt configuration */
     NVIC_SetPriority(SysTick_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(), 15, 0));
 
-    /** DISABLE: JTAG-DP Disabled and SW-DP Disabled
+    /** NOJTAG: JTAG-DP Disabled and SW-DP Enabled
      */
-    LL_GPIO_AF_DisableRemap_SWJ();
+    LL_GPIO_AF_Remap_SWJ_NOJTAG();
 
     /* USER CODE BEGIN Init */
 
