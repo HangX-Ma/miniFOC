@@ -2,6 +2,7 @@
 #include "encoder.h"
 #include "config.h"
 #include "delay.h"
+#include "qfplib-m3.h"
 
 #define abs(x) ((x) > 0 ? (x) : (-(x)))
 #define _2PI 6.28318530718
@@ -82,7 +83,7 @@ static float get_angle() {
         }
         raw_angle_data_prev = raw_angle_data;
         // return current angle(rad)
-        return  (raw_angle_data / (float)ENCODER_RESOLUTION) * _2PI;
+        return qfp_fmul(qfp_fdiv(raw_angle_data, (float)ENCODER_RESOLUTION), _2PI);
     }
     return raw_angle_data_prev;
 }
@@ -92,10 +93,10 @@ static float get_velocity() {
 
     uint32_t tick_now_us = SysTick->VAL; // 72 MHz clock rate -> SysTick (HCLK/8) is set to 9 MHz
     if (tick_now_us < vel_sample_timestamp) {
-        timestamp = (float)(vel_sample_timestamp - tick_now_us) / 9 * 1e-6; // convert to sec
+        timestamp = qfp_fmul(qfp_fdiv((float)(vel_sample_timestamp - tick_now_us), 9), 1e-6); // convert to sec
     } else {
         // SysTick->VAL only use 24 LSB bits, counting down
-        timestamp = ((uint32_t)0xFFFFFF - tick_now_us + vel_sample_timestamp) / 9 * 1e-6;
+        timestamp = qfp_fmul(qfp_fdiv(((uint32_t)0xFFFFFF - tick_now_us + vel_sample_timestamp), 9), 1e-6);
     }
     // fix strange cases (overflow)
     if(timestamp == 0 || timestamp > 0.5) {
@@ -103,7 +104,7 @@ static float get_velocity() {
     }
 
     cumulative_angle_curr = rotation_turns_angles + get_angle();
-    vel = (cumulative_angle_curr - cumulative_angle_prev) / timestamp;
+    vel = qfp_fdiv(cumulative_angle_curr - cumulative_angle_prev, timestamp);
 
     // prepare for next calculation
     cumulative_angle_prev = cumulative_angle_curr;

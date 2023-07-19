@@ -49,6 +49,7 @@ include_directories(
     Drivers/STM32F1xx_HAL_Driver/Inc
     Drivers/CMSIS/Device/ST/STM32F1xx/Include
     Drivers/CMSIS/Include
+    Drivers/Qfplib-M3
 )
 
 add_definitions(

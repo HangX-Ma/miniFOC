@@ -25,6 +25,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "led.h"
+#include "encoder.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -109,6 +110,7 @@ int main(void) {
     /* USER CODE BEGIN 2 */
 
     // LED Blinking Test
+    // encoder_init();
     LED_GPIO_Config();
 
     // TIM1 PWM Generation
