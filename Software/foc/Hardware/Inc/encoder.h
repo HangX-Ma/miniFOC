@@ -27,6 +27,8 @@
 
 #include "utils.h"
 
+#define ENCODER_GPIO_PORT           GPIOA
+#define ENCODER_CS_PIN              LL_GPIO_PIN_4
 #define ENCODER_RESOLUTION          4096
 #define ENCODER_DATA_LENGTH         12
 
@@ -47,7 +49,6 @@ typedef struct Encoder {
     BOOL (* is_error)();        ///< check if the senor is too far away with the magnetic
 } Encoder;
 extern Encoder g_encoder;
-
 
 void encoder_init();
 

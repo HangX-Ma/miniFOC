@@ -1,6 +1,5 @@
 #include "spi.h"
 #include "encoder.h"
-#include "config.h"
 #include "delay.h"
 #include "qfplib-m3.h"
 
@@ -79,7 +78,7 @@ static float get_angle() {
         float raw_angle_data = read_raw_angle();
         float d_raw_angle = raw_angle_data - raw_angle_data_prev;
         if(abs(d_raw_angle) > (0.8 * ENCODER_RESOLUTION)) {
-            rotation_turns_angles += (d_raw_angle > 0 ? -_2PI : _2PI);
+            rotation_turns_angles = qfp_fadd(d_raw_angle > 0 ? -_2PI : _2PI, rotation_turns_angles);
         }
         raw_angle_data_prev = raw_angle_data;
         // return current angle(rad)

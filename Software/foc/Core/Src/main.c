@@ -26,6 +26,8 @@
 /* USER CODE BEGIN Includes */
 #include "encoder.h"
 #include "led.h"
+#include "vofa_usart.h"
+#include "qfplib-m3.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -65,6 +67,7 @@ void SystemClock_Config(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
+float buf[3];
 /* USER CODE END 0 */
 
 /**
@@ -83,14 +86,14 @@ int main(void) {
     LL_APB1_GRP1_EnableClock(LL_APB1_GRP1_PERIPH_PWR);
 
     /* System interrupt init*/
-    NVIC_SetPriorityGrouping(NVIC_PRIORITYGROUP_4);
+    // NVIC_SetPriorityGrouping(NVIC_PRIORITYGROUP_4);
 
     /* SysTick_IRQn interrupt configuration */
-    NVIC_SetPriority(SysTick_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(), 15, 0));
+    // NVIC_SetPriority(SysTick_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(), 15, 0));
 
     /** NOJTAG: JTAG-DP Disabled and SW-DP Enabled
      */
-    LL_GPIO_AF_Remap_SWJ_NOJTAG();
+    // LL_GPIO_AF_Remap_SWJ_NOJTAG();
 
     /* USER CODE BEGIN Init */
 
@@ -109,37 +112,53 @@ int main(void) {
     MX_SPI1_Init();
     /* USER CODE BEGIN 2 */
 
-    // LED Blinking Test
+    //* user init start
+    LED_GPIO_Config(); // LED Blinking Test
+    vofa_usart_init();
     // encoder_init();
-    LED_GPIO_Config();
 
     // TIM1 PWM Generation
-    LL_TIM_CC_EnableChannel(TIM1, LL_TIM_CHANNEL_CH1);
-    LL_TIM_CC_EnableChannel(TIM1, LL_TIM_CHANNEL_CH2);
-    LL_TIM_CC_EnableChannel(TIM1, LL_TIM_CHANNEL_CH3);
-    LL_TIM_EnableCounter(TIM1);
-    LL_TIM_EnableAllOutputs(TIM1);
+    // LL_TIM_CC_EnableChannel(TIM1, LL_TIM_CHANNEL_CH1);
+    // LL_TIM_CC_EnableChannel(TIM1, LL_TIM_CHANNEL_CH2);
+    // LL_TIM_CC_EnableChannel(TIM1, LL_TIM_CHANNEL_CH3);
+    // LL_TIM_EnableCounter(TIM1);
+    // LL_TIM_EnableAllOutputs(TIM1);
+    //* user init end
     /* USER CODE END 2 */
 
     /* Infinite loop */
     /* USER CODE BEGIN WHILE */
+    float cnt1 = 0.0f;
+    float cnt2 = 0.0f;
     while (1) {
         /* USER CODE END WHILE */
 
         /* USER CODE BEGIN 3 */
-        A1;
-        B0;
-        C0;
-        LL_mDelay(10);
-        A0;
-        B1;
-        C0;
-        LL_mDelay(10);
-        A0;
-        B0;
-        C1;
-        LL_mDelay(10);
-        // LED_Blinking(200);
+        cnt1 = qfp_fadd(cnt1, 0.01);
+        cnt2 = qfp_fadd(cnt2, 0.02);
+        if (cnt1 > 20.0f) {
+            cnt1 = 0.0;
+        }
+        if (cnt2 > 40.0f) {
+            cnt2 = 0.0;
+        }
+        buf[0] = cnt1;
+        buf[1] = cnt2;
+        vofa_usart_dma_send_config(buf, 2);
+        LL_mDelay(100);
+        // A1;
+        // B0;
+        // C0;
+        // LL_mDelay(10);
+        // A0;
+        // B1;
+        // C0;
+        // LL_mDelay(10);
+        // A0;
+        // B0;
+        // C1;
+        // LL_mDelay(10);
+        // LL_GPIO_TogglePin(LED_GPIO_PORT, LED_GPIO_PIN);
     }
     /* USER CODE END 3 */
 }

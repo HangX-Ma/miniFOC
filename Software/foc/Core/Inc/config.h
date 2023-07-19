@@ -25,8 +25,21 @@
 #ifndef __CONFIG__H__
 #define __CONFIG__H__
 
-//? SC60228DC Magnetic encoder
-#define ENCODER_GPIO_PORT GPIOA
-#define ENCODER_CS_PIN LL_GPIO_PIN_4
+
+//* If you want to use the global symbols below,
+//* you need to include the'*.h' file first!
+
+/**
+ * @dir Hardware/Inc/encoder.h
+ * @param g_encoder
+ * @brief Use 'encoder_init' at initialization stage. Afterwards, you can use
+ *        g_encoder to get motor angle and velocity.
+ */
+
+/**
+ * @dir Components/Inc/vofa_usart.h
+ * @param g_target_motor_vel
+ * @brief Target motor rotation velocity, controlled by host using USART.
+ */
 
 #endif //!__CONFIG__H__

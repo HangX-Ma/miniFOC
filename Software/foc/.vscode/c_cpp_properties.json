@@ -25,7 +25,7 @@
             "compilerPath": "C:/Program Files (x86)/GNU Arm Embedded Toolchain/10 2021.10/bin/arm-none-eabi-gcc.exe",
             "cStandard": "c11",
             "cppStandard": "c++11",
-            "intelliSenseMode": "gcc-arm",
+            "intelliSenseMode": "windows-gcc-arm",
             "configurationProvider": "go2sh.cmake-integration",
             "compileCommands": "${workspaceFolder}/build/compile_commands.json"
         }

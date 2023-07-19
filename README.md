@@ -26,6 +26,13 @@ So _**DON'T USE ANY MATERIALS DIRECTLY!**_ I won't response for any mistakes.
 
 ## Development Logs
 
+### 2023-07-19
+
+- Add [Qfplib-M3](https://www.quinapalus.com/qfplib-m3.html) float-point library and it works well!
+    > I use cortex-debug plugin and it shows that Qfplib-M3 is visibly faster than software float-point calculation.
+- Add Vofa+ communication protocol and configure USART1.
+    > :question: Cough... It seems that my CH340 serial communication device breaks down. Need further checking.
+
 ### 2023-07-18
 
 - Change SPI mode to **(Receive Only Master)** and finish the SC60228DC software logic.
