@@ -1,7 +1,11 @@
-#include "spi.h"
 #include "encoder.h"
 #include "delay.h"
 #include "qfplib-m3.h"
+
+#include "stm32f1xx_ll_utils.h"
+#include "stm32f1xx_ll_spi.h"
+#include "stm32f1xx_ll_gpio.h"
+#include "stm32f1xx_ll_bus.h"
 
 #define abs(x) ((x) > 0 ? (x) : (-(x)))
 #define _2PI 6.28318530718
@@ -23,6 +27,13 @@ static uint32_t vel_sample_timestamp = 0;
 static float raw_angle_data_prev = 0; // last raw angle value, MAX = ENCODER_RESOLUTION
 static float cumulative_angle_prev = 0; // last angle value(radian)
 static float rotation_turns_angles = 0; // how may turns the motor runs(radian)
+
+
+static uint16_t spi2_transmit_receive() {
+    // wait for 16 bits data receiving complete
+    while (LL_SPI_IsActiveFlag_RXNE(SPI2) == RESET) {}
+    return LL_SPI_ReceiveData16(SPI2);
+}
 
 static void select_chip() {
     LL_GPIO_SetOutputPin(ENCODER_GPIO_PORT, ENCODER_CS_PIN);
@@ -65,7 +76,7 @@ static BOOL parity_check(uint16_t data)
 static uint16_t read_raw_angle() {
     SC60228Angle result;
     select_chip();
-    result.reg = spi_transmit_receive();
+    result.reg = spi2_transmit_receive();
     deselect_chip();
     data_check.error_check = (result.err == 1);
     data_check.parity_check = parity_check(result.angle);
@@ -112,9 +123,68 @@ static float get_velocity() {
     return vel;
 }
 
+static void encoder_gpio_init() {
+    LL_GPIO_InitTypeDef GPIO_InitStruct = {0};
+
+    // Enable GPIOB clock
+    LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_GPIOB);
+
+    // Encoder CS pin Setting
+    LL_GPIO_SetOutputPin(ENCODER_GPIO_PORT, ENCODER_CS_PIN);
+    GPIO_InitStruct.Pin        = ENCODER_CS_PIN;
+    GPIO_InitStruct.Mode       = LL_GPIO_MODE_OUTPUT;
+    GPIO_InitStruct.Speed      = LL_GPIO_SPEED_FREQ_HIGH;
+    GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
+    GPIO_InitStruct.Pull       = LL_GPIO_PULL_UP;
+    LL_GPIO_Init(ENCODER_GPIO_PORT, &GPIO_InitStruct);
+}
+
+static void encoder_spi2_init() {
+    LL_SPI_InitTypeDef SPI_InitStruct = {0};
+    LL_GPIO_InitTypeDef GPIO_InitStruct = {0};
+
+    /* Peripheral clock enable */
+    LL_APB1_GRP1_EnableClock(LL_APB1_GRP1_PERIPH_SPI2);
+
+    LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_GPIOB);
+    /** SPI2 GPIO Configuration
+        => PB13   ------> SPI2_SCK
+        => PB14   ------> SPI2_MISO
+    */
+    GPIO_InitStruct.Pin        = ENCODER_SPI_SCK_PIN;
+    GPIO_InitStruct.Mode       = LL_GPIO_MODE_ALTERNATE;
+    GPIO_InitStruct.Speed      = LL_GPIO_SPEED_FREQ_HIGH;
+    GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
+    LL_GPIO_Init(ENCODER_GPIO_PORT, &GPIO_InitStruct);
+
+    GPIO_InitStruct.Pin        = ENCODER_SPI_MISO_PIN;
+    GPIO_InitStruct.Mode       = LL_GPIO_MODE_FLOATING;
+    LL_GPIO_Init(ENCODER_GPIO_PORT, &GPIO_InitStruct);
+
+    SPI_InitStruct.TransferDirection = LL_SPI_SIMPLEX_RX;
+    SPI_InitStruct.Mode              = LL_SPI_MODE_MASTER;
+    SPI_InitStruct.DataWidth         = LL_SPI_DATAWIDTH_16BIT;
+    SPI_InitStruct.ClockPolarity     = LL_SPI_POLARITY_LOW;
+    SPI_InitStruct.ClockPhase        = LL_SPI_PHASE_2EDGE;
+    SPI_InitStruct.NSS               = LL_SPI_NSS_SOFT;
+    SPI_InitStruct.BaudRate          = LL_SPI_BAUDRATEPRESCALER_DIV8;
+    SPI_InitStruct.BitOrder          = LL_SPI_MSB_FIRST;
+    SPI_InitStruct.CRCCalculation    = LL_SPI_CRCCALCULATION_DISABLE;
+    SPI_InitStruct.CRCPoly           = 10;
+    LL_SPI_Init(SPI2, &SPI_InitStruct);
+
+    // enable spi2
+    LL_SPI_Enable(SPI2);
+}
+
+
 void encoder_init() {
+    encoder_gpio_init();
+    encoder_spi2_init();
+
+    LL_mDelay(10);
+
     deselect_chip();
-    LL_SPI_Enable(SPI1);
     // init g_encoder
     g_encoder.get_angle = get_angle;
     g_encoder.get_velocity = get_velocity;

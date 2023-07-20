@@ -44,7 +44,7 @@
 #define LED_STATE_TOGGLE()      LL_GPIO_TogglePin(LED_GPIO_PORT, LED_GPIO_PIN)
 
 /* FUNCTION */
-void LED_GPIO_Config(void);
+void led_init(void);
 
 /**
  * @brief  Set LED to Blinking mode for an infinite loop (toggle period based on value provided as input parameter).
@@ -55,6 +55,6 @@ void LED_GPIO_Config(void);
  *     @arg LED_BLINK_ERROR : Error specific Blinking
  * @retval None
  */
-void LED_Blinking(uint32_t Period);
+void led_blinking(uint32_t Period);
 
 #endif //!__LED__H__

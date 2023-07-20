@@ -29,6 +29,7 @@
 //* If you want to use the global symbols below,
 //* you need to include the'*.h' file first!
 
+
 /**
  * @dir Hardware/Inc/encoder.h
  * @param g_encoder

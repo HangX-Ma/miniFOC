@@ -1,11 +1,13 @@
+
+
 /**
- * @file utils.h
+ * @file oled.h
  * @author HangX-Ma (contour.9x@gmail.com)
- * @brief basic utilities
+ * @brief oled fundamental functions
  * @version 0.1
- * @date 2023-07-17
+ * @date 2022-08-05
  *
- * @copyright Copyright (c) 2023
+ * @copyright Copyright (c) 2022 - 2023
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,15 +22,21 @@
  * limitations under the License.
  */
 
-#ifndef __UTILS__H__
-#define __UTILS__H__
+#ifndef __OLED__H__
+#define __OLED__H__
 
-#include "stm32f103xb.h"
+#include "utils.h"
 
-typedef uint8_t BOOL;
-typedef enum {
-    FALSE = 0,
-    TRUE = !FALSE,
-} BOOL_INNER;
+#define OLED_GPIO_PORT              GPIOB
+#define OLED_CS_PIN                 LL_GPIO_PIN_4
+#define OLED_SCK_PIN                LL_GPIO_PIN_5
+#define OLED_MOSI_PIN               LL_GPIO_PIN_7
+#define OLED_RST_PIN                LL_GPIO_PIN_0
+#define OLED_DC_PIN                 LL_GPIO_PIN_1
 
-#endif  //!__UTILS__H__
+#define OLED_DMAx_Tx_IRQHandler     DMA1_Channel3_IRQHandler
+#define OLED_SPI_DMAx_Tx_CHANNEL    LL_DMA_CHANNEL_3
+
+void oled_init();
+
+#endif  //!__OLED__H__

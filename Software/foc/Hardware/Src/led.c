@@ -3,7 +3,7 @@
 #include "stm32f1xx_ll_gpio.h"
 #include "stm32f1xx_ll_utils.h"
 
-void LED_GPIO_Config(void) {
+void led_init(void) {
     LL_GPIO_InitTypeDef GPIO_InitStruct;
 
     LED_GPIO_CLK_ENABLE();
@@ -18,7 +18,7 @@ void LED_GPIO_Config(void) {
     LED_STATE_OFF();
 }
 
-void LED_Blinking(uint32_t Period) {
+void led_blinking(uint32_t Period) {
     /* Toggle LED2 in an infinite loop */
     while (1) {
         LL_GPIO_TogglePin(LED_GPIO_PORT, LED_GPIO_PIN);

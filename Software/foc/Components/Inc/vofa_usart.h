@@ -24,7 +24,7 @@
 #ifndef __VOFA_USART__H__
 #define __VOFA_USART__H__
 
-#include "stm32f103xb.h"
+#include "utils.h"
 
 /* definitions about USART1 and DMA1 settings */
 #define USARTx_INSTANCE                 USART1

@@ -23,7 +23,7 @@
 #ifndef __DELAY__H__
 #define __DELAY__H__
 
-#include "stm32f103xb.h"
+#include "utils.h"
 
 void delay_nus_72MHz(uint32_t n);
 

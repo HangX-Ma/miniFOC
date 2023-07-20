@@ -16,22 +16,15 @@
  ******************************************************************************
  */
 /* USER CODE END Header */
-/* Includes ------------------------------------------------------------------*/
 #include "main.h"
-#include "gpio.h"
-#include "spi.h"
 #include "tim.h"
 
-/* Private includes ----------------------------------------------------------*/
-/* USER CODE BEGIN Includes */
 #include "encoder.h"
 #include "led.h"
-#include "vofa_usart.h"
+#include "oled.h"
 #include "qfplib-m3.h"
-/* USER CODE END Includes */
+#include "vofa_usart.h"
 
-/* Private typedef -----------------------------------------------------------*/
-/* USER CODE BEGIN PTD */
 #define duty (uint32_t)10
 #define A0 LL_TIM_OC_SetCompareCH1(TIM1, 0)
 #define B0 LL_TIM_OC_SetCompareCH2(TIM1, 0)
@@ -40,44 +33,17 @@
 #define A1 LL_TIM_OC_SetCompareCH1(TIM1, duty)
 #define B1 LL_TIM_OC_SetCompareCH2(TIM1, duty)
 #define C1 LL_TIM_OC_SetCompareCH3(TIM1, duty)
-/* USER CODE END PTD */
 
-/* Private define ------------------------------------------------------------*/
-/* USER CODE BEGIN PD */
 
-/* USER CODE END PD */
-
-/* Private macro -------------------------------------------------------------*/
-/* USER CODE BEGIN PM */
-
-/* USER CODE END PM */
-
-/* Private variables ---------------------------------------------------------*/
-
-/* USER CODE BEGIN PV */
-
-/* USER CODE END PV */
-
-/* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
-/* USER CODE BEGIN PFP */
-
-/* USER CODE END PFP */
-
-/* Private user code ---------------------------------------------------------*/
-/* USER CODE BEGIN 0 */
 
 float buf[3];
-/* USER CODE END 0 */
 
 /**
  * @brief  The application entry point.
  * @retval int
  */
 int main(void) {
-    /* USER CODE BEGIN 1 */
-
-    /* USER CODE END 1 */
 
     /* MCU Configuration--------------------------------------------------------*/
 
@@ -95,26 +61,16 @@ int main(void) {
      */
     // LL_GPIO_AF_Remap_SWJ_NOJTAG();
 
-    /* USER CODE BEGIN Init */
-
-    /* USER CODE END Init */
-
     /* Configure the system clock */
     SystemClock_Config();
 
-    /* USER CODE BEGIN SysInit */
 
-    /* USER CODE END SysInit */
-
-    /* Initialize all configured peripherals */
-    MX_GPIO_Init();
+    //* Initialize all configured peripherals start
     MX_TIM1_Init();
-    MX_SPI1_Init();
-    /* USER CODE BEGIN 2 */
 
-    //* user init start
-    LED_GPIO_Config(); // LED Blinking Test
+    led_init();
     vofa_usart_init();
+    oled_init();
     // encoder_init();
 
     // TIM1 PWM Generation
@@ -123,11 +79,9 @@ int main(void) {
     // LL_TIM_CC_EnableChannel(TIM1, LL_TIM_CHANNEL_CH3);
     // LL_TIM_EnableCounter(TIM1);
     // LL_TIM_EnableAllOutputs(TIM1);
-    //* user init end
-    /* USER CODE END 2 */
+    //* Initialize all configured peripherals end
 
     /* Infinite loop */
-    /* USER CODE BEGIN WHILE */
     float cnt1 = 0.0f;
     float cnt2 = 0.0f;
     while (1) {
@@ -160,7 +114,6 @@ int main(void) {
         // LL_mDelay(10);
         // LL_GPIO_TogglePin(LED_GPIO_PORT, LED_GPIO_PIN);
     }
-    /* USER CODE END 3 */
 }
 
 /**
@@ -194,9 +147,7 @@ void SystemClock_Config(void) {
     LL_SetSystemCoreClock(72000000);
 }
 
-/* USER CODE BEGIN 4 */
 
-/* USER CODE END 4 */
 
 /**
  * @brief  This function is executed in case of error occurrence.

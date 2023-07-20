@@ -1,7 +1,7 @@
 /**
  * @file encoder.h
  * @author HangX-Ma (contour.9x@gmail.com)
- * @brief SC60228DC Magnetic encoder
+ * @brief SC60228DC magnetic encoder
  * @version 0.1
  * @date 2023-07-17
  * @ref https://github.com/simplefoc/Arduino-FOC-drivers/tree/master/src/encoders/sc60228
@@ -27,8 +27,10 @@
 
 #include "utils.h"
 
-#define ENCODER_GPIO_PORT           GPIOA
-#define ENCODER_CS_PIN              LL_GPIO_PIN_4
+#define ENCODER_GPIO_PORT           GPIOB
+#define ENCODER_CS_PIN              LL_GPIO_PIN_12
+#define ENCODER_SPI_SCK_PIN         LL_GPIO_PIN_13
+#define ENCODER_SPI_MISO_PIN        LL_GPIO_PIN_14
 #define ENCODER_RESOLUTION          4096
 #define ENCODER_DATA_LENGTH         12
 
