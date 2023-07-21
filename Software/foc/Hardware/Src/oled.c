@@ -32,7 +32,7 @@ static void oled_gpio_init(void) {
 
 }
 
-static void oled_spi1_init() {
+static void oled_spi1_init(void) {
     LL_SPI_InitTypeDef SPI_InitStruct = {0};
     LL_GPIO_InitTypeDef GPIO_InitStruct = {0};
 
@@ -174,7 +174,7 @@ void u8g2_init(u8g2_t *u8g2) {
     LL_mDelay(1000);
 }
 
-void oled_init() {
+void oled_init(void) {
     oled_gpio_init();
     oled_spi1_init();
 

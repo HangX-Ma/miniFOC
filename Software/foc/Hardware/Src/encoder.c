@@ -29,19 +29,19 @@ static float cumulative_angle_prev = 0; // last angle value(radian)
 static float rotation_turns_angles = 0; // how may turns the motor runs(radian)
 
 
-static uint16_t spi2_transmit_receive() {
+static uint16_t spi2_transmit_receive(void) {
     // wait for 16 bits data receiving complete
     while (LL_SPI_IsActiveFlag_RXNE(SPI2) == RESET) {}
     return LL_SPI_ReceiveData16(SPI2);
 }
 
-static void select_chip() {
+static void select_chip(void) {
     LL_GPIO_SetOutputPin(ENCODER_GPIO_PORT, ENCODER_CS_PIN);
     // min delay 250 ns
     delay_nus_72MHz(1);
 }
 
-static void deselect_chip() {
+static void deselect_chip(void) {
     // min delay here: clock period / 2, our baud rate period is 222ns
     delay_nus_72MHz(1);
     LL_GPIO_ResetOutputPin(ENCODER_GPIO_PORT, ENCODER_CS_PIN);
@@ -49,11 +49,11 @@ static void deselect_chip() {
     delay_nus_72MHz(1);
 }
 
-static BOOL is_error() {
+static BOOL is_error(void) {
     return data_check.error_check;
 }
 
-static BOOL is_valid() {
+static BOOL is_valid(void) {
     return data_check.parity_check;
 }
 
@@ -73,7 +73,7 @@ static BOOL parity_check(uint16_t data)
     return parity;
 }
 
-static uint16_t read_raw_angle() {
+static uint16_t read_raw_angle(void) {
     SC60228Angle result;
     select_chip();
     result.reg = spi2_transmit_receive();
@@ -84,7 +84,7 @@ static uint16_t read_raw_angle() {
     return result.angle;
 }
 
-static float get_angle() {
+static float get_angle(void) {
     if (is_valid()) {
         float raw_angle_data = read_raw_angle();
         float d_raw_angle = raw_angle_data - raw_angle_data_prev;
@@ -98,7 +98,7 @@ static float get_angle() {
     return raw_angle_data_prev;
 }
 
-static float get_velocity() {
+static float get_velocity(void) {
     float timestamp, cumulative_angle_curr, vel;
 
     uint32_t tick_now_us = SysTick->VAL; // 72 MHz clock rate -> SysTick (HCLK/8) is set to 9 MHz
@@ -123,7 +123,7 @@ static float get_velocity() {
     return vel;
 }
 
-static void encoder_gpio_init() {
+static void encoder_gpio_init(void) {
     LL_GPIO_InitTypeDef GPIO_InitStruct = {0};
 
     // Enable GPIOB clock
@@ -139,7 +139,7 @@ static void encoder_gpio_init() {
     LL_GPIO_Init(ENCODER_GPIO_PORT, &GPIO_InitStruct);
 }
 
-static void encoder_spi2_init() {
+static void encoder_spi2_init(void) {
     LL_SPI_InitTypeDef SPI_InitStruct = {0};
     LL_GPIO_InitTypeDef GPIO_InitStruct = {0};
 
@@ -178,7 +178,7 @@ static void encoder_spi2_init() {
 }
 
 
-void encoder_init() {
+void encoder_init(void) {
     encoder_gpio_init();
     encoder_spi2_init();
 

@@ -64,7 +64,7 @@ typedef struct RecvFrame {
 
 extern float g_target_motor_vel;
 
-void vofa_usart_init();
+void vofa_usart_init(void);
 void vofa_usart_dma_send_config(float *buffer, const uint32_t len);
 
 #endif  //!__VOFA_USART__H__

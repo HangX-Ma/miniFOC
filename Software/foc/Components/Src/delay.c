@@ -1,7 +1,7 @@
 #include "delay.h"
 
 // 64 nops here
-static void delay_us_72MHz() {
+static void delay_us_72MHz(void) {
     __NOP(); __NOP(); __NOP(); __NOP(); __NOP(); __NOP(); __NOP(); __NOP(); __NOP();
     __NOP(); __NOP(); __NOP(); __NOP(); __NOP(); __NOP(); __NOP(); __NOP(); __NOP();
     __NOP(); __NOP(); __NOP(); __NOP(); __NOP(); __NOP(); __NOP(); __NOP(); __NOP();

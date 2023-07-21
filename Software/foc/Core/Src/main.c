@@ -17,27 +17,16 @@
  */
 /* USER CODE END Header */
 #include "main.h"
-#include "tim.h"
-
 #include "encoder.h"
 #include "led.h"
 #include "oled.h"
 #include "qfplib-m3.h"
 #include "vofa_usart.h"
 
-#define duty (uint32_t)10
-#define A0 LL_TIM_OC_SetCompareCH1(TIM1, 0)
-#define B0 LL_TIM_OC_SetCompareCH2(TIM1, 0)
-#define C0 LL_TIM_OC_SetCompareCH3(TIM1, 0)
-
-#define A1 LL_TIM_OC_SetCompareCH1(TIM1, duty)
-#define B1 LL_TIM_OC_SetCompareCH2(TIM1, duty)
-#define C1 LL_TIM_OC_SetCompareCH3(TIM1, duty)
-
-
 void SystemClock_Config(void);
 
-float buf[3];
+
+// float buf[3];
 
 /**
  * @brief  The application entry point.
@@ -66,53 +55,32 @@ int main(void) {
 
 
     //* Initialize all configured peripherals start
-    MX_TIM1_Init();
 
     led_init();
     vofa_usart_init();
-    oled_init();
+    // oled_init();
     // encoder_init();
 
-    // TIM1 PWM Generation
-    // LL_TIM_CC_EnableChannel(TIM1, LL_TIM_CHANNEL_CH1);
-    // LL_TIM_CC_EnableChannel(TIM1, LL_TIM_CHANNEL_CH2);
-    // LL_TIM_CC_EnableChannel(TIM1, LL_TIM_CHANNEL_CH3);
-    // LL_TIM_EnableCounter(TIM1);
-    // LL_TIM_EnableAllOutputs(TIM1);
     //* Initialize all configured peripherals end
 
     /* Infinite loop */
-    float cnt1 = 0.0f;
-    float cnt2 = 0.0f;
+    // float cnt1 = 0.0f;
+    // float cnt2 = 0.0f;
     while (1) {
-        /* USER CODE END WHILE */
-
-        /* USER CODE BEGIN 3 */
-        cnt1 = qfp_fadd(cnt1, 0.01);
-        cnt2 = qfp_fadd(cnt2, 0.02);
-        if (cnt1 > 20.0f) {
-            cnt1 = 0.0;
-        }
-        if (cnt2 > 40.0f) {
-            cnt2 = 0.0;
-        }
-        buf[0] = cnt1;
-        buf[1] = cnt2;
-        vofa_usart_dma_send_config(buf, 2);
-        LL_mDelay(10);
-        // A1;
-        // B0;
-        // C0;
+        // ------------ USART test ----------------
+        // cnt1 = qfp_fadd(cnt1, 0.01);
+        // cnt2 = qfp_fadd(cnt2, 0.02);
+        // if (cnt1 > 20.0f) {
+        //     cnt1 = 0.0;
+        // }
+        // if (cnt2 > 40.0f) {
+        //     cnt2 = 0.0;
+        // }
+        // buf[0] = cnt1;
+        // buf[1] = cnt2;
+        // vofa_usart_dma_send_config(buf, 2);
         // LL_mDelay(10);
-        // A0;
-        // B1;
-        // C0;
-        // LL_mDelay(10);
-        // A0;
-        // B0;
-        // C1;
-        // LL_mDelay(10);
-        // LL_GPIO_TogglePin(LED_GPIO_PORT, LED_GPIO_PIN);
+        // ------------ BLDC Motor test -----------------
     }
 }
 
