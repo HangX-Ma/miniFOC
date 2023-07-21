@@ -30,6 +30,7 @@ So _**DON'T USE ANY MATERIALS DIRECTLY!**_ I won't response for any mistakes.
 
 - Add [u8g2](https://github.com/olikraus/u8g2) OLED library and add OLED demo code.
     > :x: OLED can not display normally, which needs further checking.
+    > :heavy_check_mark: Remove SPI1 DMA and the SPI OLED can display normally using u8g2.
 
 ### 2023-07-19
 
