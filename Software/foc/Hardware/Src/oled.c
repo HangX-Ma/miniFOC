@@ -8,7 +8,6 @@
 #include "stm32f1xx_ll_dma.h"
 #include "stm32f1xx_ll_utils.h"
 
-
 u8g2_t u8g2;
 
 static void oled_gpio_init(void) {
@@ -19,7 +18,7 @@ static void oled_gpio_init(void) {
     LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_GPIOA);
 
     /* OLED RST and DC pins */
-    LL_GPIO_ResetOutputPin(OLED_RST_DC_GPIO_PORT, OLED_RST_PIN | OLED_DC_PIN);
+    LL_GPIO_SetOutputPin(OLED_RST_DC_GPIO_PORT, OLED_RST_PIN | OLED_DC_PIN);
     GPIO_InitStruct.Pin = OLED_RST_PIN | OLED_DC_PIN;
     GPIO_InitStruct.Mode = LL_GPIO_MODE_OUTPUT;
     GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_HIGH;
@@ -67,45 +66,8 @@ static void oled_spi1_init() {
     LL_SPI_Enable(SPI1);
 }
 
-static void oled_spi_dma_tx_init() {
-    LL_DMA_InitTypeDef DMA_InitStruct;
-
-    /* DMA controller clock enable */
-    LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_DMA1);
-    /* DMA interrupt init */
-    NVIC_SetPriority(DMA1_Channel3_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(),0, 0));
-    NVIC_EnableIRQ(DMA1_Channel3_IRQn);
-
-    LL_DMA_DeInit(DMA1, OLED_SPI_DMAx_Tx_CHANNEL);
-    LL_DMA_DisableChannel(DMA1, OLED_SPI_DMAx_Tx_CHANNEL);
-    DMA_InitStruct.PeriphOrM2MSrcAddress  = LL_SPI_DMA_GetRegAddr(SPI1);
-    DMA_InitStruct.MemoryOrM2MDstAddress  = 0; // use oled_dma_tx_transfer to set this
-    DMA_InitStruct.PeriphOrM2MSrcDataSize = LL_DMA_PDATAALIGN_BYTE;
-    DMA_InitStruct.MemoryOrM2MDstDataSize = LL_DMA_MDATAALIGN_BYTE;
-    DMA_InitStruct.PeriphOrM2MSrcIncMode  = LL_DMA_PERIPH_NOINCREMENT;
-    DMA_InitStruct.MemoryOrM2MDstIncMode  = LL_DMA_MEMORY_INCREMENT;
-    DMA_InitStruct.Direction              = LL_DMA_DIRECTION_MEMORY_TO_PERIPH;
-    DMA_InitStruct.Priority               = LL_DMA_PRIORITY_LOW;
-    DMA_InitStruct.Mode                   = LL_DMA_MODE_NORMAL;
-    DMA_InitStruct.NbData                 = 0; // use oled_dma_tx_transfer to set this
-    LL_DMA_Init(DMA1, OLED_SPI_DMAx_Tx_CHANNEL, &DMA_InitStruct);
-    // Don't enable DMA Tx channel and buffer here
-}
-
-void oled_dma_tx_transfer(uint8_t *mem_addr, uint32_t mem_size) {
-    LL_SPI_DisableDMAReq_TX(SPI1);
-    LL_DMA_DisableChannel(DMA1, OLED_SPI_DMAx_Tx_CHANNEL);
-
-    LL_DMA_SetMemoryAddress(DMA1, OLED_SPI_DMAx_Tx_CHANNEL, (uint32_t)mem_addr);
-    LL_DMA_SetDataLength(DMA1, OLED_SPI_DMAx_Tx_CHANNEL, mem_size);
-
-    LL_DMA_EnableChannel(DMA1, OLED_SPI_DMAx_Tx_CHANNEL);
-    LL_SPI_EnableDMAReq_TX(SPI1);
-}
-
 /*官方提供的Logo绘制demo*/
-void draw(u8g2_t *u8g2)
-{
+void draw(u8g2_t *u8g2) {
     u8g2_SetFontMode(u8g2, 1); /*字体模式选择*/
     u8g2_SetFontDirection(u8g2, 0); /*字体方向选择*/
     u8g2_SetFont(u8g2, u8g2_font_inb24_mf); /*字库选择*/
@@ -138,11 +100,15 @@ uint8_t u8x8_byte_4wire_hw_spi(
 {
     switch (msg)
     {
-        case U8X8_MSG_BYTE_SEND: // Use SPI to send 'arg_int' bytes
-            oled_dma_tx_transfer((uint8_t *)arg_ptr, (uint32_t)arg_int);
-            // while(LL_DMA_GetDataLength(DMA1, OLED_SPI_DMAx_Tx_CHANNEL)) {}
-            break;
         case U8X8_MSG_BYTE_INIT: // init SPI and DMA
+            break;
+        case U8X8_MSG_BYTE_SEND: // Use SPI to send 'arg_int' bytes
+            for (int i = 0; i < arg_int; i++) {
+                LL_SPI_TransmitData8(SPI1, *((uint8_t *)arg_ptr + i));
+                while (LL_SPI_IsActiveFlag_TXE(SPI1) == RESET) {
+                    __NOP();
+                }
+            }
             break;
         case U8X8_MSG_BYTE_SET_DC: // Setup DC pin, which determines CMD or Data transferred through SPI
             if (arg_int) {
@@ -156,6 +122,9 @@ uint8_t u8x8_byte_4wire_hw_spi(
             u8x8->gpio_and_delay_cb(u8x8, U8X8_MSG_DELAY_NANO, u8x8->display_info->post_chip_enable_wait_ns, NULL);
             break;
         case U8X8_MSG_BYTE_END_TRANSFER:  // Software CS is needed. (deselect)
+            while (LL_SPI_IsActiveFlag_BSY(SPI1) == SET) {
+                __NOP();
+            }
             u8x8->gpio_and_delay_cb(u8x8, U8X8_MSG_DELAY_NANO, u8x8->display_info->pre_chip_disable_wait_ns, NULL);
             LL_GPIO_SetOutputPin(OLED_CS_SCK_MOSI_GPIO_PORT, OLED_CS_PIN);
             break;
@@ -173,10 +142,19 @@ uint8_t u8x8_stm32_gpio_and_delay(
 {
     switch (msg)
     {
+        case U8X8_MSG_GPIO_AND_DELAY_INIT: /*delay和GPIO的初始化，在main中已经初始化完成了*/
+            break;
         case U8X8_MSG_DELAY_MILLI: // delay function
             LL_mDelay(arg_int);
             break;
+        case U8X8_MSG_GPIO_DC:
+            break;
         case U8X8_MSG_GPIO_RESET: // gpio reset
+            if (arg_int) {
+                LL_GPIO_SetOutputPin(OLED_RST_DC_GPIO_PORT, OLED_RST_PIN);
+            } else {
+                LL_GPIO_ResetOutputPin(OLED_RST_DC_GPIO_PORT, OLED_RST_PIN);
+            }
             break;
     }
     return 1;
@@ -198,17 +176,14 @@ void u8g2_init(u8g2_t *u8g2) {
 
 void oled_init() {
     oled_gpio_init();
-    oled_spi_dma_tx_init();
     oled_spi1_init();
 
+    u8g2_t u8g2;
     u8g2_init(&u8g2);
-
+    u8g2_FirstPage(&u8g2);
     do
     {
-        LED_STATE_TOGGLE();
         draw(&u8g2);
-        LL_mDelay(100);
     }
-    while (1);
+    while (u8g2_NextPage(&u8g2));
 }
-

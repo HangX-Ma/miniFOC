@@ -3,6 +3,7 @@
         "*.s": "arm",
         "*.c": "c",
         "*.cfg": "tcl",
+        "*.json": "jsonc",
         "README": "plaintext",
         "*.spl": "makefile",
         "led.h": "c",
@@ -15,7 +16,9 @@
         "utils.h": "c",
         "stm32f103xb.h": "c",
         "stm32f1xx_ll_rcc.h": "c",
-        "u8g2.h": "c"
+        "u8g2.h": "c",
+        "stm32f1xx_ll_dma.h": "c",
+        "oled.h": "c"
     },
     "cmake.configureOnOpen": true,
 }

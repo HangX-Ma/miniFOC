@@ -100,7 +100,7 @@ void vofa_usart_init(void) {
 
     /**USART1 GPIO Configuration
     PB6   ------> USART1_TX
-    PB7   ------> USART1_R
+    PB7   ------> USART1_RX
     */
     GPIO_InitStruct.Pin        = USARTx_TX_PIN;
     GPIO_InitStruct.Mode       = LL_GPIO_MODE_ALTERNATE;

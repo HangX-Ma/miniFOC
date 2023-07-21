@@ -99,7 +99,7 @@ int main(void) {
         buf[0] = cnt1;
         buf[1] = cnt2;
         vofa_usart_dma_send_config(buf, 2);
-        LL_mDelay(100);
+        LL_mDelay(10);
         // A1;
         // B0;
         // C0;
