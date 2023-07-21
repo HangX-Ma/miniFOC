@@ -50,6 +50,7 @@ include_directories(
     Drivers/CMSIS/Device/ST/STM32F1xx/Include
     Drivers/CMSIS/Include
     Drivers/Qfplib-M3
+    Drivers/u8g2/Inc
 )
 
 add_definitions(

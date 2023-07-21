@@ -26,6 +26,11 @@ So _**DON'T USE ANY MATERIALS DIRECTLY!**_ I won't response for any mistakes.
 
 ## Development Logs
 
+### 2023-07-21
+
+- Add [u8g2](https://github.com/olikraus/u8g2) OLED library and add OLED demo code.
+    > :x: OLED can not display normally, which needs further checking.
+
 ### 2023-07-19
 
 - Add [Qfplib-M3](https://www.quinapalus.com/qfplib-m3.html) float-point library and it works well!

@@ -14,7 +14,8 @@
         "stm32f1xx_ll_usart.h": "c",
         "utils.h": "c",
         "stm32f103xb.h": "c",
-        "stm32f1xx_ll_rcc.h": "c"
+        "stm32f1xx_ll_rcc.h": "c",
+        "u8g2.h": "c"
     },
     "cmake.configureOnOpen": true,
 }

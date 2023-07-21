@@ -27,10 +27,14 @@
 
 #include "utils.h"
 
-#define OLED_GPIO_PORT              GPIOB
-#define OLED_CS_PIN                 LL_GPIO_PIN_4
+
+#define OLED_CS_SCK_MOSI_GPIO_PORT  GPIOA
+#define OLED_CS_PIN                 LL_GPIO_PIN_6
 #define OLED_SCK_PIN                LL_GPIO_PIN_5
 #define OLED_MOSI_PIN               LL_GPIO_PIN_7
+
+
+#define OLED_RST_DC_GPIO_PORT       GPIOB
 #define OLED_RST_PIN                LL_GPIO_PIN_0
 #define OLED_DC_PIN                 LL_GPIO_PIN_1
 
