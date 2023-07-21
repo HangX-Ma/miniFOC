@@ -17,6 +17,8 @@
  */
 /* USER CODE END Header */
 #include "main.h"
+#include "bldc_config.h"
+#include "bldc_test.h"
 #include "encoder.h"
 #include "led.h"
 #include "oled.h"
@@ -24,9 +26,6 @@
 #include "vofa_usart.h"
 
 void SystemClock_Config(void);
-
-
-// float buf[3];
 
 /**
  * @brief  The application entry point.
@@ -57,6 +56,7 @@ int main(void) {
     //* Initialize all configured peripherals start
 
     led_init();
+    bldc_init();
     vofa_usart_init();
     // oled_init();
     // encoder_init();
@@ -64,23 +64,29 @@ int main(void) {
     //* Initialize all configured peripherals end
 
     /* Infinite loop */
-    // float cnt1 = 0.0f;
-    // float cnt2 = 0.0f;
+#if USART_FLOAT_TEST
+    float buf[3];
+    float cnt1 = 0.0f;
+    float cnt2 = 0.0f;
+#endif
     while (1) {
+#if USART_FLOAT_TEST
         // ------------ USART test ----------------
-        // cnt1 = qfp_fadd(cnt1, 0.01);
-        // cnt2 = qfp_fadd(cnt2, 0.02);
-        // if (cnt1 > 20.0f) {
-        //     cnt1 = 0.0;
-        // }
-        // if (cnt2 > 40.0f) {
-        //     cnt2 = 0.0;
-        // }
-        // buf[0] = cnt1;
-        // buf[1] = cnt2;
-        // vofa_usart_dma_send_config(buf, 2);
-        // LL_mDelay(10);
+        cnt1 = qfp_fadd(cnt1, 0.01);
+        cnt2 = qfp_fadd(cnt2, 0.02);
+        if (cnt1 > 20.0f) {
+            cnt1 = 0.0;
+        }
+        if (cnt2 > 40.0f) {
+            cnt2 = 0.0;
+        }
+        buf[0] = cnt1;
+        buf[1] = cnt2;
+        vofa_usart_dma_send_config(buf, 2);
+        LL_mDelay(10);
+#endif
         // ------------ BLDC Motor test -----------------
+        bldc_test1_invariant_duty();
     }
 }
 

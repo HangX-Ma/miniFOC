@@ -85,6 +85,7 @@ void bldc_pwm_init(void) {
 }
 
 static void bldc_start_pwm_output(void) {
+    LL_GPIO_SetOutputPin(BLDC_DRV_EN_GPIO_PORT, BLDC_DRV_EN_PIN);
     LL_TIM_SetCounter(TIM1, 0);
     LL_TIM_CC_EnableChannel(TIM1, LL_TIM_CHANNEL_CH1);
     LL_TIM_CC_EnableChannel(TIM1, LL_TIM_CHANNEL_CH2);
@@ -94,6 +95,7 @@ static void bldc_start_pwm_output(void) {
 }
 
 static void bldc_stop_pwm_output(void) {
+    LL_GPIO_ResetOutputPin(BLDC_DRV_EN_GPIO_PORT, BLDC_DRV_EN_PIN);
     LL_TIM_DisableAllOutputs(TIM1);
     LL_TIM_DisableCounter(TIM1);
     LL_TIM_SetCounter(TIM1, 0);
@@ -105,6 +107,9 @@ static void bldc_stop_pwm_output(void) {
 void bldc_init(void) {
     bldc_drven_gpio_init();
     bldc_pwm_init();
+    // close PWM output at first to protect user
+    bldc_stop_pwm_output();
+
     g_bldc.start_pwm = bldc_start_pwm_output;
     g_bldc.stop_pwm = bldc_stop_pwm_output;
 }

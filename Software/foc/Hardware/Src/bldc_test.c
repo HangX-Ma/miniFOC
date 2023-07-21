@@ -15,7 +15,7 @@
 #define TEST1_PWMB_DUTY_FIXED           LL_TIM_OC_SetCompareCH2(TIM1, TEST1_PWMx_DUTY)
 #define TEST1_PWMC_DUTY_FIXED           LL_TIM_OC_SetCompareCH3(TIM1, TEST1_PWMx_DUTY)
 
-void bldc_test_invariant_duty(void) {
+void bldc_test1_invariant_duty(void) {
     // phrase1
     TEST1_PWMA_DUTY_FIXED;
     TEST1_PWMB_DUTY_ZERO;

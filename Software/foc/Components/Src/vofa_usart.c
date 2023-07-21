@@ -1,11 +1,13 @@
 #include "vofa_usart.h"
+
+#include "bldc_config.h"
+#include "led.h"
+
 #include "stm32f1xx_ll_bus.h"
 #include "stm32f1xx_ll_dma.h"
 #include "stm32f1xx_ll_gpio.h"
 #include "stm32f1xx_ll_rcc.h"
 #include "stm32f1xx_ll_usart.h"
-#include "utils.h"
-#include "led.h"
 
 SendFrame_t send_frame;
 RecvFrame_t recv_frame;
@@ -31,16 +33,16 @@ void usart_tx_dma_config(void) {
     LL_DMA_InitTypeDef USARTx_DMA_InitStruct_Tx = {0};
 
     /* USART1_TX DMA Init */
-    USARTx_DMA_InitStruct_Tx.PeriphOrM2MSrcAddress  = LL_USART_DMA_GetRegAddr(USARTx_INSTANCE);
-    USARTx_DMA_InitStruct_Tx.MemoryOrM2MDstAddress  = (uint32_t)send_frame.data_group;
-    USARTx_DMA_InitStruct_Tx.Direction              = LL_DMA_DIRECTION_MEMORY_TO_PERIPH;
-    USARTx_DMA_InitStruct_Tx.Mode                   = LL_DMA_MODE_NORMAL;
-    USARTx_DMA_InitStruct_Tx.PeriphOrM2MSrcIncMode  = LL_DMA_PERIPH_NOINCREMENT;
-    USARTx_DMA_InitStruct_Tx.MemoryOrM2MDstIncMode  = LL_DMA_MEMORY_INCREMENT;
+    USARTx_DMA_InitStruct_Tx.PeriphOrM2MSrcAddress = LL_USART_DMA_GetRegAddr(USARTx_INSTANCE);
+    USARTx_DMA_InitStruct_Tx.MemoryOrM2MDstAddress = (uint32_t)send_frame.data_group;
+    USARTx_DMA_InitStruct_Tx.Direction = LL_DMA_DIRECTION_MEMORY_TO_PERIPH;
+    USARTx_DMA_InitStruct_Tx.Mode = LL_DMA_MODE_NORMAL;
+    USARTx_DMA_InitStruct_Tx.PeriphOrM2MSrcIncMode = LL_DMA_PERIPH_NOINCREMENT;
+    USARTx_DMA_InitStruct_Tx.MemoryOrM2MDstIncMode = LL_DMA_MEMORY_INCREMENT;
     USARTx_DMA_InitStruct_Tx.PeriphOrM2MSrcDataSize = LL_DMA_PDATAALIGN_BYTE;
     USARTx_DMA_InitStruct_Tx.MemoryOrM2MDstDataSize = LL_DMA_MDATAALIGN_BYTE;
-    USARTx_DMA_InitStruct_Tx.NbData                 = 0;
-    USARTx_DMA_InitStruct_Tx.Priority               = LL_DMA_PRIORITY_MEDIUM;
+    USARTx_DMA_InitStruct_Tx.NbData = 0;
+    USARTx_DMA_InitStruct_Tx.Priority = LL_DMA_PRIORITY_MEDIUM;
     LL_DMA_Init(DMA1, USARTx_DMAx_Tx_CHANNEL, &USARTx_DMA_InitStruct_Tx);
     /* Enable DMA transfer complete interrupts Tx */
     LL_DMA_EnableIT_TC(DMA1, USARTx_DMAx_Tx_CHANNEL);
@@ -56,16 +58,16 @@ void usart_rx_dma_config(void) {
     LL_DMA_InitTypeDef USARTx_DMA_InitStruct_Rx = {0};
 
     /* USART1_RX DMA Init */
-    USARTx_DMA_InitStruct_Rx.PeriphOrM2MSrcAddress  = LL_USART_DMA_GetRegAddr(USARTx_INSTANCE);
-    USARTx_DMA_InitStruct_Rx.MemoryOrM2MDstAddress  = (uint32_t)recv_frame.data_group;
-    USARTx_DMA_InitStruct_Rx.Direction              = LL_DMA_DIRECTION_PERIPH_TO_MEMORY;
-    USARTx_DMA_InitStruct_Rx.Mode                   = LL_DMA_MODE_NORMAL;
-    USARTx_DMA_InitStruct_Rx.PeriphOrM2MSrcIncMode  = LL_DMA_PERIPH_NOINCREMENT;
-    USARTx_DMA_InitStruct_Rx.MemoryOrM2MDstIncMode  = LL_DMA_MEMORY_INCREMENT;
+    USARTx_DMA_InitStruct_Rx.PeriphOrM2MSrcAddress = LL_USART_DMA_GetRegAddr(USARTx_INSTANCE);
+    USARTx_DMA_InitStruct_Rx.MemoryOrM2MDstAddress = (uint32_t)recv_frame.data_group;
+    USARTx_DMA_InitStruct_Rx.Direction = LL_DMA_DIRECTION_PERIPH_TO_MEMORY;
+    USARTx_DMA_InitStruct_Rx.Mode = LL_DMA_MODE_NORMAL;
+    USARTx_DMA_InitStruct_Rx.PeriphOrM2MSrcIncMode = LL_DMA_PERIPH_NOINCREMENT;
+    USARTx_DMA_InitStruct_Rx.MemoryOrM2MDstIncMode = LL_DMA_MEMORY_INCREMENT;
     USARTx_DMA_InitStruct_Rx.PeriphOrM2MSrcDataSize = LL_DMA_PDATAALIGN_BYTE;
     USARTx_DMA_InitStruct_Rx.MemoryOrM2MDstDataSize = LL_DMA_MDATAALIGN_BYTE;
-    USARTx_DMA_InitStruct_Rx.NbData                 = 8;
-    USARTx_DMA_InitStruct_Rx.Priority               = LL_DMA_PRIORITY_MEDIUM;
+    USARTx_DMA_InitStruct_Rx.NbData = 8;
+    USARTx_DMA_InitStruct_Rx.Priority = LL_DMA_PRIORITY_MEDIUM;
     LL_DMA_Init(DMA1, USARTx_DMAx_Rx_CHANNEL, &USARTx_DMA_InitStruct_Rx);
     /* Enable DMA transfer complete interrupts Rx */
     LL_DMA_EnableIT_TC(DMA1, USARTx_DMAx_Rx_CHANNEL);
@@ -90,6 +92,18 @@ void usart_tx_dma_reload(uint32_t len) {
 }
 
 void vofa_usart_init(void) {
+    /* ------------------ USART1 DMA Init ------------------ */
+    /* DMA interrupt init */
+    NVIC_SetPriority(DMA1_Channel4_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(), 0, 0));
+    NVIC_EnableIRQ(DMA1_Channel4_IRQn);
+    NVIC_SetPriority(DMA1_Channel5_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(), 0, 0));
+    NVIC_EnableIRQ(DMA1_Channel5_IRQn);
+
+    /* DMA controller clock enable */
+    LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_DMA1);
+    usart_rx_dma_config();
+    usart_tx_dma_config();
+
     /* --------------- USART1 init ----------------- */
     LL_USART_InitTypeDef USART_InitStruct = {0};
     LL_GPIO_InitTypeDef GPIO_InitStruct = {0};
@@ -98,19 +112,23 @@ void vofa_usart_init(void) {
     LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_USART1);
     LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_GPIOB);
 
+    /* Configure NVIC for USARTx transfer interrupts */
+    NVIC_SetPriority(USART1_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(), 0, 1));
+    NVIC_EnableIRQ(USART1_IRQn);
+
     /**USART1 GPIO Configuration
     PB6   ------> USART1_TX
     PB7   ------> USART1_RX
     */
-    GPIO_InitStruct.Pin        = USARTx_TX_PIN;
-    GPIO_InitStruct.Mode       = LL_GPIO_MODE_ALTERNATE;
-    GPIO_InitStruct.Speed      = LL_GPIO_SPEED_FREQ_HIGH;
-    GPIO_InitStruct.Pull       = LL_GPIO_PULL_UP;
+    GPIO_InitStruct.Pin = USARTx_TX_PIN;
+    GPIO_InitStruct.Mode = LL_GPIO_MODE_ALTERNATE;
+    GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_HIGH;
+    GPIO_InitStruct.Pull = LL_GPIO_PULL_UP;
     GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
     LL_GPIO_Init(USARTx_TX_RX_GPIO_PORT, &GPIO_InitStruct);
 
-    GPIO_InitStruct.Pin        = USARTx_RX_PIN;
-    GPIO_InitStruct.Mode       = LL_GPIO_MODE_FLOATING;
+    GPIO_InitStruct.Pin = USARTx_RX_PIN;
+    GPIO_InitStruct.Mode = LL_GPIO_MODE_FLOATING;
     LL_GPIO_Init(USARTx_TX_RX_GPIO_PORT, &GPIO_InitStruct);
 
     LL_GPIO_AF_EnableRemap_USART1();
@@ -119,13 +137,13 @@ void vofa_usart_init(void) {
     NVIC_SetPriority(USART1_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(), 0, 0));
     NVIC_EnableIRQ(USART1_IRQn);
 
-    USART_InitStruct.BaudRate            = 115200;
-    USART_InitStruct.DataWidth           = LL_USART_DATAWIDTH_8B;
-    USART_InitStruct.StopBits            = LL_USART_STOPBITS_1;
-    USART_InitStruct.Parity              = LL_USART_PARITY_NONE;
-    USART_InitStruct.TransferDirection   = LL_USART_DIRECTION_TX_RX;
+    USART_InitStruct.BaudRate = 115200;
+    USART_InitStruct.DataWidth = LL_USART_DATAWIDTH_8B;
+    USART_InitStruct.StopBits = LL_USART_STOPBITS_1;
+    USART_InitStruct.Parity = LL_USART_PARITY_NONE;
+    USART_InitStruct.TransferDirection = LL_USART_DIRECTION_TX_RX;
     USART_InitStruct.HardwareFlowControl = LL_USART_HWCONTROL_NONE;
-    USART_InitStruct.OverSampling        = LL_USART_OVERSAMPLING_16;
+    USART_InitStruct.OverSampling = LL_USART_OVERSAMPLING_16;
     LL_USART_Init(USARTx_INSTANCE, &USART_InitStruct);
     LL_USART_ConfigAsyncMode(USARTx_INSTANCE);
     LL_USART_Enable(USARTx_INSTANCE);
@@ -134,22 +152,6 @@ void vofa_usart_init(void) {
     LL_USART_EnableDMAReq_RX(USARTx_INSTANCE);
     /* Enable DMA TX Interrupt */
     LL_USART_EnableDMAReq_TX(USARTx_INSTANCE);
-
-    /* Configure NVIC for USARTx transfer interrupts */
-    NVIC_SetPriority(USART1_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(), 0, 1));
-    NVIC_EnableIRQ(USART1_IRQn);
-
-    /* DMA interrupt init */
-    NVIC_SetPriority(DMA1_Channel4_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(), 0, 0));
-    NVIC_EnableIRQ(DMA1_Channel4_IRQn);
-    NVIC_SetPriority(DMA1_Channel5_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(), 0, 0));
-    NVIC_EnableIRQ(DMA1_Channel5_IRQn);
-
-    /* ------------------ USART1 DMA Init ------------------ */
-    /* DMA controller clock enable */
-    LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_DMA1);
-    usart_rx_dma_config();
-    usart_tx_dma_config();
 }
 
 /* Handle the DMA interrupt */
@@ -172,11 +174,13 @@ void USARTx_DMA_RX_IRQHandler(void) {
             Format_Typedef recv_data = recv_frame.data_group[1];
 
             switch (cmd) {
-            case 0x01:                                // control motor start/stop
-                if (recv_data.chars[0] == 1) {        // start
+            case 0x01:                         // control motor start/stop
+                if (recv_data.chars[0] == 1) { // start
                     LED_STATE_TOGGLE();
-                } else if (recv_data.chars[0] == 0) { // stop
-                    ;
+                    g_bldc.start_pwm();
+                } else if (recv_data.chars[0] == 2) { // stop
+                    LED_STATE_TOGGLE();
+                    g_bldc.stop_pwm();
                 }
                 break;
             case 0x02: // set velocity

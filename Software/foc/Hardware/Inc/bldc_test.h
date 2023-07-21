@@ -33,6 +33,6 @@
  *          so the BLDC motor can rotate without any control algorithm.
  * @warning Don't change the duty over 100 or too high. It's really dangerous.
  */
-void test1_bldc_invariant_duty(void);
+void bldc_test1_invariant_duty(void);
 
-#endif  //!__BLDC_TEST__H__
+#endif //!__BLDC_TEST__H__
