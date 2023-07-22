@@ -4,6 +4,8 @@ This repository records my development of miniFOC. I have an immature design and
 
 So _**DON'T USE ANY MATERIALS DIRECTLY!**_ I won't response for any mistakes.
 
+> I will try to use sensor-less control strategy.
+
 <div align="center">
     <img src="assets/miniFOC.svg" alt="miniFOC design(concept), HangX-Ma" width=600 />
     <br>
@@ -16,19 +18,23 @@ So _**DON'T USE ANY MATERIALS DIRECTLY!**_ I won't response for any mistakes.
     <font size="2" color="#999"><u>Current STM32CubeMX settings, HangX-Ma</u></font>
 </div>
 
+## Problem Found
+
+- SPI output pins sequence needs to be `CS`, `SCLK`, `MISO`, `MOSI`.
+- Magnetic attached to motor will affect the motor itself, my friend suggests me to use sensorless control strategy.
+
 ## TODO
 
 - [ ] Add Basic _SVPWM_ control algorithm.
-- [ ] Use SPI protocol to communicate with _**SC60228DC**_ encoder.
-    > :question: _**(Logic finished, not checked)**_
 - [ ] Design OLED display library. Prepare to take a reference to [WouoUI](https://github.com/RQNG/WouoUI).
-- [ ] Use UART to debug and control motor. [[Vofa+]](https://www.vofa.plus/downloads/?v=7/17/2023)
+- [x] Use UART to debug and control motor. [[Vofa+]](https://www.vofa.plus/downloads/?v=7/17/2023)
 
 ## Development Logs
 
 ### 2023-07-22
 
 - Direct given PWM can successfully drive BLDC motor. _[TEST1 passes]_
+- Fix transmission error of SPI2, which is linked to magnetic encoder. But I forget to buy the magnetic, so fully check hasn't been done.
 
 ### 2023-07-21
 
