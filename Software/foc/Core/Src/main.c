@@ -19,7 +19,6 @@
 #include "main.h"
 #include "bldc_config.h"
 #include "bldc_test.h"
-#include "encoder.h"
 #include "led.h"
 #include "oled.h"
 #include "qfplib-m3.h"
@@ -58,7 +57,6 @@ int main(void) {
     led_init();
     vofa_usart_init();
     bldc_init();
-    encoder_init();
     // oled_init();
 
     //* Initialize all configured peripherals end
@@ -87,8 +85,6 @@ int main(void) {
 #endif
         // ------------ BLDC Motor test -----------------
         // bldc_test1_invariant_duty();
-        // ------------ Encoder test -----------------
-        encoder_test();
     }
 }
 
