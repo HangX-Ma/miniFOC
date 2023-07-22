@@ -25,18 +25,21 @@ static data_check_t data_check = {
 
 static uint32_t vel_sample_timestamp = 0;
 static float raw_angle_data_prev = 0; // last raw angle value, MAX = ENCODER_RESOLUTION
-static float cumulative_angle_prev = 0; // last angle value(radian)
+static float angle_prev = 0; // last angle value(radian)
 static float rotation_turns_angles = 0; // how may turns the motor runs(radian)
 
 
-static uint16_t spi2_transmit_receive(void) {
+static uint16_t spi2_transmit_rw(uint16_t outdata) {
+    // wait until the SPI Tx buffer to be empty
+    while (LL_SPI_IsActiveFlag_TXE(SPI2) == RESET) {}
+    LL_SPI_TransmitData16(SPI2, outdata);
     // wait for 16 bits data receiving complete
     while (LL_SPI_IsActiveFlag_RXNE(SPI2) == RESET) {}
     return LL_SPI_ReceiveData16(SPI2);
 }
 
 static void select_chip(void) {
-    LL_GPIO_SetOutputPin(ENCODER_GPIO_PORT, ENCODER_CS_PIN);
+    LL_GPIO_ResetOutputPin(ENCODER_GPIO_PORT, ENCODER_CS_PIN);
     // min delay 250 ns
     delay_nus_72MHz(1);
 }
@@ -44,7 +47,7 @@ static void select_chip(void) {
 static void deselect_chip(void) {
     // min delay here: clock period / 2, our baud rate period is 222ns
     delay_nus_72MHz(1);
-    LL_GPIO_ResetOutputPin(ENCODER_GPIO_PORT, ENCODER_CS_PIN);
+    LL_GPIO_SetOutputPin(ENCODER_GPIO_PORT, ENCODER_CS_PIN);
     // min delay until next read: 250ns
     delay_nus_72MHz(1);
 }
@@ -76,7 +79,7 @@ static BOOL parity_check(uint16_t data)
 static uint16_t read_raw_angle(void) {
     SC60228Angle result;
     select_chip();
-    result.reg = spi2_transmit_receive();
+    result.reg = spi2_transmit_rw(0x0000);
     deselect_chip();
     data_check.error_check = (result.err == 1);
     data_check.parity_check = parity_check(result.angle);
@@ -85,21 +88,25 @@ static uint16_t read_raw_angle(void) {
 }
 
 static float get_angle(void) {
+    float raw_angle_data = read_raw_angle();
     if (is_valid()) {
-        float raw_angle_data = read_raw_angle();
         float d_raw_angle = raw_angle_data - raw_angle_data_prev;
+        // record the whole turns angles(according to d_raw_angle's direction)
         if(abs(d_raw_angle) > (0.8 * ENCODER_RESOLUTION)) {
             rotation_turns_angles = qfp_fadd(d_raw_angle > 0 ? -_2PI : _2PI, rotation_turns_angles);
         }
         raw_angle_data_prev = raw_angle_data;
         // return current angle(rad)
-        return qfp_fmul(qfp_fdiv(raw_angle_data, (float)ENCODER_RESOLUTION), _2PI);
+        return qfp_fadd(qfp_fmul(qfp_fdiv(raw_angle_data, (float)ENCODER_RESOLUTION), _2PI), rotation_turns_angles);
+    } else {
+        // Throw away the illegal data
+        return rotation_turns_angles;
     }
-    return raw_angle_data_prev;
+
 }
 
 static float get_velocity(void) {
-    float timestamp, cumulative_angle_curr, vel;
+    float timestamp, angle_curr, vel;
 
     uint32_t tick_now_us = SysTick->VAL; // 72 MHz clock rate -> SysTick (HCLK/8) is set to 9 MHz
     if (tick_now_us < vel_sample_timestamp) {
@@ -113,11 +120,15 @@ static float get_velocity(void) {
         timestamp = 1e-3;
     }
 
-    cumulative_angle_curr = rotation_turns_angles + get_angle();
-    vel = qfp_fdiv(cumulative_angle_curr - cumulative_angle_prev, timestamp);
+    // current angle
+    angle_curr = get_angle();
+    // angle change
+    float d_angle = qfp_fsub(angle_curr, angle_prev);
+    // velocity calculation
+    vel = qfp_fdiv(d_angle, timestamp);
 
     // prepare for next calculation
-    cumulative_angle_prev = cumulative_angle_curr;
+    angle_prev = angle_curr;
     vel_sample_timestamp = tick_now_us;
 
     return vel;
@@ -150,8 +161,9 @@ static void encoder_spi2_init(void) {
     /** SPI2 GPIO Configuration
         => PB13   ------> SPI2_SCK
         => PB14   ------> SPI2_MISO
+        => PB15   ------> SPI2_MOSI
     */
-    GPIO_InitStruct.Pin        = ENCODER_SPI_SCK_PIN;
+    GPIO_InitStruct.Pin        = ENCODER_SPI_SCK_PIN | ENCODER_SPI_MOSI_PIN;
     GPIO_InitStruct.Mode       = LL_GPIO_MODE_ALTERNATE;
     GPIO_InitStruct.Speed      = LL_GPIO_SPEED_FREQ_HIGH;
     GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
@@ -161,7 +173,7 @@ static void encoder_spi2_init(void) {
     GPIO_InitStruct.Mode       = LL_GPIO_MODE_FLOATING;
     LL_GPIO_Init(ENCODER_GPIO_PORT, &GPIO_InitStruct);
 
-    SPI_InitStruct.TransferDirection = LL_SPI_SIMPLEX_RX;
+    SPI_InitStruct.TransferDirection = LL_SPI_FULL_DUPLEX;
     SPI_InitStruct.Mode              = LL_SPI_MODE_MASTER;
     SPI_InitStruct.DataWidth         = LL_SPI_DATAWIDTH_16BIT;
     SPI_InitStruct.ClockPolarity     = LL_SPI_POLARITY_LOW;
@@ -186,9 +198,25 @@ void encoder_init(void) {
 
     deselect_chip();
     // init g_encoder
-    g_encoder.get_angle = get_angle;
+    g_encoder.get_angle    = get_angle;
     g_encoder.get_velocity = get_velocity;
-    g_encoder.is_error = is_error;
+    g_encoder.is_error     = is_error;
     // get the initial motor magnetic angle position
-    raw_angle_data_prev = (float)read_raw_angle();
+    raw_angle_data_prev    = (float)read_raw_angle();
+}
+
+
+#include "vofa_usart.h"
+static float encoder_test_buf[1];
+void encoder_test(void) {
+    encoder_test_buf[0] = g_encoder.get_angle();
+    if (g_encoder.is_error) {
+        encoder_test_buf[0] = -1.11;
+    }
+    // encoder_test_buf[1] = g_encoder.get_velocity();
+    // if (g_encoder.is_error) {
+    //     encoder_test_buf[1] = -2.22;
+    // }
+    vofa_usart_dma_send_config(encoder_test_buf, 1);
+    LL_mDelay(10);
 }

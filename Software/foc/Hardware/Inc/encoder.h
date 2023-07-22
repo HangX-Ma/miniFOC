@@ -31,6 +31,7 @@
 #define ENCODER_CS_PIN              LL_GPIO_PIN_12
 #define ENCODER_SPI_SCK_PIN         LL_GPIO_PIN_13
 #define ENCODER_SPI_MISO_PIN        LL_GPIO_PIN_14
+#define ENCODER_SPI_MOSI_PIN        LL_GPIO_PIN_15
 #define ENCODER_RESOLUTION          4096
 #define ENCODER_DATA_LENGTH         12
 
@@ -53,5 +54,8 @@ typedef struct Encoder {
 extern Encoder g_encoder;
 
 void encoder_init(void);
+
+// You need to ensure the 'encoder_init' has been called.
+void encoder_test(void);
 
 #endif  //!__ENCODER__H__

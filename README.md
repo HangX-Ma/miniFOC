@@ -26,11 +26,17 @@ So _**DON'T USE ANY MATERIALS DIRECTLY!**_ I won't response for any mistakes.
 
 ## Development Logs
 
+### 2023-07-22
+
+- Direct given PWM can successfully drive BLDC motor. _[TEST1 passes]_
+
 ### 2023-07-21
 
 - Add [u8g2](https://github.com/olikraus/u8g2) OLED library and add OLED demo code.
-    > :x: OLED can not display normally, which needs further checking.
-    > :heavy_check_mark: Remove SPI1 DMA and the SPI OLED can display normally using u8g2.
+    >
+    > - :x: OLED can not display normally, which needs further checking.
+    > - :heavy_check_mark: Remove SPI1 DMA and the SPI OLED can display normally using u8g2.
+
 - Reconstruct PWMx configurations and merges it into BLDC configurations.
 - Add BLDC motor tests for checking different BLDC motor working conditions.
 - Add USART control to start or stop BLDC motor.
@@ -41,9 +47,9 @@ So _**DON'T USE ANY MATERIALS DIRECTLY!**_ I won't response for any mistakes.
 - Add [Qfplib-M3](https://www.quinapalus.com/qfplib-m3.html) float-point library and it works well!
     > I use cortex-debug plugin and it shows that Qfplib-M3 is visibly faster than software float-point calculation.
 - Add Vofa+ communication protocol and configure USART1.
-    > :question: Cough... It seems that my CH340 serial communication device breaks down. Need further checking.
     >
-    > :heavy_check_mark: I use logic analyzer to capture output of _**PB6(Tx)**_ and it actually gives me different waveforms, which means that the CH340 is actually broken.
+    > - :question: Cough... It seems that my CH340 serial communication device breaks down. Need further checking.
+    > - :heavy_check_mark: I use logic analyzer to capture output of _**PB6(Tx)**_ and it actually gives me different waveforms, which means that the CH340 is actually broken.
 
 ### 2023-07-18
 

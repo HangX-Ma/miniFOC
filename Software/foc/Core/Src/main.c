@@ -56,10 +56,10 @@ int main(void) {
     //* Initialize all configured peripherals start
 
     led_init();
-    bldc_init();
     vofa_usart_init();
+    bldc_init();
+    encoder_init();
     // oled_init();
-    // encoder_init();
 
     //* Initialize all configured peripherals end
 
@@ -86,7 +86,9 @@ int main(void) {
         LL_mDelay(10);
 #endif
         // ------------ BLDC Motor test -----------------
-        bldc_test1_invariant_duty();
+        // bldc_test1_invariant_duty();
+        // ------------ Encoder test -----------------
+        encoder_test();
     }
 }
 

@@ -27,8 +27,8 @@
 
 #include "utils.h"
 
-#define BLDC_DRV_EN_GPIO_PORT       GPIOB
-#define BLDC_DRV_EN_PIN             LL_GPIO_PIN_15
+#define BLDC_DRV_EN_GPIO_PORT       GPIOA
+#define BLDC_DRV_EN_PIN             LL_GPIO_PIN_11
 
 #define BLDC_PWMx_GPIO_PORT         GPIOA
 #define BLDC_PWMA_PIN               LL_GPIO_PIN_8

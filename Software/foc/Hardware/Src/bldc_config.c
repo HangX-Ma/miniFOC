@@ -1,4 +1,5 @@
 #include "bldc_config.h"
+#include "delay.h"
 
 #include "stm32f1xx_ll_bus.h"
 #include "stm32f1xx_ll_gpio.h"
@@ -85,7 +86,10 @@ void bldc_pwm_init(void) {
 }
 
 static void bldc_start_pwm_output(void) {
+    // Enable DRV8313
     LL_GPIO_SetOutputPin(BLDC_DRV_EN_GPIO_PORT, BLDC_DRV_EN_PIN);
+    delay_nus_72MHz(1);
+
     LL_TIM_SetCounter(TIM1, 0);
     LL_TIM_CC_EnableChannel(TIM1, LL_TIM_CHANNEL_CH1);
     LL_TIM_CC_EnableChannel(TIM1, LL_TIM_CHANNEL_CH2);
@@ -95,7 +99,10 @@ static void bldc_start_pwm_output(void) {
 }
 
 static void bldc_stop_pwm_output(void) {
+    // Disable DRV8313
     LL_GPIO_ResetOutputPin(BLDC_DRV_EN_GPIO_PORT, BLDC_DRV_EN_PIN);
+    delay_nus_72MHz(1);
+
     LL_TIM_DisableAllOutputs(TIM1);
     LL_TIM_DisableCounter(TIM1);
     LL_TIM_SetCounter(TIM1, 0);
