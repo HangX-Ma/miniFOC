@@ -6,8 +6,10 @@
             "type": "shell",
             "command": "cmake",
             "args": [
-                "-S .",
-                "-B build",
+                "-S",
+                ".",
+                "-B",
+                "build",
                 "-DCMAKE_BUILD_TYPE=Debug"
             ],
             "detail": "CMake configure task [CMAKE_BUILD_TYPE=Debug]",

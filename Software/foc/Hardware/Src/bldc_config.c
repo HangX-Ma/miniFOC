@@ -1,4 +1,5 @@
 #include "bldc_config.h"
+#include "config.h"
 #include "delay.h"
 
 #include "stm32f1xx_ll_bus.h"
@@ -11,7 +12,7 @@ BLDC g_bldc;
 void bldc_drven_gpio_init(void) {
     LL_GPIO_InitTypeDef GPIO_InitStruct;
 
-    LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_GPIOB);
+    LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_GPIOA);
     LL_GPIO_ResetOutputPin(BLDC_DRV_EN_GPIO_PORT, BLDC_DRV_EN_PIN);
 
     GPIO_InitStruct.Pin        = BLDC_DRV_EN_PIN;
@@ -31,13 +32,13 @@ void bldc_pwm_init(void) {
     /* Peripheral clock enable */
     LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_TIM1);
 
-    TIM_InitStruct.Prescaler         = 36 - 1;
-    TIM_InitStruct.CounterMode       = LL_TIM_COUNTERMODE_UP;
-    TIM_InitStruct.Autoreload        = 100 - 1;
+    TIM_InitStruct.Prescaler         = 0;
+    TIM_InitStruct.CounterMode       = LL_TIM_COUNTERMODE_CENTER_UP;
+    TIM_InitStruct.Autoreload        = PWM_RELOAD_PERIOD - 1;
     TIM_InitStruct.ClockDivision     = LL_TIM_CLOCKDIVISION_DIV1;
     TIM_InitStruct.RepetitionCounter = 0;
     LL_TIM_Init(TIM1, &TIM_InitStruct);
-    LL_TIM_EnableARRPreload(TIM1);
+    LL_TIM_DisableARRPreload(TIM1);
     LL_TIM_SetClockSource(TIM1, LL_TIM_CLOCKSOURCE_INTERNAL);
     LL_TIM_OC_EnablePreload(TIM1, LL_TIM_CHANNEL_CH1);
 
@@ -60,8 +61,8 @@ void bldc_pwm_init(void) {
 
     LL_TIM_OC_Init(TIM1, LL_TIM_CHANNEL_CH3, &TIM_OC_InitStruct);
     LL_TIM_OC_DisableFast(TIM1, LL_TIM_CHANNEL_CH3);
-    LL_TIM_SetTriggerOutput(TIM1, LL_TIM_TRGO_RESET);
 
+    LL_TIM_SetTriggerOutput(TIM1, LL_TIM_TRGO_RESET);
     LL_TIM_DisableMasterSlaveMode(TIM1);
     TIM_BDTRInitStruct.OSSRState       = LL_TIM_OSSR_DISABLE;
     TIM_BDTRInitStruct.OSSIState       = LL_TIM_OSSI_DISABLE;
@@ -78,11 +79,23 @@ void bldc_pwm_init(void) {
     PA9     ------> TIM1_CH2
     PA10    ------> TIM1_CH3
     */
-    GPIO_InitStruct.Pin = BLDC_PWMA_PIN | BLDC_PWMB_PIN | BLDC_PWMC_PIN;
-    GPIO_InitStruct.Mode = LL_GPIO_MODE_ALTERNATE;
-    GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_LOW;
+    GPIO_InitStruct.Pin        = BLDC_PWMA_PIN | BLDC_PWMB_PIN | BLDC_PWMC_PIN;
+    GPIO_InitStruct.Mode       = LL_GPIO_MODE_ALTERNATE;
+    GPIO_InitStruct.Speed      = LL_GPIO_SPEED_FREQ_LOW;
     GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
     LL_GPIO_Init(BLDC_PWMx_GPIO_PORT, &GPIO_InitStruct);
+}
+
+static void bldc_set_pwm_a_duty(uint32_t duty) {
+    LL_TIM_OC_SetCompareCH1(TIM1, duty);
+}
+
+static void bldc_set_pwm_b_duty(uint32_t duty) {
+    LL_TIM_OC_SetCompareCH2(TIM1, duty);
+}
+
+static void bldc_set_pwm_c_duty(uint32_t duty) {
+    LL_TIM_OC_SetCompareCH3(TIM1, duty);
 }
 
 static void bldc_start_pwm_output(void) {
@@ -117,6 +130,9 @@ void bldc_init(void) {
     // close PWM output at first to protect user
     bldc_stop_pwm_output();
 
-    g_bldc.start_pwm = bldc_start_pwm_output;
-    g_bldc.stop_pwm = bldc_stop_pwm_output;
+    g_bldc.set_pwm_a_duty = bldc_set_pwm_a_duty;
+    g_bldc.set_pwm_b_duty = bldc_set_pwm_c_duty;
+    g_bldc.set_pwm_c_duty = bldc_set_pwm_b_duty;
+    g_bldc.start_pwm      = bldc_start_pwm_output;
+    g_bldc.stop_pwm       = bldc_stop_pwm_output;
 }

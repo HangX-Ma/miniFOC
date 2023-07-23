@@ -4,7 +4,7 @@ This repository records my development of miniFOC. I have an immature design and
 
 So _**DON'T USE ANY MATERIALS DIRECTLY!**_ I won't response for any mistakes.
 
-> I will try to use sensor-less control strategy.
+> I will try to use sensor-less control strategy if the fundamental functions all perform well.
 
 <div align="center">
     <img src="assets/miniFOC.svg" alt="miniFOC design(concept), HangX-Ma" width=600 />
@@ -30,6 +30,11 @@ So _**DON'T USE ANY MATERIALS DIRECTLY!**_ I won't response for any mistakes.
 - [x] Use UART to debug and control motor. [[Vofa+]](https://www.vofa.plus/downloads/?v=7/17/2023)
 
 ## Development Logs
+
+### 2023-07-23
+
+- Add SVPWM control module and change PWM to center aligned mode.
+- SVPWM control test passes.
 
 ### 2023-07-22
 

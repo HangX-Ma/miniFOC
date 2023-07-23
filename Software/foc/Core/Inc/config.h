@@ -43,4 +43,12 @@
  * @brief Target motor rotation velocity, controlled by host using USART.
  */
 
+
+/* ----------------  FOC Configurations ---------------- */
+#define MOTOR_VM                        11.1f
+// PWM frequency 20 KHz, but we use center aligned mode, so 72MHz/1800 = 40 KHz
+// can satisfy our need.
+#define PWM_RELOAD_PERIOD               1800
+
+
 #endif //!__CONFIG__H__

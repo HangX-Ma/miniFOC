@@ -49,8 +49,8 @@ add_compile_options(
     -fdata-sections
     -fno-common # Do not put uninitialized global variables into the common segment
     # -nostartfiles
-    # -nodefaultlibs
-    # -nostdlib
+    -nodefaultlibs
+    -nostdlib
     -fmessage-length=0 # The output information wraps automatically according to the width of the console
 )
 
@@ -64,7 +64,10 @@ add_link_options(
     # $<$<CONFIG:DEBUG>:--specs=rdimon.specs> # debug runtime
     $<$<CONFIG:DEBUG>:--specs=nano.specs>
     $<$<CONFIG:DEBUG>:--specs=nosys.specs>
+    # undefined reference to `__errno‘ 解决办法: <https://blog.csdn.net/u013866683/article/details/110408463>
+    $<$<CONFIG:DEBUG>:--specs=rdimon.specs>
     $<$<CONFIG:RELEASE>:--specs=nosys.specs> # bare metal release
+    $<$<CONFIG:RELEASE>:--specs=rdimon.specs>
 #    $<$<CONFIG:DEBUG>:-u_printf_float # enable printf function output float
 #    $<$<CONFIG:DEBUG>:-u_scanf_float  # enable scanf function output float
     # LINKER: To pass options to the linker tool.

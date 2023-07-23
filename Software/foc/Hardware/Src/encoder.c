@@ -7,8 +7,6 @@
 #include "stm32f1xx_ll_gpio.h"
 #include "stm32f1xx_ll_bus.h"
 
-#define abs(x) ((x) > 0 ? (x) : (-(x)))
-#define _2PI 6.28318530718
 
 Encoder g_encoder;
 

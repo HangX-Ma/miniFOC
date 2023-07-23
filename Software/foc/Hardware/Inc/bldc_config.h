@@ -36,6 +36,9 @@
 #define BLDC_PWMC_PIN               LL_GPIO_PIN_10
 
 typedef struct BLDC {
+    void (*set_pwm_a_duty)(uint32_t);
+    void (*set_pwm_b_duty)(uint32_t);
+    void (*set_pwm_c_duty)(uint32_t);
     void (*start_pwm)(void);
     void (*stop_pwm)(void);
 } BLDC;

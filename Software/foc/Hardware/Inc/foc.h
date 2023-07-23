@@ -1,9 +1,9 @@
 /**
- * @file bldc_config.h
+ * @file foc.h
  * @author HangX-Ma (contour.9x@gmail.com)
- * @brief BLDC test functions, used to confirm BLDC performing conditions
+ * @brief FOC core
  * @version 0.1
- * @date 2023-07-21
+ * @date 2023-07-22
  * @ref https://github.com/simplefoc/Arduino-FOC-drivers/tree/master/src/encoders/sc60228
  * @ref https://blog.csdn.net/weixin_43593122/article/details/119253544
  *
@@ -22,25 +22,12 @@
  * limitations under the License.
  */
 
-#ifndef __BLDC_TEST__H__
-#define __BLDC_TEST__H__
 
-/* ----------------- TEST CODE BELOW ----------------- */
+#ifndef __FOC__H__
+#define __FOC__H__
 
-/**
- * @brief simplest rotation test
- * @details We give three phrases with sequential PWM output in a specific duty,
- *          so the BLDC motor can rotate without any control algorithm.
- * @warning Don't change the duty over 100 or too high. It's really dangerous.
- */
-void bldc_test1_invariant_duty(void);
+#include "utils.h"
 
-/**
- * @brief svpwm test
- * @details Simple SVPWM test. Set Uq = Constant, Ud = 0 and increase electrical
- *          angle continuously.
- * @warning Uq needs to be less than 2.0, otherwise the motor will be damaged.
- */
-void bldc_test2_svpwm(void);
+void setPhaseVoltage(float Uq, float Ud, float electric_angle);
 
-#endif //!__BLDC_TEST__H__
+#endif  //!__FOC__H__

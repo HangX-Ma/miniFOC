@@ -18,7 +18,8 @@
         "stm32f1xx_ll_rcc.h": "c",
         "u8g2.h": "c",
         "stm32f1xx_ll_dma.h": "c",
-        "oled.h": "c"
+        "oled.h": "c",
+        "math.h": "c"
     },
     "cmake.configureOnOpen": true,
 }

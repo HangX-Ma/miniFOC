@@ -23,6 +23,7 @@
 #include "oled.h"
 #include "qfplib-m3.h"
 #include "vofa_usart.h"
+#include "foc.h"
 
 void SystemClock_Config(void);
 
@@ -84,7 +85,8 @@ int main(void) {
         LL_mDelay(10);
 #endif
         // ------------ BLDC Motor test -----------------
-        // bldc_test1_invariant_duty();
+        bldc_test1_invariant_duty();
+        // bldc_test2_svpwm();
     }
 }
 
