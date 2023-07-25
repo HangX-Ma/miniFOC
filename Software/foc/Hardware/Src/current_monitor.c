@@ -1,0 +1,173 @@
+#include "current_monitor.h"
+
+#include "stm32f1xx_ll_adc.h"
+#include "stm32f1xx_ll_bus.h"
+#include "stm32f1xx_ll_dma.h"
+#include "stm32f1xx_ll_gpio.h"
+#include "stm32f1xx_ll_tim.h"
+#include "stm32f1xx_ll_utils.h"
+
+#include "delay.h"
+#include "qfplib-m3.h"
+#include "vofa_usart.h"
+
+// ref: STM32F0使用LL库实现DMA方式AD采集 <https://blog.51cto.com/u_520887/5290076>
+// ref: STM32L476多通道TIM+DMA+ADC采样（LL库） <https://codeantenna.com/a/1MnFm9oX2G>
+// ref: STM32 定时器触发 ADC 多通道采集，DMA搬运至内存 <https://blog.51cto.com/u_15456236/4801335>
+
+RotorStatorCurrent g_RS_current;
+
+static CurrentMonitorADC current_monitor_adc;
+static PhaseCurrent phase_current;
+
+// TIM2 is used to determine the current sampling frequency.
+// The ADC will use TIM2 channel 2 as the external trigger signal.
+// Only the rising edge will lead to ADC conversion.
+void current_monitor_tim2_init(void) {
+    LL_TIM_InitTypeDef TIM_InitStruct = {0};
+    LL_TIM_OC_InitTypeDef TIM_OC_InitStruct = {0};
+
+    /* Peripheral clock enable */
+    LL_APB1_GRP1_EnableClock(LL_APB1_GRP1_PERIPH_TIM2);
+
+    // ADC sampling frequency: 72 MHz / 72000 = 1 KHz
+    TIM_InitStruct.Prescaler       = 36 - 1;
+    TIM_InitStruct.CounterMode     = LL_TIM_COUNTERMODE_UP;
+    TIM_InitStruct.Autoreload      = 2000 - 1;
+    TIM_InitStruct.ClockDivision   = LL_TIM_CLOCKDIVISION_DIV1;
+    LL_TIM_Init(TIM2, &TIM_InitStruct);
+
+    LL_TIM_EnableARRPreload(TIM2);
+    LL_TIM_SetClockSource(TIM2, LL_TIM_CLOCKSOURCE_INTERNAL);
+
+    // PWM mode 1 with polarity low means before the reach of ARR,
+    // the PWM will output effectively LOW.
+    LL_TIM_OC_EnablePreload(TIM2, LL_TIM_CHANNEL_CH2);
+    TIM_OC_InitStruct.OCMode       = LL_TIM_OCMODE_PWM1;
+    TIM_OC_InitStruct.OCState      = LL_TIM_OCSTATE_DISABLE;
+    TIM_OC_InitStruct.OCNState     = LL_TIM_OCSTATE_DISABLE;
+    TIM_OC_InitStruct.CompareValue = 0;
+    TIM_OC_InitStruct.OCPolarity   = LL_TIM_OCPOLARITY_LOW;
+    LL_TIM_OC_Init(TIM2, LL_TIM_CHANNEL_CH2, &TIM_OC_InitStruct);
+    LL_TIM_OC_DisableFast(TIM2, LL_TIM_CHANNEL_CH2);
+    LL_TIM_SetTriggerOutput(TIM2, LL_TIM_TRGO_RESET);
+    LL_TIM_DisableMasterSlaveMode(TIM2);
+
+    // We don't enable TIM2 until we have set DMA and ADC
+    LL_TIM_DisableCounter(TIM2);
+    LL_TIM_DisableAllOutputs(TIM2);
+}
+
+void current_monitor_adc_dma_init(void) {
+    /* DMA controller clock enable */
+    LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_DMA1);
+
+    /* DMA interrupt init */
+    NVIC_SetPriority(DMA1_Channel1_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(), 0, 0));
+    NVIC_EnableIRQ(DMA1_Channel1_IRQn);
+
+    LL_DMA_InitTypeDef ADCx_DMA_InitStruct = {0};
+
+    LL_DMA_DeInit(DMA1, CURRENT_MONITOR_ADCx_DMAx_CHANNEL);
+    ADCx_DMA_InitStruct.PeriphOrM2MSrcAddress  = LL_ADC_DMA_GetRegAddr(ADC1, LL_ADC_DMA_REG_REGULAR_DATA);
+    ADCx_DMA_InitStruct.MemoryOrM2MDstAddress  = (uint32_t)current_monitor_adc.chx;
+    ADCx_DMA_InitStruct.Direction              = LL_DMA_DIRECTION_PERIPH_TO_MEMORY;
+    ADCx_DMA_InitStruct.Mode                   = LL_DMA_MODE_CIRCULAR;
+    ADCx_DMA_InitStruct.PeriphOrM2MSrcIncMode  = LL_DMA_PERIPH_NOINCREMENT;
+    ADCx_DMA_InitStruct.MemoryOrM2MDstIncMode  = LL_DMA_MEMORY_INCREMENT;
+    ADCx_DMA_InitStruct.PeriphOrM2MSrcDataSize = LL_DMA_PDATAALIGN_HALFWORD;
+    ADCx_DMA_InitStruct.MemoryOrM2MDstDataSize = LL_DMA_MDATAALIGN_HALFWORD;
+    ADCx_DMA_InitStruct.NbData                 = 32; // 2 channels, 2 half word, 32 bytes
+    ADCx_DMA_InitStruct.Priority               = LL_DMA_PRIORITY_MEDIUM;
+    LL_DMA_Init(DMA1, CURRENT_MONITOR_ADCx_DMAx_CHANNEL, &ADCx_DMA_InitStruct);
+
+    //* start DMA
+    LL_DMA_EnableChannel(DMA1, CURRENT_MONITOR_ADCx_DMAx_CHANNEL);
+}
+
+void current_monitor_adc_init(void) {
+    LL_ADC_InitTypeDef ADC_InitStruct = {0};
+    LL_ADC_CommonInitTypeDef ADC_CommonInitStruct = {0};
+    LL_ADC_REG_InitTypeDef ADC_REG_InitStruct = {0};
+    LL_GPIO_InitTypeDef GPIO_InitStruct = {0};
+
+    /* Peripheral clock enable */
+    LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_ADC1);
+    LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_GPIOA);
+
+    // avoid abnormal phenomenon
+    LL_ADC_Disable(ADC1);
+
+    /**ADC1 GPIO Configuration
+        PA0-WKUP    ------> ADC1_IN0
+        PA1         ------> ADC1_IN1
+    */
+    GPIO_InitStruct.Pin = CURRENT_MONITOR_ADCx_IN0_PIN | CURRENT_MONITOR_ADCx_IN1_PIN;
+    GPIO_InitStruct.Mode = LL_GPIO_MODE_ANALOG;
+    LL_GPIO_Init(CURRENT_MONITOR_ADC_GPIO_PORT, &GPIO_InitStruct);
+
+    ADC_InitStruct.DataAlignment        = LL_ADC_DATA_ALIGN_RIGHT;
+    ADC_InitStruct.SequencersScanMode   = LL_ADC_SEQ_SCAN_ENABLE;
+    LL_ADC_Init(ADC1, &ADC_InitStruct);
+
+    ADC_CommonInitStruct.Multimode      = LL_ADC_MULTI_INDEPENDENT;
+    LL_ADC_CommonInit(__LL_ADC_COMMON_INSTANCE(ADC1), &ADC_CommonInitStruct);
+
+    ADC_REG_InitStruct.TriggerSource    = LL_ADC_REG_TRIG_EXT_TIM2_CH2;
+    ADC_REG_InitStruct.SequencerLength  = LL_ADC_REG_SEQ_SCAN_ENABLE_2RANKS;
+    ADC_REG_InitStruct.SequencerDiscont = LL_ADC_REG_SEQ_DISCONT_DISABLE;
+    // otherwise, TIM2 cannot trigger ADC conversion after the first time trigger
+    ADC_REG_InitStruct.ContinuousMode   = LL_ADC_REG_CONV_SINGLE;
+    ADC_REG_InitStruct.DMATransfer      = LL_ADC_REG_DMA_TRANSFER_UNLIMITED;
+    LL_ADC_REG_Init(ADC1, &ADC_REG_InitStruct);
+    // rising edge trigger
+    LL_ADC_REG_StartConversionExtTrig(ADC1, LL_ADC_REG_TRIG_EXT_RISING);
+
+    /** Configure Regular Channel
+     */
+    LL_ADC_REG_SetSequencerRanks(ADC1, LL_ADC_REG_RANK_1, LL_ADC_CHANNEL_0);
+    LL_ADC_SetChannelSamplingTime(ADC1, LL_ADC_CHANNEL_0, LL_ADC_SAMPLINGTIME_55CYCLES_5);
+
+    LL_ADC_REG_SetSequencerRanks(ADC1, LL_ADC_REG_RANK_1, LL_ADC_CHANNEL_1);
+    LL_ADC_SetChannelSamplingTime(ADC1, LL_ADC_CHANNEL_1, LL_ADC_SAMPLINGTIME_55CYCLES_5);
+}
+
+void current_mointor_init(void) {
+    current_monitor_tim2_init();
+    current_monitor_adc_dma_init();
+    current_monitor_adc_init();
+
+    //* start ADC1
+    LL_ADC_Enable(ADC1);
+    // wait until internal voltage reference stable
+    delay_nus_72MHz(LL_ADC_DELAY_TEMPSENSOR_STAB_US);
+
+    // wait at least 2 ADC cycles after ADC power-on but before calibration
+    LL_mDelay(10);
+    // wait until ADC calibration done
+    LL_ADC_StartCalibration(ADC1);
+    while (LL_ADC_IsCalibrationOnGoing(ADC1) != RESET) {}
+
+    //* start TIM2
+    LL_TIM_CC_EnableChannel(TIM2, LL_TIM_CHANNEL_CH2);
+    LL_TIM_EnableCounter(TIM2);
+    LL_TIM_EnableAllOutputs(TIM2);
+
+    LL_mDelay(1);
+}
+
+static float adc_val1, adc_val2;
+static float vofa_buf[2];
+void current_monitor_test(void) {
+    adc_val1 = qfp_fdiv(qfp_fmul((float)current_monitor_adc.chx[0], ADCx_VOLTAGE_REFERENCE), (float)ADCx_RESOLUTION);
+    adc_val2 = qfp_fdiv(qfp_fmul((float)current_monitor_adc.chx[1], ADCx_VOLTAGE_REFERENCE), (float)ADCx_RESOLUTION);
+
+    phase_current.Ia = qfp_fdiv(qfp_fdiv((adc_val1 - ADCx_VOLTAGE_BIAS), CURRENT_SENSE_REGISTER), INA199x1_GAIN);
+    phase_current.Ib = qfp_fdiv(qfp_fdiv((adc_val2 - ADCx_VOLTAGE_BIAS), CURRENT_SENSE_REGISTER), INA199x1_GAIN);
+
+    vofa_buf[0] = adc_val1;
+    vofa_buf[1] = adc_val2;
+    vofa_usart_dma_send_config(vofa_buf, 2);
+
+    LL_mDelay(2);
+}

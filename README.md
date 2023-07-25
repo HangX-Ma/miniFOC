@@ -25,20 +25,25 @@ So _**DON'T USE ANY MATERIALS DIRECTLY!**_ I won't response for any mistakes.
 
 ## TODO
 
-- [ ] Add Basic _SVPWM_ control algorithm.
+- [x] Add Basic _SVPWM_ control algorithm.
 - [ ] Design OLED display library. Prepare to take a reference to [WouoUI](https://github.com/RQNG/WouoUI).
 - [x] Use UART to debug and control motor. [[Vofa+]](https://www.vofa.plus/downloads/?v=7/17/2023)
 
 ## Development Logs
 
+### 2023-07-24
+
+- SC60228DC magnetic encoder works well. I brought _5 mm x 2 mm (d x h)_ magnetic but can not stick it to the motor bearing using hot-melt adhesive. I will use AB glue instead.
+    > Waiting for essential materials again~
+
 ### 2023-07-23
 
 - Add SVPWM control module and change PWM to center aligned mode.
-- SVPWM control test passes.
+- <span style="color: #98C379; font-weight: bold;">[Pass TEST2]:</span> SVPWM control test passes.
 
 ### 2023-07-22
 
-- Direct given PWM can successfully drive BLDC motor. _[TEST1 passes]_
+- <span style="color: #98C379; font-weight: bold;">[Pass TEST1]:</span> Direct given PWM can successfully drive BLDC motor.
 - Fix transmission error of SPI2, which is linked to magnetic encoder. But I forget to buy the magnetic, so fully check hasn't been done.
 
 ### 2023-07-21

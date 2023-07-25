@@ -33,16 +33,16 @@ void usart_tx_dma_config(void) {
     LL_DMA_InitTypeDef USARTx_DMA_InitStruct_Tx = {0};
 
     /* USART1_TX DMA Init */
-    USARTx_DMA_InitStruct_Tx.PeriphOrM2MSrcAddress = LL_USART_DMA_GetRegAddr(USARTx_INSTANCE);
-    USARTx_DMA_InitStruct_Tx.MemoryOrM2MDstAddress = (uint32_t)send_frame.data_group;
-    USARTx_DMA_InitStruct_Tx.Direction = LL_DMA_DIRECTION_MEMORY_TO_PERIPH;
-    USARTx_DMA_InitStruct_Tx.Mode = LL_DMA_MODE_NORMAL;
-    USARTx_DMA_InitStruct_Tx.PeriphOrM2MSrcIncMode = LL_DMA_PERIPH_NOINCREMENT;
-    USARTx_DMA_InitStruct_Tx.MemoryOrM2MDstIncMode = LL_DMA_MEMORY_INCREMENT;
+    USARTx_DMA_InitStruct_Tx.PeriphOrM2MSrcAddress  = LL_USART_DMA_GetRegAddr(USARTx_INSTANCE);
+    USARTx_DMA_InitStruct_Tx.MemoryOrM2MDstAddress  = (uint32_t)send_frame.data_group;
+    USARTx_DMA_InitStruct_Tx.Direction              = LL_DMA_DIRECTION_MEMORY_TO_PERIPH;
+    USARTx_DMA_InitStruct_Tx.Mode                   = LL_DMA_MODE_NORMAL;
+    USARTx_DMA_InitStruct_Tx.PeriphOrM2MSrcIncMode  = LL_DMA_PERIPH_NOINCREMENT;
+    USARTx_DMA_InitStruct_Tx.MemoryOrM2MDstIncMode  = LL_DMA_MEMORY_INCREMENT;
     USARTx_DMA_InitStruct_Tx.PeriphOrM2MSrcDataSize = LL_DMA_PDATAALIGN_BYTE;
     USARTx_DMA_InitStruct_Tx.MemoryOrM2MDstDataSize = LL_DMA_MDATAALIGN_BYTE;
-    USARTx_DMA_InitStruct_Tx.NbData = 0;
-    USARTx_DMA_InitStruct_Tx.Priority = LL_DMA_PRIORITY_MEDIUM;
+    USARTx_DMA_InitStruct_Tx.NbData                 = 0;
+    USARTx_DMA_InitStruct_Tx.Priority               = LL_DMA_PRIORITY_MEDIUM;
     LL_DMA_Init(DMA1, USARTx_DMAx_Tx_CHANNEL, &USARTx_DMA_InitStruct_Tx);
     /* Enable DMA transfer complete interrupts Tx */
     LL_DMA_EnableIT_TC(DMA1, USARTx_DMAx_Tx_CHANNEL);
@@ -58,16 +58,16 @@ void usart_rx_dma_config(void) {
     LL_DMA_InitTypeDef USARTx_DMA_InitStruct_Rx = {0};
 
     /* USART1_RX DMA Init */
-    USARTx_DMA_InitStruct_Rx.PeriphOrM2MSrcAddress = LL_USART_DMA_GetRegAddr(USARTx_INSTANCE);
-    USARTx_DMA_InitStruct_Rx.MemoryOrM2MDstAddress = (uint32_t)recv_frame.data_group;
-    USARTx_DMA_InitStruct_Rx.Direction = LL_DMA_DIRECTION_PERIPH_TO_MEMORY;
-    USARTx_DMA_InitStruct_Rx.Mode = LL_DMA_MODE_NORMAL;
-    USARTx_DMA_InitStruct_Rx.PeriphOrM2MSrcIncMode = LL_DMA_PERIPH_NOINCREMENT;
-    USARTx_DMA_InitStruct_Rx.MemoryOrM2MDstIncMode = LL_DMA_MEMORY_INCREMENT;
+    USARTx_DMA_InitStruct_Rx.PeriphOrM2MSrcAddress  = LL_USART_DMA_GetRegAddr(USARTx_INSTANCE);
+    USARTx_DMA_InitStruct_Rx.MemoryOrM2MDstAddress  = (uint32_t)recv_frame.data_group;
+    USARTx_DMA_InitStruct_Rx.Direction              = LL_DMA_DIRECTION_PERIPH_TO_MEMORY;
+    USARTx_DMA_InitStruct_Rx.Mode                   = LL_DMA_MODE_NORMAL;
+    USARTx_DMA_InitStruct_Rx.PeriphOrM2MSrcIncMode  = LL_DMA_PERIPH_NOINCREMENT;
+    USARTx_DMA_InitStruct_Rx.MemoryOrM2MDstIncMode  = LL_DMA_MEMORY_INCREMENT;
     USARTx_DMA_InitStruct_Rx.PeriphOrM2MSrcDataSize = LL_DMA_PDATAALIGN_BYTE;
     USARTx_DMA_InitStruct_Rx.MemoryOrM2MDstDataSize = LL_DMA_MDATAALIGN_BYTE;
-    USARTx_DMA_InitStruct_Rx.NbData = 8;
-    USARTx_DMA_InitStruct_Rx.Priority = LL_DMA_PRIORITY_MEDIUM;
+    USARTx_DMA_InitStruct_Rx.NbData                 = 8;
+    USARTx_DMA_InitStruct_Rx.Priority               = LL_DMA_PRIORITY_MEDIUM;
     LL_DMA_Init(DMA1, USARTx_DMAx_Rx_CHANNEL, &USARTx_DMA_InitStruct_Rx);
     /* Enable DMA transfer complete interrupts Rx */
     LL_DMA_EnableIT_TC(DMA1, USARTx_DMAx_Rx_CHANNEL);

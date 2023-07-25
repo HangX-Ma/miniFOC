@@ -19,11 +19,13 @@
 #include "main.h"
 #include "bldc_config.h"
 #include "bldc_test.h"
+#include "current_monitor.h"
+#include "encoder.h"
+#include "foc.h"
 #include "led.h"
 #include "oled.h"
 #include "qfplib-m3.h"
 #include "vofa_usart.h"
-#include "foc.h"
 
 void SystemClock_Config(void);
 
@@ -52,13 +54,13 @@ int main(void) {
     /* Configure the system clock */
     SystemClock_Config();
 
-
     //* Initialize all configured peripherals start
-
-    led_init();
     vofa_usart_init();
     bldc_init();
+    encoder_init();
+    led_init();
     // oled_init();
+    current_mointor_init();
 
     //* Initialize all configured peripherals end
 
@@ -85,8 +87,13 @@ int main(void) {
         LL_mDelay(10);
 #endif
         // ------------ BLDC Motor test -----------------
-        bldc_test1_invariant_duty();
+        // bldc_test1_invariant_duty();
         // bldc_test2_svpwm();
+        // ------------ Encoder test ------------
+        // encoder_test();
+        // ------------ Current Monitor test ------------
+        bldc_test1_invariant_duty();
+        current_monitor_test();
     }
 }
 
@@ -120,8 +127,6 @@ void SystemClock_Config(void) {
     LL_Init1msTick(72000000);
     LL_SetSystemCoreClock(72000000);
 }
-
-
 
 /**
  * @brief  This function is executed in case of error occurrence.

@@ -39,15 +39,15 @@ static uint16_t spi2_transmit_rw(uint16_t outdata) {
 static void select_chip(void) {
     LL_GPIO_ResetOutputPin(ENCODER_GPIO_PORT, ENCODER_CS_PIN);
     // min delay 250 ns
-    delay_nus_72MHz(1);
+    delay_nus_72MHz(2);
 }
 
 static void deselect_chip(void) {
     // min delay here: clock period / 2, our baud rate period is 222ns
-    delay_nus_72MHz(1);
+    delay_nus_72MHz(2);
     LL_GPIO_SetOutputPin(ENCODER_GPIO_PORT, ENCODER_CS_PIN);
     // min delay until next read: 250ns
-    delay_nus_72MHz(1);
+    delay_nus_72MHz(2);
 }
 
 static BOOL is_error(void) {
@@ -216,5 +216,5 @@ void encoder_test(void) {
     //     encoder_test_buf[1] = -2.22;
     // }
     vofa_usart_dma_send_config(encoder_test_buf, 1);
-    LL_mDelay(10);
+    LL_mDelay(500);
 }
