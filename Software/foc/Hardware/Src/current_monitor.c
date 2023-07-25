@@ -14,51 +14,56 @@
 // ref: STM32F0使用LL库实现DMA方式AD采集 <https://blog.51cto.com/u_520887/5290076>
 // ref: STM32L476多通道TIM+DMA+ADC采样（LL库） <https://codeantenna.com/a/1MnFm9oX2G>
 // ref: STM32 定时器触发 ADC 多通道采集，DMA搬运至内存 <https://blog.51cto.com/u_15456236/4801335>
+// ref: [STM32] HAL库 STM32CubeMX教程九---ADC <https://www.guyuehome.com/36010>
 
 RotorStatorCurrent g_RS_current;
 
 static CurrentMonitorADC current_monitor_adc;
 static PhaseCurrent phase_current;
 
-// TIM2 is used to determine the current sampling frequency.
-// The ADC will use TIM2 channel 2 as the external trigger signal.
+// TIM3 is used to determine the current sampling frequency.
+// The ADC will use TIM3 channel 3 as the external trigger signal.
 // Only the rising edge will lead to ADC conversion.
-void current_monitor_tim2_init(void) {
+// Note:
+//      Regular Conversion launched by software 规则的软件触发 调用函数触发即可
+//      Timer X Capture Compare X event 外部引脚触发,
+//      Timer X Trigger Out event 定时器通道输出触发 需要设置相应的定时器设置
+static void current_monitor_tim3_init(void) {
     LL_TIM_InitTypeDef TIM_InitStruct = {0};
     LL_TIM_OC_InitTypeDef TIM_OC_InitStruct = {0};
 
     /* Peripheral clock enable */
-    LL_APB1_GRP1_EnableClock(LL_APB1_GRP1_PERIPH_TIM2);
+    LL_APB1_GRP1_EnableClock(LL_APB1_GRP1_PERIPH_TIM3);
 
     // ADC sampling frequency: 72 MHz / 72000 = 1 KHz
     TIM_InitStruct.Prescaler       = 36 - 1;
     TIM_InitStruct.CounterMode     = LL_TIM_COUNTERMODE_UP;
     TIM_InitStruct.Autoreload      = 2000 - 1;
     TIM_InitStruct.ClockDivision   = LL_TIM_CLOCKDIVISION_DIV1;
-    LL_TIM_Init(TIM2, &TIM_InitStruct);
+    LL_TIM_Init(TIM3, &TIM_InitStruct);
 
-    LL_TIM_EnableARRPreload(TIM2);
-    LL_TIM_SetClockSource(TIM2, LL_TIM_CLOCKSOURCE_INTERNAL);
+    LL_TIM_EnableARRPreload(TIM3);
+    LL_TIM_SetClockSource(TIM3, LL_TIM_CLOCKSOURCE_INTERNAL);
 
     // PWM mode 1 with polarity low means before the reach of ARR,
     // the PWM will output effectively LOW.
-    LL_TIM_OC_EnablePreload(TIM2, LL_TIM_CHANNEL_CH2);
+    LL_TIM_OC_EnablePreload(TIM3, LL_TIM_CHANNEL_CH2);
     TIM_OC_InitStruct.OCMode       = LL_TIM_OCMODE_PWM1;
     TIM_OC_InitStruct.OCState      = LL_TIM_OCSTATE_DISABLE;
     TIM_OC_InitStruct.OCNState     = LL_TIM_OCSTATE_DISABLE;
     TIM_OC_InitStruct.CompareValue = 0;
     TIM_OC_InitStruct.OCPolarity   = LL_TIM_OCPOLARITY_LOW;
-    LL_TIM_OC_Init(TIM2, LL_TIM_CHANNEL_CH2, &TIM_OC_InitStruct);
-    LL_TIM_OC_DisableFast(TIM2, LL_TIM_CHANNEL_CH2);
-    LL_TIM_SetTriggerOutput(TIM2, LL_TIM_TRGO_RESET);
-    LL_TIM_DisableMasterSlaveMode(TIM2);
+    LL_TIM_OC_Init(TIM3, LL_TIM_CHANNEL_CH2, &TIM_OC_InitStruct);
+    LL_TIM_OC_DisableFast(TIM3, LL_TIM_CHANNEL_CH2);
+    LL_TIM_SetTriggerOutput(TIM3, LL_TIM_TRGO_RESET);
+    LL_TIM_DisableMasterSlaveMode(TIM3);
 
     // We don't enable TIM2 until we have set DMA and ADC
-    LL_TIM_DisableCounter(TIM2);
-    LL_TIM_DisableAllOutputs(TIM2);
+    LL_TIM_DisableCounter(TIM3);
+    LL_TIM_DisableAllOutputs(TIM3);
 }
 
-void current_monitor_adc_dma_init(void) {
+static void current_monitor_adc_dma_init(void) {
     /* DMA controller clock enable */
     LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_DMA1);
 
@@ -85,7 +90,7 @@ void current_monitor_adc_dma_init(void) {
     LL_DMA_EnableChannel(DMA1, CURRENT_MONITOR_ADCx_DMAx_CHANNEL);
 }
 
-void current_monitor_adc_init(void) {
+static void current_monitor_adc_init(void) {
     LL_ADC_InitTypeDef ADC_InitStruct = {0};
     LL_ADC_CommonInitTypeDef ADC_CommonInitStruct = {0};
     LL_ADC_REG_InitTypeDef ADC_REG_InitStruct = {0};
@@ -113,10 +118,10 @@ void current_monitor_adc_init(void) {
     ADC_CommonInitStruct.Multimode      = LL_ADC_MULTI_INDEPENDENT;
     LL_ADC_CommonInit(__LL_ADC_COMMON_INSTANCE(ADC1), &ADC_CommonInitStruct);
 
-    ADC_REG_InitStruct.TriggerSource    = LL_ADC_REG_TRIG_EXT_TIM2_CH2;
+    ADC_REG_InitStruct.TriggerSource    = LL_ADC_REG_TRIG_EXT_TIM3_TRGO;
     ADC_REG_InitStruct.SequencerLength  = LL_ADC_REG_SEQ_SCAN_ENABLE_2RANKS;
     ADC_REG_InitStruct.SequencerDiscont = LL_ADC_REG_SEQ_DISCONT_DISABLE;
-    // otherwise, TIM2 cannot trigger ADC conversion after the first time trigger
+    // otherwise, TIM3 cannot trigger ADC conversion after the first time trigger
     ADC_REG_InitStruct.ContinuousMode   = LL_ADC_REG_CONV_SINGLE;
     ADC_REG_InitStruct.DMATransfer      = LL_ADC_REG_DMA_TRANSFER_UNLIMITED;
     LL_ADC_REG_Init(ADC1, &ADC_REG_InitStruct);
@@ -133,7 +138,7 @@ void current_monitor_adc_init(void) {
 }
 
 void current_mointor_init(void) {
-    current_monitor_tim2_init();
+    current_monitor_tim3_init();
     current_monitor_adc_dma_init();
     current_monitor_adc_init();
 
@@ -148,10 +153,10 @@ void current_mointor_init(void) {
     LL_ADC_StartCalibration(ADC1);
     while (LL_ADC_IsCalibrationOnGoing(ADC1) != RESET) {}
 
-    //* start TIM2
-    LL_TIM_CC_EnableChannel(TIM2, LL_TIM_CHANNEL_CH2);
-    LL_TIM_EnableCounter(TIM2);
-    LL_TIM_EnableAllOutputs(TIM2);
+    //* start TIM3
+    LL_TIM_CC_EnableChannel(TIM3, LL_TIM_CHANNEL_CH2);
+    LL_TIM_EnableCounter(TIM3);
+    LL_TIM_EnableAllOutputs(TIM3);
 
     LL_mDelay(1);
 }
