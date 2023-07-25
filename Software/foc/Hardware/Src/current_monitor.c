@@ -77,7 +77,7 @@ void current_monitor_adc_dma_init(void) {
     ADCx_DMA_InitStruct.MemoryOrM2MDstIncMode  = LL_DMA_MEMORY_INCREMENT;
     ADCx_DMA_InitStruct.PeriphOrM2MSrcDataSize = LL_DMA_PDATAALIGN_HALFWORD;
     ADCx_DMA_InitStruct.MemoryOrM2MDstDataSize = LL_DMA_MDATAALIGN_HALFWORD;
-    ADCx_DMA_InitStruct.NbData                 = 32; // 2 channels, 2 half word, 32 bytes
+    ADCx_DMA_InitStruct.NbData                 = 4; // 2 channels, 2 half word, 4 bytes
     ADCx_DMA_InitStruct.Priority               = LL_DMA_PRIORITY_MEDIUM;
     LL_DMA_Init(DMA1, CURRENT_MONITOR_ADCx_DMAx_CHANNEL, &ADCx_DMA_InitStruct);
 
@@ -102,7 +102,7 @@ void current_monitor_adc_init(void) {
         PA0-WKUP    ------> ADC1_IN0
         PA1         ------> ADC1_IN1
     */
-    GPIO_InitStruct.Pin = CURRENT_MONITOR_ADCx_IN0_PIN | CURRENT_MONITOR_ADCx_IN1_PIN;
+    GPIO_InitStruct.Pin  = CURRENT_MONITOR_ADCx_IN0_PIN | CURRENT_MONITOR_ADCx_IN1_PIN;
     GPIO_InitStruct.Mode = LL_GPIO_MODE_ANALOG;
     LL_GPIO_Init(CURRENT_MONITOR_ADC_GPIO_PORT, &GPIO_InitStruct);
 
