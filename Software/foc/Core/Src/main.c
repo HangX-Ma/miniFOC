@@ -92,8 +92,7 @@ int main(void) {
         // ------------ Encoder test ------------
         // encoder_test();
         // ------------ Current Monitor test ------------
-        bldc_test1_invariant_duty();
-        current_monitor_test();
+        current_monitor_test(bldc_test2_svpwm());
     }
 }
 

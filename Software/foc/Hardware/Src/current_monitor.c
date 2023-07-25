@@ -16,10 +16,7 @@
 // ref: STM32 定时器触发 ADC 多通道采集，DMA搬运至内存 <https://blog.51cto.com/u_15456236/4801335>
 // ref: [STM32] HAL库 STM32CubeMX教程九---ADC <https://www.guyuehome.com/36010>
 
-RotorStatorCurrent g_RS_current;
-
 static CurrentMonitorADC current_monitor_adc;
-static PhaseCurrent phase_current;
 
 // TIM3 is used to determine the current sampling frequency.
 // The ADC will use TIM3 channel 3 as the external trigger signal.
@@ -55,7 +52,7 @@ static void current_monitor_tim3_init(void) {
     TIM_OC_InitStruct.OCPolarity   = LL_TIM_OCPOLARITY_LOW;
     LL_TIM_OC_Init(TIM3, LL_TIM_CHANNEL_CH2, &TIM_OC_InitStruct);
     LL_TIM_OC_DisableFast(TIM3, LL_TIM_CHANNEL_CH2);
-    LL_TIM_SetTriggerOutput(TIM3, LL_TIM_TRGO_RESET);
+    LL_TIM_SetTriggerOutput(TIM3, LL_TIM_TRGO_UPDATE);
     LL_TIM_DisableMasterSlaveMode(TIM3);
 
     // We don't enable TIM2 until we have set DMA and ADC
@@ -131,10 +128,10 @@ static void current_monitor_adc_init(void) {
     /** Configure Regular Channel
      */
     LL_ADC_REG_SetSequencerRanks(ADC1, LL_ADC_REG_RANK_1, LL_ADC_CHANNEL_0);
-    LL_ADC_SetChannelSamplingTime(ADC1, LL_ADC_CHANNEL_0, LL_ADC_SAMPLINGTIME_55CYCLES_5);
+    LL_ADC_SetChannelSamplingTime(ADC1, LL_ADC_CHANNEL_0, LL_ADC_SAMPLINGTIME_71CYCLES_5);
 
     LL_ADC_REG_SetSequencerRanks(ADC1, LL_ADC_REG_RANK_2, LL_ADC_CHANNEL_1);
-    LL_ADC_SetChannelSamplingTime(ADC1, LL_ADC_CHANNEL_1, LL_ADC_SAMPLINGTIME_55CYCLES_5);
+    LL_ADC_SetChannelSamplingTime(ADC1, LL_ADC_CHANNEL_1, LL_ADC_SAMPLINGTIME_71CYCLES_5);
 }
 
 void current_mointor_init(void) {
@@ -161,18 +158,47 @@ void current_mointor_init(void) {
     LL_mDelay(1);
 }
 
-static float adc_val1, adc_val2;
-static float vofa_buf[2];
-void current_monitor_test(void) {
+static void LPF_current(float *curr, float *prev) {
+    *curr = qfp_fadd(qfp_fmul(0.9f, *prev), qfp_fmul(0.1f, *curr));
+    *prev = *curr;
+}
+
+// rotor and stator current (Iq and Id)
+static RotorStatorCurrent RS_current_prev = {0};
+RotorStatorCurrent get_RS_current(float electric_angle) {
+    PhaseCurrent phase_current;
+    RotorStatorCurrent RS_current_curr;
+    float adc_val1, adc_val2;
+
     adc_val1 = qfp_fdiv(qfp_fmul((float)current_monitor_adc.chx[0], ADCx_VOLTAGE_REFERENCE), (float)ADCx_RESOLUTION);
     adc_val2 = qfp_fdiv(qfp_fmul((float)current_monitor_adc.chx[1], ADCx_VOLTAGE_REFERENCE), (float)ADCx_RESOLUTION);
 
-    phase_current.Ia = qfp_fdiv(qfp_fdiv((adc_val1 - ADCx_VOLTAGE_BIAS), CURRENT_SENSE_REGISTER), INA199x1_GAIN);
-    phase_current.Ib = qfp_fdiv(qfp_fdiv((adc_val2 - ADCx_VOLTAGE_BIAS), CURRENT_SENSE_REGISTER), INA199x1_GAIN);
+    phase_current.Ia   = qfp_fdiv(qfp_fdiv((adc_val1 - ADCx_VOLTAGE_BIAS), CURRENT_SENSE_REGISTER), INA199x1_GAIN);
+    phase_current.Ib   = qfp_fdiv(qfp_fdiv((adc_val2 - ADCx_VOLTAGE_BIAS), CURRENT_SENSE_REGISTER), INA199x1_GAIN);
+    phase_current.Ib   = qfp_fadd(qfp_fmul(_1_SQRT3, phase_current.Ia), qfp_fmul(_2_SQRT3, phase_current.Ib));
 
-    vofa_buf[0] = adc_val1;
-    vofa_buf[1] = adc_val2;
+    RS_current_curr.Id = qfp_fadd(
+                           qfp_fmul(phase_current.Ia, qfp_fcos(electric_angle)),
+                           qfp_fmul(phase_current.Ib, qfp_fsin(electric_angle))
+                         );
+
+    RS_current_curr.Iq  = qfp_fsub(
+                           qfp_fmul(phase_current.Ib, qfp_fcos(electric_angle)),
+                           qfp_fmul(phase_current.Ia, qfp_fsin(electric_angle))
+                         );
+    LPF_current(&RS_current_curr.Id, &RS_current_prev.Id);
+    LPF_current(&RS_current_curr.Iq, &RS_current_prev.Iq);
+
+    return RS_current_curr;
+}
+
+static float vofa_buf[2];
+void current_monitor_test(float electric_angle) {
+    RotorStatorCurrent current = get_RS_current(electric_angle);
+
+    vofa_buf[0] = current.Id;
+    vofa_buf[1] = current.Iq;
     vofa_usart_dma_send_config(vofa_buf, 2);
 
-    LL_mDelay(2);
+    LL_mDelay(1);
 }

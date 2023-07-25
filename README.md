@@ -4,7 +4,7 @@ This repository records my development of miniFOC. I have an immature design and
 
 So _**DON'T USE ANY MATERIALS DIRECTLY!**_ I won't response for any mistakes.
 
-> I will try to use sensor-less control strategy if the fundamental functions all perform well.
+Except for this, <span style="color: #98C379; font-weight: bold;">`Software/foc/foc.ioc`</span> is only used for configuration reference.
 
 <div align="center">
     <img src="assets/miniFOC.svg" alt="miniFOC design(concept), HangX-Ma" width=600 />
@@ -18,18 +18,27 @@ So _**DON'T USE ANY MATERIALS DIRECTLY!**_ I won't response for any mistakes.
     <font size="2" color="#999"><u>Current STM32CubeMX settings, HangX-Ma</u></font>
 </div>
 
+> I will try to use sensor-less control strategy if the fundamental functions all perform well.
+
+## Environment
+
+- **Serial Port Tool:** [Vofa+](https://www.vofa.plus/downloads/?v=7/17/2023)
+- **OLED UI:** [WouoUI](https://github.com/RQNG/WouoUI)
+- **Dev Tools:** VSCode, CMake, OpenOCD, STLInk-v2, STM32CubeMX
+- **Debugger:** Cortex-Debug
+- **Library:** [u8g2](https://github.com/olikraus/u8g2), [Qfplib-M3](https://www.quinapalus.com/qfplib-m3.html)
+
 ## Problem Found
 
 - SPI output pins sequence needs to be `CS`, `SCLK`, `MISO`, `MOSI`.
 - Magnetic attached to motor will affect the motor itself, my friend suggests me to use sensorless control strategy.
 
-## TODO
-
-- [x] Add Basic _SVPWM_ control algorithm.
-- [ ] Design OLED display library. Prepare to take a reference to [WouoUI](https://github.com/RQNG/WouoUI).
-- [x] Use UART to debug and control motor. [[Vofa+]](https://www.vofa.plus/downloads/?v=7/17/2023)
-
 ## Development Logs
+
+### 2023-07-25
+
+- INA199x1 has been configured successfully. I use TIM3 to generate update event to trigger ADC1 to start multi-channel conversion. The conversion result will be carried by DMA and send to specific address.
+- Add `get_RS_current` function that can conveniently return the rotor and stator current (Id and Iq). I also write a test code for it.
 
 ### 2023-07-24
 

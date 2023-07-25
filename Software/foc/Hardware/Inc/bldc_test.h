@@ -40,7 +40,8 @@ void bldc_test1_invariant_duty(void);
  * @details Simple SVPWM test. Set Uq = Constant, Ud = 0 and increase electrical
  *          angle continuously.
  * @warning Uq needs to be less than 2.0, otherwise the motor will be damaged.
+ * @return current electric angle
  */
-void bldc_test2_svpwm(void);
+float bldc_test2_svpwm(void);
 
 #endif //!__BLDC_TEST__H__

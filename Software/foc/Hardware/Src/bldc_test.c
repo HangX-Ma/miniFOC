@@ -40,10 +40,11 @@ void bldc_test1_invariant_duty(void) {
 //* TEST2 start
 #include "foc.h"
 static float electric_angle = 0.0f;
-void bldc_test2_svpwm(void) {
+float bldc_test2_svpwm(void) {
     setPhaseVoltage(1.0f, 0.0f, electric_angle); // Uq < 2.0
     electric_angle = qfp_fadd(electric_angle, 0.1f);
     LL_mDelay(1);
+    return electric_angle;
 }
 
 //* TEST2 end
