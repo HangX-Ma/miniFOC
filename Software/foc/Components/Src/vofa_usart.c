@@ -148,14 +148,11 @@ void vofa_usart_init(void) {
     LL_USART_ConfigAsyncMode(USARTx_INSTANCE);
     LL_USART_Enable(USARTx_INSTANCE);
 
-    /* Enable DMA RX Interrupt */
     LL_USART_EnableDMAReq_RX(USARTx_INSTANCE);
-    /* Enable DMA TX Interrupt */
     LL_USART_EnableDMAReq_TX(USARTx_INSTANCE);
 }
 
 /* Handle the DMA interrupt */
-
 void USARTx_DMA_TX_IRQHandler(void) {
     // If data sending complete, clear the TC4 flag
     if (LL_DMA_IsActiveFlag_TC4(DMA1) != RESET) {
