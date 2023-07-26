@@ -56,13 +56,15 @@ int main(void) {
 
     //* Initialize all configured peripherals start
     vofa_usart_init();
-    bldc_init();
-    encoder_init();
+    // bldc_init();
+    // encoder_init();
     led_init();
-    // oled_init();
-    current_mointor_init();
-
+    // current_mointor_init();
+    oled_init();
     //* Initialize all configured peripherals end
+
+    // ------------ OLED test -----------------
+    oled_test();
 
     /* Infinite loop */
 #if USART_FLOAT_TEST
@@ -92,7 +94,7 @@ int main(void) {
         // ------------ Encoder test ------------
         // encoder_test();
         // ------------ Current Monitor test ------------
-        current_monitor_test(bldc_test2_svpwm());
+        // current_monitor_test(bldc_test2_svpwm());
     }
 }
 

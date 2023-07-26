@@ -1,5 +1,4 @@
 #include "oled.h"
-#include "u8g2.h"
 #include "led.h"
 
 #include "stm32f1xx_ll_bus.h"
@@ -17,19 +16,13 @@ static void oled_gpio_init(void) {
     LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_GPIOB);
     LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_GPIOA);
 
-    /* OLED RST and DC pins */
-    LL_GPIO_SetOutputPin(OLED_RST_DC_GPIO_PORT, OLED_RST_PIN | OLED_DC_PIN);
-    GPIO_InitStruct.Pin = OLED_RST_PIN | OLED_DC_PIN;
-    GPIO_InitStruct.Mode = LL_GPIO_MODE_OUTPUT;
-    GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_HIGH;
+    /* OLED RST, DC, CS pins */
+    LL_GPIO_SetOutputPin(OLED_RST_DC_CS_GPIO_PORT, OLED_RST_PIN | OLED_DC_PIN | OLED_CS_PIN);
+    GPIO_InitStruct.Pin        = OLED_RST_PIN | OLED_DC_PIN | OLED_CS_PIN;
+    GPIO_InitStruct.Mode       = LL_GPIO_MODE_OUTPUT;
+    GPIO_InitStruct.Speed      = LL_GPIO_SPEED_FREQ_HIGH;
     GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
-    LL_GPIO_Init(OLED_RST_DC_GPIO_PORT, &GPIO_InitStruct);
-
-    /* OELD CS pin */
-    LL_GPIO_SetOutputPin(OLED_CS_SCK_MOSI_GPIO_PORT, OLED_CS_PIN);
-    GPIO_InitStruct.Pin = OLED_CS_PIN;
-    LL_GPIO_Init(OLED_CS_SCK_MOSI_GPIO_PORT, &GPIO_InitStruct);
-
+    LL_GPIO_Init(OLED_RST_DC_CS_GPIO_PORT, &GPIO_InitStruct);
 }
 
 static void oled_spi1_init(void) {
@@ -48,7 +41,7 @@ static void oled_spi1_init(void) {
     GPIO_InitStruct.Mode       = LL_GPIO_MODE_ALTERNATE;
     GPIO_InitStruct.Speed      = LL_GPIO_SPEED_FREQ_HIGH;
     GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
-    LL_GPIO_Init(OLED_CS_SCK_MOSI_GPIO_PORT, &GPIO_InitStruct);
+    LL_GPIO_Init(OLED_SCK_MOSI_GPIO_PORT, &GPIO_InitStruct);
 
     SPI_InitStruct.TransferDirection = LL_SPI_FULL_DUPLEX;
     SPI_InitStruct.Mode              = LL_SPI_MODE_MASTER;
@@ -112,13 +105,13 @@ uint8_t u8x8_byte_4wire_hw_spi(
             break;
         case U8X8_MSG_BYTE_SET_DC: // Setup DC pin, which determines CMD or Data transferred through SPI
             if (arg_int) {
-                LL_GPIO_SetOutputPin(OLED_RST_DC_GPIO_PORT, OLED_DC_PIN); // Data
+                LL_GPIO_SetOutputPin(OLED_RST_DC_CS_GPIO_PORT, OLED_DC_PIN); // Data
             } else {
-                LL_GPIO_ResetOutputPin(OLED_RST_DC_GPIO_PORT, OLED_DC_PIN); // CMD
+                LL_GPIO_ResetOutputPin(OLED_RST_DC_CS_GPIO_PORT, OLED_DC_PIN); // CMD
             }
             break;
         case U8X8_MSG_BYTE_START_TRANSFER: // Software CS is needed. (select)
-            LL_GPIO_ResetOutputPin(OLED_CS_SCK_MOSI_GPIO_PORT, OLED_CS_PIN);
+            LL_GPIO_ResetOutputPin(OLED_RST_DC_CS_GPIO_PORT, OLED_CS_PIN);
             u8x8->gpio_and_delay_cb(u8x8, U8X8_MSG_DELAY_NANO, u8x8->display_info->post_chip_enable_wait_ns, NULL);
             break;
         case U8X8_MSG_BYTE_END_TRANSFER:  // Software CS is needed. (deselect)
@@ -126,7 +119,7 @@ uint8_t u8x8_byte_4wire_hw_spi(
                 __NOP();
             }
             u8x8->gpio_and_delay_cb(u8x8, U8X8_MSG_DELAY_NANO, u8x8->display_info->pre_chip_disable_wait_ns, NULL);
-            LL_GPIO_SetOutputPin(OLED_CS_SCK_MOSI_GPIO_PORT, OLED_CS_PIN);
+            LL_GPIO_SetOutputPin(OLED_RST_DC_CS_GPIO_PORT, OLED_CS_PIN);
             break;
         default:
             return 0;
@@ -151,35 +144,43 @@ uint8_t u8x8_stm32_gpio_and_delay(
             break;
         case U8X8_MSG_GPIO_RESET: // gpio reset
             if (arg_int) {
-                LL_GPIO_SetOutputPin(OLED_RST_DC_GPIO_PORT, OLED_RST_PIN);
+                LL_GPIO_SetOutputPin(OLED_RST_DC_CS_GPIO_PORT, OLED_RST_PIN);
             } else {
-                LL_GPIO_ResetOutputPin(OLED_RST_DC_GPIO_PORT, OLED_RST_PIN);
+                LL_GPIO_ResetOutputPin(OLED_RST_DC_CS_GPIO_PORT, OLED_RST_PIN);
             }
             break;
     }
     return 1;
 }
 
-void u8g2_init(u8g2_t *u8g2) {
+void u8g2Init(u8g2_t *u8g2) {
     u8g2_Setup_ssd1306_128x64_noname_f(u8g2, U8G2_R0, u8x8_byte_4wire_hw_spi, u8x8_stm32_gpio_and_delay);
     u8g2_InitDisplay(u8g2); // init ssd1306, the screen is off
     u8g2_SetPowerSave(u8g2, 0); // turn on the screen
     u8g2_ClearBuffer(u8g2);
-
-    LL_mDelay(1000);
-
-    u8g2_DrawLine(u8g2, 0, 0, 127, 63);
-    u8g2_DrawLine(u8g2, 127, 0, 0, 63);
-    u8g2_SendBuffer(u8g2);
-    LL_mDelay(1000);
+    LL_mDelay(100);
 }
 
+u8g2_t u8g2;
+uint8_t* g_u8g2_buf_ptr;
+uint16_t g_u8g2_buf_len;
 void oled_init(void) {
     oled_gpio_init();
     oled_spi1_init();
 
-    u8g2_t u8g2;
-    u8g2_init(&u8g2);
+    u8g2Init(&u8g2);
+    u8g2_SetFont(&u8g2, u8g2_font_ncenB08_tr);
+    g_u8g2_buf_ptr = u8g2_GetBufferPtr(&u8g2);
+    g_u8g2_buf_len = 8 * u8g2_GetBufferTileHeight(&u8g2) * u8g2_GetBufferTileWidth(&u8g2);
+}
+
+void oled_test(void) {
+    // clear screen
+    u8g2_DrawLine(&u8g2, 0, 0, 127, 63);
+    u8g2_DrawLine(&u8g2, 127, 0, 0, 63);
+    u8g2_SendBuffer(&u8g2);
+    LL_mDelay(500);
+
     u8g2_FirstPage(&u8g2);
     do
     {

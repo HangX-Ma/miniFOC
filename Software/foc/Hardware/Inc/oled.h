@@ -1,5 +1,3 @@
-
-
 /**
  * @file oled.h
  * @author HangX-Ma (contour.9x@gmail.com)
@@ -26,21 +24,29 @@
 #define __OLED__H__
 
 #include "utils.h"
+#include "u8g2.h"
 
-
-#define OLED_CS_SCK_MOSI_GPIO_PORT  GPIOA
-#define OLED_CS_PIN                 LL_GPIO_PIN_6
+#define OLED_SCK_MOSI_GPIO_PORT  GPIOA
 #define OLED_SCK_PIN                LL_GPIO_PIN_5
 #define OLED_MOSI_PIN               LL_GPIO_PIN_7
 
 
-#define OLED_RST_DC_GPIO_PORT       GPIOB
+#define OLED_RST_DC_CS_GPIO_PORT    GPIOB
 #define OLED_RST_PIN                LL_GPIO_PIN_0
 #define OLED_DC_PIN                 LL_GPIO_PIN_1
+#define OLED_CS_PIN                 LL_GPIO_PIN_10
 
 #define OLED_DMAx_Tx_IRQHandler     DMA1_Channel3_IRQHandler
 #define OLED_SPI_DMAx_Tx_CHANNEL    LL_DMA_CHANNEL_3
 
-void oled_init();
+#define OLED_WIDTH                  128
+#define OLED_HEIGHT                 64
+
+extern u8g2_t u8g2;
+extern uint8_t* g_u8g2_buf_ptr;
+extern uint16_t g_u8g2_buf_len;
+
+void oled_init(void);
+void oled_test(void);
 
 #endif  //!__OLED__H__

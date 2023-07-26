@@ -23,7 +23,7 @@ Except for this, <span style="color: #98C379; font-weight: bold;">`Software/foc/
 ## Environment
 
 - **Serial Port Tool:** [Vofa+](https://www.vofa.plus/downloads/?v=7/17/2023)
-- **OLED UI:** [WouoUI](https://github.com/RQNG/WouoUI)
+- **OLED UI:** [WouoUI](https://github.com/RQNG/WouoUI), [uYanki/menu](https://github.com/uYanki/board-stm32f103rc-berial/tree/main/7.Example/hal/gui/u8g2/02_menu), [小蛋显璐](https://www.bilibili.com/video/BV1RY411f7GT/?share_source=copy_web&vd_source=1056f83cab1f5ee1d05548018d3e8731)
 - **Dev Tools:** VSCode, CMake, OpenOCD, STLInk-v2, STM32CubeMX
 - **Debugger:** Cortex-Debug
 - **Library:** [u8g2](https://github.com/olikraus/u8g2), [Qfplib-M3](https://www.quinapalus.com/qfplib-m3.html)
@@ -34,6 +34,10 @@ Except for this, <span style="color: #98C379; font-weight: bold;">`Software/foc/
 - Magnetic attached to motor will affect the motor itself, my friend suggests me to use sensorless control strategy.
 
 ## Development Logs
+
+### 2023-07-26
+
+- Add OLED menu base code.
 
 ### 2023-07-25
 

@@ -51,6 +51,7 @@ include_directories(
     Drivers/CMSIS/Include
     Drivers/Qfplib-M3
     Drivers/u8g2/Inc
+    Drivers/menu/Inc
 )
 
 add_definitions(
