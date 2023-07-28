@@ -115,7 +115,7 @@ static void align_sensor(void) {
     float e_angle; // electrical angle
     float forward_angle, back_angle, delta_abs_angle; // mechanic angle
 
-    printf("[Motor]: Start sensor alignment...\r\n");
+    printf("\n[Motor]: Start sensor alignment...\r\n");
 
     // we need to start pwm output first
     LED_STATE_OFF();
@@ -138,8 +138,8 @@ static void align_sensor(void) {
     }
     back_angle = g_encoder.get_angle();
 
-    printf("[Motor]: Forward angle is %.3f\r\n", forward_angle);
-    printf("[Motor]: Back angle is %.3f\r\n", back_angle);
+    printf("[Motor]: Forward angle is degree %d\r\n", (int)qfp_fmul(qfp_fdiv(forward_angle, _PI), 180.0f));
+    printf("[Motor]: Back angle is degree %d\r\n", (int)qfp_fmul(qfp_fdiv(back_angle, _PI), 180.0f));
 
     // Try to stop motor at zero point
     g_foc.set_phase_voltage(0, 0, -_PI_2);
@@ -182,7 +182,8 @@ static void align_sensor(void) {
 
     // collect the current mechanical angle to calculate the zero electrical angle offset
     g_foc.property_.zero_electrical_angle_offset = normalize_angle(qfp_fmul(g_encoder.get_shaft_angle(), g_foc.property_.pole_pairs));
-    printf("[Motor]: Zero electrical angle: %.3f\r\n", g_foc.property_.zero_electrical_angle_offset);
+    printf("[Motor]: Zero electrical angle is degree %d\r\n",
+            (int)qfp_fmul(qfp_fdiv(g_foc.property_.zero_electrical_angle_offset, _PI), 180.0f));
     LL_mDelay(100);
 
     // Try to stop motor at zero point

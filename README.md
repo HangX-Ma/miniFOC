@@ -43,6 +43,8 @@ Except for this, <span style="color: #98C379; font-weight: bold;">`Software/foc/
 - Remake an encoder board because previous one seems to be damaged.
 - Ensure the UVW sequence of the Motor.
 - <span style="color: #98C379; font-weight: bold;">[Pass TEST3]:</span> Position control test passes.
+- Add `printf` redirection code.
+- Add sensor alignment code: Identify the sensor direction, pole pairs and calculate the zero electrical angle offset.
 
 ### 2023-07-26
 
