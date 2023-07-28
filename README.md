@@ -45,6 +45,7 @@ Except for this, <span style="color: #98C379; font-weight: bold;">`Software/foc/
 - <span style="color: #98C379; font-weight: bold;">[Pass TEST3]:</span> Position control test passes.
 - Add `printf` redirection code.
 - Add sensor alignment code: Identify the sensor direction, pole pairs and calculate the zero electrical angle offset.
+    > The code will be trapped into a rabbit hole if the motor rotates not fluently. So check the serial output first!
 
 ### 2023-07-26
 

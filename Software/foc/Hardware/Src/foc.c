@@ -123,16 +123,16 @@ static void align_sensor(void) {
 
     /* We want to ensure the sensor direction and the pole pairs number */
     // forward 2PI electrical angle
-    for(int i = 0; i <= 500; i++) {
-        e_angle = qfp_fadd(-_PI_2, qfp_fdiv(qfp_fmul(_2PI, i), 500.0f));
+    for(int i = 0; i <= 1000; i++) {
+        e_angle = qfp_fadd(-_PI_2, qfp_fdiv(qfp_fmul(_2PI, i), 1000.0f));
         g_foc.set_phase_voltage(SENSOR_ALIGN_VOLTAGE, 0, e_angle);
         LL_mDelay(2);
     }
     forward_angle = g_encoder.get_angle();
 
     // turn back
-    for(int i = 500; i >= 0; i--) {
-        e_angle = qfp_fadd(-_PI_2, qfp_fdiv(qfp_fmul(_2PI, i), 500.0f));
+    for(int i = 1000; i >= 0; i--) {
+        e_angle = qfp_fadd(-_PI_2, qfp_fdiv(qfp_fmul(_2PI, i), 1000.0f));
         g_foc.set_phase_voltage(SENSOR_ALIGN_VOLTAGE, 0, e_angle);
         LL_mDelay(2);
     }
@@ -142,8 +142,8 @@ static void align_sensor(void) {
     printf("[Motor]: Back angle is degree %d\r\n", (int)qfp_fmul(qfp_fdiv(back_angle, _PI), 180.0f));
 
     // Try to stop motor at zero point
-    g_foc.set_phase_voltage(0, 0, -_PI_2);
-    LL_mDelay(200);
+    g_foc.set_phase_voltage(0, 0, 0);
+    LL_mDelay(500);
 
     // Motor moves none, which indicates motor error.
     delta_abs_angle = abs(qfp_fsub(forward_angle, back_angle));
@@ -178,7 +178,7 @@ static void align_sensor(void) {
 
     // lock electrical angle to zero
     g_foc.set_phase_voltage(SENSOR_ALIGN_VOLTAGE, 0, -_PI_2);
-    LL_mDelay(500);
+    LL_mDelay(1000);
 
     // collect the current mechanical angle to calculate the zero electrical angle offset
     g_foc.property_.zero_electrical_angle_offset = normalize_angle(qfp_fmul(g_encoder.get_shaft_angle(), g_foc.property_.pole_pairs));
@@ -187,8 +187,8 @@ static void align_sensor(void) {
     LL_mDelay(100);
 
     // Try to stop motor at zero point
-    g_foc.set_phase_voltage(0, 0, -_PI_2);
-    LL_mDelay(200);
+    g_foc.set_phase_voltage(0, 0, 0);
+    LL_mDelay(500);
 
     LED_STATE_OFF();
     // stop pwm output. Motor will be stopped and this also can avoid emergency situation
