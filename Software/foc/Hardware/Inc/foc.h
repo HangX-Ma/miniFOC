@@ -28,6 +28,8 @@
 
 #include "utils.h"
 
-void setPhaseVoltage(float Uq, float Ud, float electric_angle);
+
+float get_electrical_angle(float shaft_angle);
+void setPhaseVoltage(float Uq, float Ud, float e_angle);
 
 #endif  //!__FOC__H__

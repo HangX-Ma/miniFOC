@@ -4,6 +4,9 @@
 #include "vofa_usart.h"
 #include "config.h"
 
+#include "foc.h"
+#include "encoder.h"
+
 #include "stm32f1xx_ll_tim.h"
 #include "stm32f1xx_ll_utils.h"
 
@@ -37,14 +40,21 @@ void bldc_test1_invariant_duty(void) {
 }
 //* TEST1 end
 
-//* TEST2 start
-#include "foc.h"
-static float electric_angle = 0.0f;
-float bldc_test2_svpwm(void) {
-    setPhaseVoltage(1.0f, 0.0f, electric_angle); // Uq < 2.0
-    electric_angle = qfp_fadd(electric_angle, 0.1f);
-    LL_mDelay(1);
-    return electric_angle;
-}
 
+//* TEST2 start
+static float shaft_angle = 0.0f;
+float bldc_test2_svpwm(void) {
+    float e_angle = get_electrical_angle(shaft_angle);
+    setPhaseVoltage(1.0f, 0.0f, e_angle); // Uq < 2.0
+    shaft_angle = qfp_fadd(shaft_angle, 0.05f);
+    LL_mDelay(1);
+    return e_angle;
+}
 //* TEST2 end
+
+
+//* TEST3 start
+void bldc_test3_svpwm_with_angle(void) {
+    setPhaseVoltage(0.5f, 0.0f, get_electrical_angle(g_encoder.get_shaft_angle()));
+}
+//* TEST3 end

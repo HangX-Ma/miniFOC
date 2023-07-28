@@ -55,10 +55,10 @@ int main(void) {
     SystemClock_Config();
 
     //* Initialize all configured peripherals start
+    led_init();
     vofa_usart_init();
     bldc_init();
     encoder_init();
-    led_init();
     current_mointor_init();
     // oled_init();
     // oled_test();
@@ -89,8 +89,9 @@ int main(void) {
         // ------------ BLDC Motor test -----------------
         // bldc_test1_invariant_duty();
         // bldc_test2_svpwm();
+        bldc_test3_svpwm_with_angle();
         // ------------ Encoder test ------------
-        encoder_test();
+        // encoder_test();
         // ------------ Current Monitor test ------------
         // current_monitor_test(bldc_test2_svpwm());
     }

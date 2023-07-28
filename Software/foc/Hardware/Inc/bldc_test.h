@@ -40,8 +40,15 @@ void bldc_test1_invariant_duty(void);
  * @details Simple SVPWM test. Set Uq = Constant, Ud = 0 and increase electrical
  *          angle continuously.
  * @warning Uq needs to be less than 2.0, otherwise the motor will be damaged.
+ * @warning DON't RUN THIS TEST TOO LONG! 3 to 5 seconds is enough to generate
+ *          really high chip temperature!
  * @return current electric angle
  */
 float bldc_test2_svpwm(void);
+
+/**
+ * @brief svpwm with angle feedback
+ */
+void bldc_test3_svpwm_with_angle(void);
 
 #endif //!__BLDC_TEST__H__

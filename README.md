@@ -37,6 +37,13 @@ Except for this, <span style="color: #98C379; font-weight: bold;">`Software/foc/
 
 ## Development Logs
 
+### 2023-07-28
+
+- Attach the magnetic with shaft sleeve, sticking it on the shaft.
+- Remake an encoder board because previous one seems to be damaged.
+- Ensure the UVW sequence of the Motor.
+- <span style="color: #98C379; font-weight: bold;">[Pass TEST3]:</span> Position control test passes.
+
 ### 2023-07-26
 
 - Add OLED menu base code.

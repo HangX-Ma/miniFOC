@@ -165,7 +165,7 @@ static void LPF_current(float *curr, float *prev) {
 
 // rotor and stator current (Iq and Id)
 static RotorStatorCurrent RS_current_prev = {0};
-RotorStatorCurrent get_RS_current(float electric_angle) {
+RotorStatorCurrent get_RS_current(float e_angle) {
     PhaseCurrent phase_current;
     RotorStatorCurrent RS_current_curr;
     float adc_val1, adc_val2;
@@ -178,13 +178,13 @@ RotorStatorCurrent get_RS_current(float electric_angle) {
     phase_current.Ib   = qfp_fadd(qfp_fmul(_1_SQRT3, phase_current.Ia), qfp_fmul(_2_SQRT3, phase_current.Ib));
 
     RS_current_curr.Id = qfp_fadd(
-                           qfp_fmul(phase_current.Ia, qfp_fcos(electric_angle)),
-                           qfp_fmul(phase_current.Ib, qfp_fsin(electric_angle))
+                           qfp_fmul(phase_current.Ia, qfp_fcos(e_angle)),
+                           qfp_fmul(phase_current.Ib, qfp_fsin(e_angle))
                          );
 
     RS_current_curr.Iq  = qfp_fsub(
-                           qfp_fmul(phase_current.Ib, qfp_fcos(electric_angle)),
-                           qfp_fmul(phase_current.Ia, qfp_fsin(electric_angle))
+                           qfp_fmul(phase_current.Ib, qfp_fcos(e_angle)),
+                           qfp_fmul(phase_current.Ia, qfp_fsin(e_angle))
                          );
     LPF_current(&RS_current_curr.Id, &RS_current_prev.Id);
     LPF_current(&RS_current_curr.Iq, &RS_current_prev.Iq);
@@ -193,8 +193,8 @@ RotorStatorCurrent get_RS_current(float electric_angle) {
 }
 
 static float vofa_buf[2];
-void current_monitor_test(float electric_angle) {
-    RotorStatorCurrent current = get_RS_current(electric_angle);
+void current_monitor_test(float e_angle) {
+    RotorStatorCurrent current = get_RS_current(e_angle);
 
     vofa_buf[0] = current.Id;
     vofa_buf[1] = current.Iq;

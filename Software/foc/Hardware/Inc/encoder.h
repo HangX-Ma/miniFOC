@@ -53,6 +53,14 @@ typedef struct Encoder {
 } Encoder;
 extern Encoder g_encoder;
 
+
+typedef enum {
+    CW      = 1,  // clockwise
+    CCW     = -1, // counter-clockwise
+    UNKNOWN = 0   // not yet known or invalid state
+} Direction;
+extern Direction g_sensor_dir;
+
 void encoder_init(void);
 
 // You need to ensure the 'encoder_init' has been called.
