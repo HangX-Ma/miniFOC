@@ -108,7 +108,6 @@ static void align_sensor(void) {
 //! YOU MUST CALL ENCODER INIT FIRST
 void foc_init(void) {
     g_foc.property_.pole_pairs = MOTOR_POLE_PAIRS;
-    g_foc.property_.state      = MOTOR_UNALIGNED;
 
     g_foc.set_phase_voltage    = set_phase_voltage;
     g_foc.get_electrical_angle = get_electrical_angle;

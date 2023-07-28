@@ -28,14 +28,7 @@
 
 #include "utils.h"
 
-typedef enum {
-    MOTOR_UNALIGNED,
-    MOTOR_NORMAL,
-} MotorState;
-
-
 typedef struct {
-    MotorState state;
     uint8_t pole_pairs;
 } FOCProperty;
 
