@@ -1,7 +1,4 @@
 #include "led.h"
-#include "stm32f1xx_ll_bus.h"
-#include "stm32f1xx_ll_gpio.h"
-#include "stm32f1xx_ll_utils.h"
 
 void led_init(void) {
     LL_GPIO_InitTypeDef GPIO_InitStruct;

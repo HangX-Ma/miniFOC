@@ -215,9 +215,9 @@ void encoder_init(void) {
     // We need to do sensor alignment first.
     // Otherwise, on account of safety, the motor will not run.
     g_encoder.dir_ = UNKNOWN;
-    g_encoder.dir_ = CW;
 
-    g_encoder.get_shaft_angle    = get_shaft_angle; // needs to check ERROR_CODE
+    g_encoder.get_angle          = get_angle;
+    g_encoder.get_shaft_angle    = get_shaft_angle;
     g_encoder.get_shaft_velocity = get_shaft_velocity;
     g_encoder.is_error           = is_error;
 

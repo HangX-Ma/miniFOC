@@ -30,6 +30,7 @@
 
 typedef struct {
     uint8_t pole_pairs;
+    float zero_electrical_angle_offset;
 } FOCProperty;
 
 typedef struct {

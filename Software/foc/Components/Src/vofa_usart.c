@@ -92,6 +92,7 @@ void usart_tx_dma_reload(uint32_t len) {
 }
 
 void vofa_usart_init(void) {
+    setvbuf(stdout, NULL, _IONBF, 0);
     /* ------------------ USART1 DMA Init ------------------ */
     /* DMA interrupt init */
     NVIC_SetPriority(DMA1_Channel4_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(), 0, 0));

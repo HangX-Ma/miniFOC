@@ -22,7 +22,10 @@
 #ifndef __LED__H__
 #define __LED__H__
 
-#include "stm32f1xx.h"
+#include "utils.h"
+#include "stm32f1xx_ll_bus.h"
+#include "stm32f1xx_ll_gpio.h"
+#include "stm32f1xx_ll_utils.h"
 
 /**
  * @brief Toggle periods for various blinking modes

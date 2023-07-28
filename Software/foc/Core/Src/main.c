@@ -61,6 +61,9 @@ int main(void) {
     current_mointor_init();
     encoder_init();
     foc_init();
+    // Motor alignment start!
+    LL_mDelay(500);
+    g_foc.align_sensor();
 
     // oled_init();
     // oled_test();
@@ -91,7 +94,7 @@ int main(void) {
         // ------------ BLDC Motor test -----------------
         // bldc_test1_invariant_duty();
         // bldc_test2_svpwm();
-        bldc_test3_svpwm_with_angle();
+        // bldc_test3_svpwm_with_angle();
         // ------------ Encoder test ------------
         // encoder_test();
         // ------------ Current Monitor test ------------

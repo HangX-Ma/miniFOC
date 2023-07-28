@@ -3,7 +3,11 @@
 #include "bldc_config.h"
 #include "encoder.h"
 #include "qfplib-m3.h"
+#include "vofa_usart.h"
+#include "led.h"
 #include <math.h>
+
+#include "stm32f1xx_ll_utils.h"
 
 FOC g_foc;
 
@@ -14,7 +18,12 @@ static float normalize_angle(float angle) {
 }
 
 static float get_electrical_angle(float shaft_angle) {
-    return normalize_angle(qfp_fmul(shaft_angle, (float)g_foc.property_.pole_pairs));
+    return normalize_angle(
+        qfp_fsub(
+            qfp_fmul(shaft_angle, (float)g_foc.property_.pole_pairs),
+            g_foc.property_.zero_electrical_angle_offset
+        )
+    );
 }
 
 
@@ -103,11 +112,92 @@ static void set_phase_voltage(float Uq, float Ud, float e_angle) {
 
 static void align_sensor(void) {
     // electrical direction needs to be correspond to the mechanical angle
+    float e_angle; // electrical angle
+    float forward_angle, back_angle, delta_abs_angle; // mechanic angle
+
+    printf("[Motor]: Start sensor alignment...\r\n");
+
+    // we need to start pwm output first
+    LED_STATE_OFF();
+    g_bldc.start_pwm();
+
+    /* We want to ensure the sensor direction and the pole pairs number */
+    // forward 2PI electrical angle
+    for(int i = 0; i <= 500; i++) {
+        e_angle = qfp_fadd(-_PI_2, qfp_fdiv(qfp_fmul(_2PI, i), 500.0f));
+        g_foc.set_phase_voltage(SENSOR_ALIGN_VOLTAGE, 0, e_angle);
+        LL_mDelay(2);
+    }
+    forward_angle = g_encoder.get_angle();
+
+    // turn back
+    for(int i = 500; i >= 0; i--) {
+        e_angle = qfp_fadd(-_PI_2, qfp_fdiv(qfp_fmul(_2PI, i), 500.0f));
+        g_foc.set_phase_voltage(SENSOR_ALIGN_VOLTAGE, 0, e_angle);
+        LL_mDelay(2);
+    }
+    back_angle = g_encoder.get_angle();
+
+    printf("[Motor]: Forward angle is %.3f\r\n", forward_angle);
+    printf("[Motor]: Back angle is %.3f\r\n", back_angle);
+
+    // Try to stop motor at zero point
+    g_foc.set_phase_voltage(0, 0, -_PI_2);
+    LL_mDelay(200);
+
+    // Motor moves none, which indicates motor error.
+    delta_abs_angle = abs(qfp_fsub(forward_angle, back_angle));
+    if(( delta_abs_angle < 0.02f)) {
+        printf("[Motor]: Abnormal state. Please check encoder or motor.\n");
+        LED_STATE_OFF();
+        // stop pwm output. Motor will be stopped and this also can avoid emergency situation
+        g_bldc.stop_pwm();
+        return;
+    }
+
+    //* determine the sensor direction
+    if(forward_angle < back_angle) {
+        printf("[Motor]: Encoder dir is CCW\r\n");
+        g_encoder.dir_ = CCW;
+    }
+    else {
+        printf("[Motor]: Encoder dir is CW\r\n");
+        g_encoder.dir_ = CW;
+    }
+
+    //* calculate motor pole pairs
+    printf("[Motor]: Pole pairs checking...\r\n");
+    // 0.5 is arbitrary number it can be lower or higher!
+    // If the default pole pairs isn't correct, we use the calculated one!
+    if( abs(qfp_fsub(qfp_fmul(delta_abs_angle, g_foc.property_.pole_pairs), _2PI)) > 0.5f ) {
+        g_foc.property_.pole_pairs = qfp_fadd(qfp_fdiv(_2PI, delta_abs_angle), 0.5f);
+        printf("[Motor]: Estimated pole pairs = %d\r\n", g_foc.property_.pole_pairs);
+    } else {
+        printf("[Motor]: Ok!\r\n");
+    }
+
+    // lock electrical angle to zero
+    g_foc.set_phase_voltage(SENSOR_ALIGN_VOLTAGE, 0, -_PI_2);
+    LL_mDelay(500);
+
+    // collect the current mechanical angle to calculate the zero electrical angle offset
+    g_foc.property_.zero_electrical_angle_offset = normalize_angle(qfp_fmul(g_encoder.get_shaft_angle(), g_foc.property_.pole_pairs));
+    printf("[Motor]: Zero electrical angle: %.3f\r\n", g_foc.property_.zero_electrical_angle_offset);
+    LL_mDelay(100);
+
+    // Try to stop motor at zero point
+    g_foc.set_phase_voltage(0, 0, -_PI_2);
+    LL_mDelay(200);
+
+    LED_STATE_OFF();
+    // stop pwm output. Motor will be stopped and this also can avoid emergency situation
+    g_bldc.stop_pwm();
 }
 
 //! YOU MUST CALL ENCODER INIT FIRST
 void foc_init(void) {
     g_foc.property_.pole_pairs = MOTOR_POLE_PAIRS;
+    g_foc.property_.zero_electrical_angle_offset = 0.0f;
 
     g_foc.set_phase_voltage    = set_phase_voltage;
     g_foc.get_electrical_angle = get_electrical_angle;

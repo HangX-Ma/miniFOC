@@ -56,6 +56,7 @@ typedef enum {
 typedef struct Encoder {
     Direction dir_;
 
+    float (* get_angle)(void);
     float (* get_shaft_angle)(void);        ///< read the cumulative magnetic absolute angle value
     float (* get_shaft_velocity)(void);     ///< get current motor shaft velocity
     BOOL (* is_error)(void);                ///< check if the senor is too far away with the magnetic
