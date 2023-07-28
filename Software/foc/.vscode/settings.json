@@ -21,7 +21,9 @@
         "oled.h": "c",
         "math.h": "c",
         "bldc_test.h": "c",
-        "bldc_config.h": "c"
+        "bldc_config.h": "c",
+        "stm32f1xx_ll_utils.h": "c",
+        "foc.h": "c"
     },
     "cmake.configureOnOpen": true,
 }

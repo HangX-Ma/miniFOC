@@ -44,8 +44,8 @@ void bldc_test1_invariant_duty(void) {
 //* TEST2 start
 static float shaft_angle = 0.0f;
 float bldc_test2_svpwm(void) {
-    float e_angle = get_electrical_angle(shaft_angle);
-    setPhaseVoltage(1.0f, 0.0f, e_angle); // Uq < 2.0
+    float e_angle = g_foc.get_electrical_angle(shaft_angle);
+    g_foc.set_phase_voltage(1.0f, 0.0f, e_angle); // Uq < 2.0
     shaft_angle = qfp_fadd(shaft_angle, 0.05f);
     LL_mDelay(1);
     return e_angle;
@@ -55,6 +55,6 @@ float bldc_test2_svpwm(void) {
 
 //* TEST3 start
 void bldc_test3_svpwm_with_angle(void) {
-    setPhaseVoltage(0.5f, 0.0f, get_electrical_angle(g_encoder.get_shaft_angle()));
+    g_foc.set_phase_voltage(0.5f, 0.0f, g_foc.get_electrical_angle(g_encoder.get_shaft_angle()));
 }
 //* TEST3 end

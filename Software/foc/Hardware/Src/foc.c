@@ -1,8 +1,11 @@
 #include "foc.h"
 #include "config.h"
 #include "bldc_config.h"
+#include "encoder.h"
 #include "qfplib-m3.h"
 #include <math.h>
+
+FOC g_foc;
 
 // normalize angle to range [0, 2PI]
 static float normalize_angle(float angle) {
@@ -10,12 +13,12 @@ static float normalize_angle(float angle) {
     return _fmod >= 0 ? _fmod : qfp_fadd(_fmod, _2PI);
 }
 
-float get_electrical_angle(float shaft_angle) {
-    return normalize_angle(qfp_fmul(shaft_angle, (float)MOTOR_POLE_PAIRS));
+static float get_electrical_angle(float shaft_angle) {
+    return normalize_angle(qfp_fmul(shaft_angle, (float)g_foc.property_.pole_pairs));
 }
 
 
-void setPhaseVoltage(float Uq, float Ud, float e_angle) {
+static void set_phase_voltage(float Uq, float Ud, float e_angle) {
     float U_ref, U_alpha, U_beta;
     float T0, T1, T2;
     float Ta, Tb, Tc;
@@ -96,4 +99,18 @@ void setPhaseVoltage(float Uq, float Ud, float e_angle) {
     g_bldc.set_pwm_a_duty((uint32_t)qfp_fmul(Ta, (float)PWM_RELOAD_PERIOD));
     g_bldc.set_pwm_b_duty((uint32_t)qfp_fmul(Tb, (float)PWM_RELOAD_PERIOD));
     g_bldc.set_pwm_c_duty((uint32_t)qfp_fmul(Tc, (float)PWM_RELOAD_PERIOD));
+}
+
+static void align_sensor(void) {
+    // electrical direction needs to be correspond to the mechanical angle
+}
+
+//! YOU MUST CALL ENCODER INIT FIRST
+void foc_init(void) {
+    g_foc.property_.pole_pairs = MOTOR_POLE_PAIRS;
+    g_foc.property_.state      = MOTOR_UNALIGNED;
+
+    g_foc.set_phase_voltage    = set_phase_voltage;
+    g_foc.get_electrical_angle = get_electrical_angle;
+    g_foc.align_sensor         = align_sensor;
 }

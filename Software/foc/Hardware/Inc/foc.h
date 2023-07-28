@@ -28,8 +28,27 @@
 
 #include "utils.h"
 
+typedef enum {
+    MOTOR_UNALIGNED,
+    MOTOR_NORMAL,
+} MotorState;
 
-float get_electrical_angle(float shaft_angle);
-void setPhaseVoltage(float Uq, float Ud, float e_angle);
+
+typedef struct {
+    MotorState state;
+    uint8_t pole_pairs;
+} FOCProperty;
+
+typedef struct {
+    FOCProperty property_;
+    // methods
+    void (*set_phase_voltage)(float, float, float);
+    float (*get_electrical_angle)(float);
+    void (*align_sensor)(void);
+} FOC;
+
+extern FOC g_foc;
+
+void foc_init();
 
 #endif  //!__FOC__H__

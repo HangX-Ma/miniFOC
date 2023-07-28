@@ -9,7 +9,6 @@
 
 
 Encoder g_encoder;
-Direction g_sensor_dir;
 
 typedef struct {
     BOOL error_check;   // indicate the SC60228 state
@@ -142,11 +141,11 @@ static float LPF_velocity(float v) {
 }
 
 static float get_shaft_angle(void) {
-    return qfp_fmul((float)g_sensor_dir, get_angle());
+    return qfp_fmul((float)g_encoder.dir_, get_angle());
 }
 
 static float get_shaft_velocity(void) {
-    return qfp_fmul((float)g_sensor_dir, LPF_velocity(get_velocity()));
+    return qfp_fmul((float)g_encoder.dir_, LPF_velocity(get_velocity()));
 }
 
 static void encoder_gpio_init(void) {
@@ -212,17 +211,20 @@ void encoder_init(void) {
     LL_mDelay(10);
 
     deselect_chip();
-    // init g_encoder
+
+    // We need to do sensor alignment first.
+    // Otherwise, on account of safety, the motor will not run.
+    g_encoder.dir_ = UNKNOWN;
+    g_encoder.dir_ = CW;
+
     g_encoder.get_shaft_angle    = get_shaft_angle; // needs to check ERROR_CODE
     g_encoder.get_shaft_velocity = get_shaft_velocity;
     g_encoder.is_error           = is_error;
 
     // Get the initial motor magnetic angle position
     // Ensure the shaft velocity to be zero
-    raw_angle_data_prev          = (float)read_raw_angle();
+    raw_angle_data_prev = (float)read_raw_angle();
 
-    // electrical direction needs to be correspond to the mechanical angle
-    g_sensor_dir = CW;
 }
 
 

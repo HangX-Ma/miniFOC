@@ -47,9 +47,9 @@
 /* ----------------  FOC Configurations ---------------- */
 #define MOTOR_VM                        11.1f
 #define MOTOR_POLE_PAIRS                7
+#define SENSOR_ALIGN_VOLTAGE            0.5f
 // PWM frequency 20 KHz, but we use center aligned mode, so 72MHz/1800 = 40 KHz
 // can satisfy our need.
 #define PWM_RELOAD_PERIOD               1800
-
 
 #endif //!__CONFIG__H__
