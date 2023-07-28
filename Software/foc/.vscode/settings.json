@@ -19,7 +19,9 @@
         "u8g2.h": "c",
         "stm32f1xx_ll_dma.h": "c",
         "oled.h": "c",
-        "math.h": "c"
+        "math.h": "c",
+        "bldc_test.h": "c",
+        "bldc_config.h": "c"
     },
     "cmake.configureOnOpen": true,
 }

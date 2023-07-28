@@ -92,6 +92,7 @@ void usart_tx_dma_reload(uint32_t len) {
 }
 
 void vofa_usart_init(void) {
+    setvbuf(stdout, NULL, _IONBF, 0);
     /* ------------------ USART1 DMA Init ------------------ */
     /* DMA interrupt init */
     NVIC_SetPriority(DMA1_Channel4_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(), 0, 0));
@@ -217,4 +218,23 @@ void vofa_usart_dma_send_config(float *buffer, const uint32_t len) {
         send_frame.data_group[i].fdata = buffer[i];
     }
     usart_tx_dma_reload((len + 1) * 4);
+}
+
+
+// Use 'printf' to send data to USART using GCC compiler.
+//! ref: <https://blog.csdn.net/u010779035/article/details/104910309>
+//! ref: <https://zhuanlan.zhihu.com/p/369380259>
+int __io_putchar(int ch) {
+    while (LL_USART_IsActiveFlag_TXE(USARTx_INSTANCE) != SET) {}
+    LL_USART_TransmitData8(USARTx_INSTANCE, ch);
+
+    return ch;
+}
+
+int _write(int fd, char *ptr, int len) {
+    (void)fd; // avoid unused warning
+    for (int i = 0; i < len; i++) {
+        __io_putchar(*(ptr + i));
+    }
+    return len;
 }

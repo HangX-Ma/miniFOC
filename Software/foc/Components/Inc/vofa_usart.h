@@ -25,6 +25,7 @@
 #define __VOFA_USART__H__
 
 #include "utils.h"
+#include <stdio.h>
 
 /* definitions about USART1 and DMA1 settings */
 #define USARTx_INSTANCE                 USART1
