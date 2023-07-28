@@ -39,7 +39,7 @@ typedef struct MenuBase {
     void (*draw_circle_full)(u8g2_uint_t, u8g2_uint_t, u8g2_uint_t);
     void (*draw_circle_full_center)(u8g2_uint_t, u8g2_uint_t, u8g2_uint_t);
     void (*draw_rotated_rect)(float, float, float, float, float);
-    void (*set_color)(uint8_t c);
+    void (*set_color)(uint8_t);
     void (*clear)(void);
     void (*update)(void);
 } MenuBase;

@@ -86,21 +86,22 @@ static uint16_t read_raw_angle(void) {
 }
 
 static float get_angle(void) {
+    uint8_t count = 0;
     float raw_angle_data = read_raw_angle();
-    if (is_valid()) {
-        float d_raw_angle = raw_angle_data - raw_angle_data_prev;
-        // record the whole turns angles(according to d_raw_angle's direction)
-        if(abs(d_raw_angle) > (0.8 * ENCODER_RESOLUTION)) {
-            rotation_turns_angles = qfp_fadd(d_raw_angle > 0 ? -_2PI : _2PI, rotation_turns_angles);
-        }
-        raw_angle_data_prev = raw_angle_data;
-        // return current angle(rad)
-        return qfp_fadd(qfp_fmul(qfp_fdiv(raw_angle_data, (float)ENCODER_RESOLUTION), _2PI), rotation_turns_angles);
-    } else {
-        // Throw away the illegal data
-        return rotation_turns_angles;
+    // invalid angle is a small probability event
+    while (!is_valid() && count < 10) {
+        raw_angle_data = read_raw_angle();
+        count++;
     }
 
+    float d_raw_angle = raw_angle_data - raw_angle_data_prev;
+    // record the whole turns angles(according to d_raw_angle's direction)
+    if(abs(d_raw_angle) > qfp_fmul(0.8, (float)ENCODER_RESOLUTION)) {
+        rotation_turns_angles = qfp_fadd(d_raw_angle > 0 ? -_2PI : _2PI, rotation_turns_angles);
+    }
+    raw_angle_data_prev = raw_angle_data;
+    // return current angle(rad)
+    return qfp_fadd(qfp_fmul(qfp_fdiv(raw_angle_data, (float)ENCODER_RESOLUTION), _2PI), rotation_turns_angles);
 }
 
 static float get_velocity(void) {
@@ -108,14 +109,14 @@ static float get_velocity(void) {
 
     uint32_t tick_now_us = SysTick->VAL; // 72 MHz clock rate -> SysTick (HCLK/8) is set to 9 MHz
     if (tick_now_us < vel_sample_timestamp) {
-        timestamp = qfp_fmul(qfp_fdiv((float)(vel_sample_timestamp - tick_now_us), 9), 1e-6); // convert to sec
+        timestamp = qfp_fmul(qfp_fdiv((float)(vel_sample_timestamp - tick_now_us), 9.0f), 1e-6f); // convert to sec
     } else {
         // SysTick->VAL only use 24 LSB bits, counting down
-        timestamp = qfp_fmul(qfp_fdiv(((uint32_t)0xFFFFFF - tick_now_us + vel_sample_timestamp), 9), 1e-6);
+        timestamp = qfp_fmul(qfp_fdiv((float)((uint32_t)0xFFFFFF - tick_now_us + vel_sample_timestamp), 9.0f), 1e-6f);
     }
     // fix strange cases (overflow)
-    if(timestamp == 0 || timestamp > 0.5) {
-        timestamp = 1e-3;
+    if((timestamp < 1e-6f && timestamp > 1e-6f) || timestamp > 0.5f) {
+        timestamp = 1e-3f;
     }
 
     // current angle
@@ -130,6 +131,17 @@ static float get_velocity(void) {
     vel_sample_timestamp = tick_now_us;
 
     return vel;
+}
+
+static float vel_prev = 0;
+static float LPF_velocity(float v) {
+    float vel_curr = qfp_fadd(qfp_fmul(0.9f, vel_prev), qfp_fmul(0.1f, v));
+    vel_prev = vel_curr;
+    return vel_curr;
+}
+
+static float get_shaft_velocity(void) {
+    return LPF_velocity(get_velocity());
 }
 
 static void encoder_gpio_init(void) {
@@ -196,25 +208,23 @@ void encoder_init(void) {
 
     deselect_chip();
     // init g_encoder
-    g_encoder.get_angle    = get_angle;
-    g_encoder.get_velocity = get_velocity;
-    g_encoder.is_error     = is_error;
-    // get the initial motor magnetic angle position
-    raw_angle_data_prev    = (float)read_raw_angle();
+    g_encoder.get_shaft_angle    = get_angle; // needs to check ERROR_CODE
+    g_encoder.get_shaft_velocity = get_shaft_velocity;
+    g_encoder.is_error           = is_error;
+
+    // Get the initial motor magnetic angle position
+    // Ensure the shaft velocity to be zero
+    raw_angle_data_prev          = (float)read_raw_angle();
 }
 
 
 #include "vofa_usart.h"
 static float encoder_test_buf[1];
 void encoder_test(void) {
-    encoder_test_buf[0] = g_encoder.get_angle();
-    if (g_encoder.is_error) {
+    encoder_test_buf[0] = g_encoder.get_shaft_angle();
+    if (g_encoder.is_error()) {
         encoder_test_buf[0] = -1.11;
     }
-    // encoder_test_buf[1] = g_encoder.get_velocity();
-    // if (g_encoder.is_error) {
-    //     encoder_test_buf[1] = -2.22;
-    // }
     vofa_usart_dma_send_config(encoder_test_buf, 1);
-    LL_mDelay(500);
+    LL_mDelay(10);
 }

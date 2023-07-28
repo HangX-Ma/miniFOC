@@ -47,9 +47,9 @@ typedef union {
 } SC60228Angle;
 
 typedef struct Encoder {
-    float (* get_angle)(void);      ///< read current magnetic absolute angle value
-    float (* get_velocity)(void);   ///< get current motor velocity
-    BOOL (* is_error)(void);        ///< check if the senor is too far away with the magnetic
+    float (* get_shaft_angle)(void);        ///< read the cumulative magnetic absolute angle value
+    float (* get_shaft_velocity)(void);     ///< get current motor shaft velocity
+    BOOL (* is_error)(void);                ///< check if the senor is too far away with the magnetic
 } Encoder;
 extern Encoder g_encoder;
 

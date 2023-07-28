@@ -32,6 +32,8 @@ Except for this, <span style="color: #98C379; font-weight: bold;">`Software/foc/
 
 - SPI output pins sequence needs to be `CS`, `SCLK`, `MISO`, `MOSI`.
 - Magnetic attached to motor will affect the motor itself, my friend suggests me to use sensorless control strategy.
+- More power ports need to be reserved, such as `GND`, `3V3`.
+- SPI OLED ports sequence needs to be `GND`, `VCC`, `SCK`, `MOSI`, `RST`, `DC`, `CS`.
 
 ## Development Logs
 

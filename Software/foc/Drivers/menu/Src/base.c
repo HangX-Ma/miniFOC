@@ -4,7 +4,7 @@
 #include <stdio.h>
 
 MenuBase g_menu_base;
-static uint8_t str_buf[16];
+static char str_buf[16];
 
 static void get_str_width(const char *str) {
     u8g2_GetStrWidth(&u8g2, str);
