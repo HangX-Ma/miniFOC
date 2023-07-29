@@ -30,6 +30,11 @@
 //* you need to include the'*.h' file first!
 
 
+// Contorl Period
+//  =>  Current sensor:   10 KHz
+//  =>  Velocity Control: 1 KHz
+//  =>  Position Control: 100 Hz
+
 /**
  * @dir Hardware/Inc/encoder.h
  * @param g_encoder

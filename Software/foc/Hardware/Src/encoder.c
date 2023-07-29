@@ -6,10 +6,10 @@
 #include "stm32f1xx_ll_spi.h"
 #include "stm32f1xx_ll_gpio.h"
 #include "stm32f1xx_ll_bus.h"
+#include "stm32f1xx_ll_tim.h"
 
 
 Encoder g_encoder;
-
 typedef struct {
     BOOL error_check;   // indicate the SC60228 state
     BOOL parity_check;  // if the received data has error or not
@@ -21,10 +21,12 @@ static data_check_t data_check = {
 };
 
 
-static uint32_t vel_sample_timestamp = 0;
 static float raw_angle_data_prev = 0; // last raw angle value, MAX = ENCODER_RESOLUTION
 static float angle_prev = 0; // last angle value(radian)
 static float rotation_turns_angles = 0; // how may turns the motor runs(radian)
+
+// TIM2 is set to 1 KHz
+static float vel_ctrl_rate = 0.001;
 
 
 static uint16_t spi2_transmit_rw(uint16_t outdata) {
@@ -104,31 +106,23 @@ static float get_angle(void) {
     return qfp_fadd(qfp_fmul(qfp_fdiv(raw_angle_data, (float)ENCODER_RESOLUTION), _2PI), rotation_turns_angles);
 }
 
-static float get_velocity(void) {
-    float timestamp, angle_curr, vel;
+static float get_shaft_angle(void) {
+    return qfp_fmul((float)g_encoder.dir_, get_angle());
+}
 
-    uint32_t tick_now_us = SysTick->VAL; // 72 MHz clock rate -> SysTick (HCLK/8) is set to 9 MHz
-    if (tick_now_us < vel_sample_timestamp) {
-        timestamp = qfp_fmul(qfp_fdiv((float)(vel_sample_timestamp - tick_now_us), 9.0f), 1e-6f); // convert to sec
-    } else {
-        // SysTick->VAL only use 24 LSB bits, counting down
-        timestamp = qfp_fmul(qfp_fdiv((float)((uint32_t)0xFFFFFF - tick_now_us + vel_sample_timestamp), 9.0f), 1e-6f);
-    }
-    // fix strange cases (overflow)
-    if((timestamp < 1e-9f && timestamp > -1e-9f) || timestamp > 0.5f) {
-        timestamp = 1e-3f;
-    }
+//* Used in TIM2 interrupt handler -- start
+static float get_velocity(void) {
+    float angle_curr, vel;
 
     // current angle
     angle_curr = get_angle();
     // angle change
     float d_angle = qfp_fsub(angle_curr, angle_prev);
     // velocity calculation
-    vel = qfp_fdiv(d_angle, timestamp);
+    vel = qfp_fdiv(d_angle, vel_ctrl_rate);
 
     // prepare for next calculation
     angle_prev = angle_curr;
-    vel_sample_timestamp = tick_now_us;
 
     return vel;
 }
@@ -140,13 +134,11 @@ static float LPF_velocity(float v) {
     return vel_curr;
 }
 
-static float get_shaft_angle(void) {
-    return qfp_fmul((float)g_encoder.dir_, get_angle());
-}
 
 static float get_shaft_velocity(void) {
     return qfp_fmul((float)g_encoder.dir_, LPF_velocity(get_velocity()));
 }
+//* Used in TIM2 interrupt handler -- end
 
 static void encoder_gpio_init(void) {
     LL_GPIO_InitTypeDef GPIO_InitStruct = {0};
@@ -203,6 +195,42 @@ static void encoder_spi2_init(void) {
     LL_SPI_Enable(SPI2);
 }
 
+static void encoder_tim2_init(void) {
+    LL_TIM_InitTypeDef TIM_InitStruct = {0};
+
+    /* Peripheral clock enable */
+    LL_APB1_GRP1_EnableClock(LL_APB1_GRP1_PERIPH_TIM2);
+
+    /* TIM2 interrupt Init */
+    NVIC_SetPriority(TIM2_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(),0, 0));
+    NVIC_EnableIRQ(TIM2_IRQn);
+
+        // Velocity control frequency: 72 MHz / 72000 = 1 KHz
+    TIM_InitStruct.Prescaler     = 36 - 1;
+    TIM_InitStruct.CounterMode   = LL_TIM_COUNTERMODE_UP;
+    TIM_InitStruct.Autoreload    = 2000 - 1;
+    TIM_InitStruct.ClockDivision = LL_TIM_CLOCKDIVISION_DIV1;
+    LL_TIM_Init(TIM2, &TIM_InitStruct);
+
+    LL_TIM_EnableARRPreload(TIM2);
+    LL_TIM_SetClockSource(TIM2, LL_TIM_CLOCKSOURCE_INTERNAL);
+    LL_TIM_SetTriggerOutput(TIM2, LL_TIM_TRGO_RESET);
+    LL_TIM_DisableMasterSlaveMode(TIM2);
+
+    // enable TIM2 update
+    LL_TIM_EnableIT_UPDATE(TIM2);
+
+    // start TIM2 counter
+    LL_TIM_EnableCounter(TIM2);
+}
+
+static float shaft_velocity_print = 0.0f;
+void VELOCITY_CTRL_IRQHandler(void) {
+    if (LL_TIM_IsActiveFlag_UPDATE(TIM2) != RESET) {
+        shaft_velocity_print = get_shaft_velocity();
+    }
+    LL_TIM_ClearFlag_UPDATE(TIM2);
+}
 
 void encoder_init(void) {
     encoder_gpio_init();
@@ -218,13 +246,14 @@ void encoder_init(void) {
 
     g_encoder.get_angle          = get_angle;
     g_encoder.get_shaft_angle    = get_shaft_angle;
-    g_encoder.get_shaft_velocity = get_shaft_velocity;
     g_encoder.is_error           = is_error;
 
     // Get the initial motor magnetic angle position
     // Ensure the shaft velocity to be zero
     raw_angle_data_prev = (float)read_raw_angle();
 
+    // start TIM2 after the encoder start to work
+    encoder_tim2_init();
 }
 
 
@@ -235,7 +264,7 @@ void encoder_test(void) {
     if (g_encoder.is_error()) {
         encoder_test_buf[0] = -1.11;
     }
-    encoder_test_buf[1] = g_encoder.get_shaft_velocity();
+    encoder_test_buf[1] = shaft_velocity_print;
     if (g_encoder.is_error()) {
         encoder_test_buf[1] = -2.22;
     }

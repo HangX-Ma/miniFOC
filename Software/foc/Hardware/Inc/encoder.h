@@ -27,13 +27,15 @@
 
 #include "utils.h"
 
-#define ENCODER_GPIO_PORT           GPIOB
-#define ENCODER_CS_PIN              LL_GPIO_PIN_12
-#define ENCODER_SPI_SCK_PIN         LL_GPIO_PIN_13
-#define ENCODER_SPI_MISO_PIN        LL_GPIO_PIN_14
-#define ENCODER_SPI_MOSI_PIN        LL_GPIO_PIN_15
-#define ENCODER_RESOLUTION          4096
-#define ENCODER_DATA_LENGTH         12
+#define ENCODER_GPIO_PORT               GPIOB
+#define ENCODER_CS_PIN                  LL_GPIO_PIN_12
+#define ENCODER_SPI_SCK_PIN             LL_GPIO_PIN_13
+#define ENCODER_SPI_MISO_PIN            LL_GPIO_PIN_14
+#define ENCODER_SPI_MOSI_PIN            LL_GPIO_PIN_15
+#define ENCODER_RESOLUTION              4096
+#define ENCODER_DATA_LENGTH             12
+
+#define VELOCITY_CTRL_IRQHandler        TIM2_IRQHandler
 
 typedef union {
     struct {
@@ -58,7 +60,6 @@ typedef struct Encoder {
 
     float (* get_angle)(void);
     float (* get_shaft_angle)(void);        ///< read the cumulative magnetic absolute angle value
-    float (* get_shaft_velocity)(void);     ///< get current motor shaft velocity
     BOOL (* is_error)(void);                ///< check if the senor is too far away with the magnetic
 } Encoder;
 extern Encoder g_encoder;

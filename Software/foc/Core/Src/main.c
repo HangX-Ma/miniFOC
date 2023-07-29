@@ -96,7 +96,7 @@ int main(void) {
         // bldc_test2_svpwm();
         // bldc_test3_svpwm_with_angle();
         // ------------ Encoder test ------------
-        encoder_test();
+        // encoder_test();
         // ------------ Current Monitor test ------------
         // current_monitor_test(bldc_test2_svpwm());
     }

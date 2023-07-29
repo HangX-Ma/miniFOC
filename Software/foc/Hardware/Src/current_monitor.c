@@ -32,10 +32,10 @@ static void current_monitor_tim3_init(void) {
     /* Peripheral clock enable */
     LL_APB1_GRP1_EnableClock(LL_APB1_GRP1_PERIPH_TIM3);
 
-    // ADC sampling frequency: 72 MHz / 72000 = 1 KHz
+    // ADC sampling frequency: 72 MHz / 7200 = 10 KHz
     TIM_InitStruct.Prescaler       = 36 - 1;
     TIM_InitStruct.CounterMode     = LL_TIM_COUNTERMODE_UP;
-    TIM_InitStruct.Autoreload      = 2000 - 1;
+    TIM_InitStruct.Autoreload      = 200 - 1;
     TIM_InitStruct.ClockDivision   = LL_TIM_CLOCKDIVISION_DIV1;
     LL_TIM_Init(TIM3, &TIM_InitStruct);
 
