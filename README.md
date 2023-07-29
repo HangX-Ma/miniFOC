@@ -41,6 +41,7 @@ Except for this, <span style="color: #98C379; font-weight: bold;">`Software/foc/
 
 - Add velocity control loop and fix the jitter problem.
 - Add position control loop.
+- Add motion switch function and fix the motor jump problem when control type switches.
 
 ### 2023-07-28
 
