@@ -37,12 +37,17 @@ Except for this, <span style="color: #98C379; font-weight: bold;">`Software/foc/
 
 ## Development Logs
 
+### 2023-07-29
+
+- Add velocity control loop and fix the jitter problem.
+- Add position control loop.
+
 ### 2023-07-28
 
 - Attach the magnetic with shaft sleeve, sticking it on the shaft.
 - Remake an encoder board because previous one seems to be damaged.
 - Ensure the UVW sequence of the Motor.
-- <span style="color: #98C379; font-weight: bold;">[Pass TEST3]:</span> Position control test passes.
+- <span style="color: #98C379; font-weight: bold;">[Pass TEST3]:</span> Open loop position control test passes.
 - Add `printf` redirection code.
 - Add sensor alignment code: Identify the sensor direction, pole pairs and calculate the zero electrical angle offset.
     > The code will be trapped into a rabbit hole if the motor rotates not fluently. So check the serial output first!

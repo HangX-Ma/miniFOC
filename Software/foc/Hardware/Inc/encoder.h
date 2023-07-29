@@ -65,6 +65,7 @@ extern Encoder g_encoder;
 
 
 void encoder_init(void);
+void encoder_reset(void);
 // You need to ensure the 'encoder_init' has been called.
 void encoder_test(void);
 

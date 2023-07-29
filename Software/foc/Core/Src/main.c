@@ -30,6 +30,8 @@
 
 void SystemClock_Config(void);
 
+float foc_debugger_buf[3];
+
 /**
  * @brief  The application entry point.
  * @retval int
@@ -72,7 +74,6 @@ int main(void) {
     // oled_test();
     //* Initialize all configured peripherals end
 
-    float vel_debugger_buf[2];
     /* Infinite loop */
 #if USART_FLOAT_TEST
     float buf[3];
@@ -100,9 +101,10 @@ int main(void) {
         // bldc_test2_svpwm();
         // bldc_test3_svpwm_with_angle();
         // print out control info
-        vel_debugger_buf[0] = g_foc.state_.electrical_angle;
-        vel_debugger_buf[1] = g_foc.state_.vel;
-        vofa_usart_dma_send_config(vel_debugger_buf, 2);
+        foc_debugger_buf[0] = g_foc.state_.shaft_angle;
+        foc_debugger_buf[1] = g_foc.state_.shaft_speed;
+        foc_debugger_buf[2] = g_foc.state_.electrical_angle;
+        vofa_usart_dma_send_config(foc_debugger_buf, 3);
         LL_mDelay(100);
         // ------------ Encoder test ------------
         // encoder_test();

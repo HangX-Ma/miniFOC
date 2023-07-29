@@ -28,7 +28,7 @@
 
 #include "utils.h"
 
-#define VELOCITY_CTRL_IRQHandler        TIM2_IRQHandler
+#define FOC_CTRL_IRQHandler        TIM2_IRQHandler
 
 typedef struct {
     uint8_t pole_pairs;
@@ -36,19 +36,28 @@ typedef struct {
 } FOCProperty;
 
 typedef struct {
-    float vel;
+    float shaft_angle;
+    float shaft_speed;
     float electrical_angle;
+    BOOL switch_type;
 } FOCState;
 
 typedef struct {
-    void (*vel_start)(void);
-    void (*vel_stop)(void);
+    void (*start)(void);
+    void (*stop)(void);
 } FOCTypeCtrl;
+
+typedef enum FOCType {
+    // FOC_Type_Torque,
+    FOC_Type_Velocity,
+    FOC_Type_Angle,
+} FOCType;
 
 typedef struct {
     FOCProperty property_;
     FOCState state_;
     FOCTypeCtrl ctrl_;
+    FOCType type_;
 
     // methods
     void (*set_phase_voltage)(float, float, float);

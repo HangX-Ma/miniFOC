@@ -145,9 +145,9 @@ static void align_sensor(void) {
     printf("[Motor]: Back angle is degree %d\r\n", (int)qfp_fmul(qfp_fdiv(back_angle, _PI), 180.0f));
 
     // Try to stop motor at zero point
-    LL_mDelay(500);
+    LL_mDelay(200);
     g_foc.set_phase_voltage(0, 0, 0);
-    LL_mDelay(500);
+    LL_mDelay(200);
 
     // Motor moves none, which indicates motor error.
     delta_abs_angle = abs(qfp_fsub(forward_angle, back_angle));
@@ -197,7 +197,7 @@ static void align_sensor(void) {
 
     // lock electrical angle to zero
     g_foc.set_phase_voltage(SENSOR_ALIGN_VOLTAGE, 0, _3PI_2);
-    LL_mDelay(2000);
+    LL_mDelay(1000);
 
     // collect the current mechanical angle to calculate the zero electrical angle offset
     g_foc.property_.zero_electrical_angle_offset =
@@ -206,9 +206,9 @@ static void align_sensor(void) {
             (int)qfp_fmul(qfp_fdiv(g_foc.property_.zero_electrical_angle_offset, _PI), 180.0f));
 
     // Try to stop motor at zero point
-    LL_mDelay(500);
+    LL_mDelay(200);
     g_foc.set_phase_voltage(0, 0, 0);
-    LL_mDelay(500);
+    LL_mDelay(200);
 
     LED_STATE_OFF();
     // stop pwm output. Motor will be stopped and this also can avoid emergency situation
@@ -238,31 +238,41 @@ static void vel_ctrl_tim2_init(void) {
     LL_TIM_DisableMasterSlaveMode(TIM2);
 }
 
-#include "vofa_usart.h"
-
-// static float buf[3];
-
-//! ------------------- VELOCITY CONTROL -------------------
-static float vel_Uq = 0.0f;
-void VELOCITY_CTRL_IRQHandler(void) {
+//! ------------------- FOC CONTROL -------------------
+static float Uq_ = 0.0f;
+static float shaft_speed;
+void FOC_CTRL_IRQHandler(void) {
     if (LL_TIM_IsActiveFlag_UPDATE(TIM2) != RESET) {
-        g_foc.state_.electrical_angle = g_foc.get_electrical_angle(g_encoder.get_shaft_angle());
-        g_foc.state_.vel              = g_encoder.get_shaft_velocity();
-        vel_Uq = PID_velocity(qfp_fsub(g_vel_ctrl.target_speed, g_foc.state_.vel));
-        // buf[0] = g_foc.state_.electrical_angle;
-        // buf[1] = g_foc.state_.vel;
-        // buf[2] = vel_Uq;
-        // vofa_usart_dma_send_config(buf, 3);
-        g_foc.set_phase_voltage(vel_Uq, 0.0f, g_foc.state_.electrical_angle);
+        g_foc.state_.shaft_angle      = g_encoder.get_shaft_angle();
+        g_foc.state_.electrical_angle = g_foc.get_electrical_angle(g_foc.state_.shaft_angle);
+        g_foc.state_.shaft_speed      = g_encoder.get_shaft_velocity();
+
+        switch (g_foc.type_) {
+            case FOC_Type_Velocity:
+                Uq_            = PID_velocity(qfp_fsub(g_vel_ctrl.target_speed, g_foc.state_.shaft_speed));
+                g_foc.set_phase_voltage(Uq_, 0.0f, g_foc.state_.electrical_angle);
+                break;
+            case FOC_Type_Angle:
+                shaft_speed    = PID_angle(qfp_fsub(g_ang_ctrl.target_angle, g_foc.state_.shaft_angle));
+                Uq_            = PID_velocity(qfp_fsub(shaft_speed, g_foc.state_.shaft_speed /* actual speed */));
+                g_foc.set_phase_voltage(Uq_, 0.0f, g_foc.state_.electrical_angle);
+                break;
+        }
         LL_TIM_ClearFlag_UPDATE(TIM2);
     }
 }
 
-static void foc_vel_ctrl_start(void) {
-    vel_Uq = 0.0f;
-    g_foc.state_.vel = 0.0f;
-    g_foc.state_.electrical_angle = 0.0f;
-    pid_clear_history();
+static void foc_start(void) {
+    // We only reset those values when we switch motion type.
+    // Otherwise, this will lead to a motor jump.
+    if (g_foc.state_.switch_type == TRUE) {
+        Uq_ = 0.0f;
+        pid_clear_history();
+
+        // reset switch flag
+        g_foc.state_.switch_type = FALSE;
+        encoder_reset();
+    }
 
     g_bldc.start_pwm();
     // enable TIM2 update
@@ -271,7 +281,7 @@ static void foc_vel_ctrl_start(void) {
     LL_TIM_EnableCounter(TIM2);
 }
 
-static void foc_vel_ctrl_stop(void) {
+static void foc_stop(void) {
     g_bldc.stop_pwm();
     // start TIM2 counter
     LL_TIM_DisableCounter(TIM2);
@@ -284,11 +294,15 @@ void foc_init(void) {
     g_foc.property_.pole_pairs = MOTOR_POLE_PAIRS;
     g_foc.property_.zero_electrical_angle_offset = 0.0f;
 
-    g_foc.state_.vel              = 0.0f;
+    g_foc.state_.shaft_angle      = 0.0f;
+    g_foc.state_.shaft_speed      = 0.0f;
     g_foc.state_.electrical_angle = 0.0f;
+    g_foc.state_.switch_type      = TRUE;
 
-    g_foc.ctrl_.vel_start         = foc_vel_ctrl_start;
-    g_foc.ctrl_.vel_stop          = foc_vel_ctrl_stop;
+    g_foc.ctrl_.start             = foc_start;
+    g_foc.ctrl_.stop              = foc_stop;
+
+    g_foc.type_                   = FOC_Type_Velocity;
 
     g_foc.set_phase_voltage       = set_phase_voltage;
     g_foc.get_electrical_angle    = get_electrical_angle;

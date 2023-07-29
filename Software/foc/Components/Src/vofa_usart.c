@@ -172,35 +172,46 @@ void USARTx_DMA_RX_IRQHandler(void) {
             Format_Typedef recv_data = recv_frame.data_group[1];
 
             switch (cmd) {
-            case 0x01:                         // control motor start/stop
-                if (recv_data.chars[0] == 1) { // start
-                    LED_STATE_ON();
-                    g_foc.ctrl_.vel_start();
-                } else if (recv_data.chars[0] == 2) { // stop
-                    LED_STATE_OFF();
-                    g_foc.ctrl_.vel_stop();
-                }
-                break;
-            case 0x02: // set velocity
-                // The voltage limitation constrains the speed!
-                g_vel_ctrl.target_speed = recv_data.fdata;
-                break;
-            case 0x03: // set Speed Kp
-                g_vel_ctrl.pid.Kp = recv_data.fdata;
-                break;
-            case 0x04: // set Speed Ki
-                g_vel_ctrl.pid.Ki = recv_data.fdata;
-                break;
-            case 0x05: // set Current Kp
-                break;
-            case 0x06: // set Current Ki
-                break;
-            case 0x07: // enable Speed loop adjustment
-                break;
-            case 0x08: // enable Current loop adjustment
-                break;
-            default:
-                break;
+                case 0x01:                         // control motor start/stop
+                    if (recv_data.chars[0] == 1) { // start
+                        LED_STATE_ON();
+                        g_foc.ctrl_.start();
+                    } else if (recv_data.chars[0] == 2) { // stop
+                        LED_STATE_OFF();
+                        g_foc.ctrl_.stop();
+                    }
+                    break;
+                case 0x02: // set velocity
+                    // The voltage limitation constrains the speed!
+                    g_vel_ctrl.target_speed = recv_data.fdata;
+                    break;
+                case 0x03: // set Speed Kp
+                    g_vel_ctrl.pid.Kp = recv_data.fdata;
+                    break;
+                case 0x04: // set Speed Ki
+                    g_vel_ctrl.pid.Ki = recv_data.fdata;
+                    break;
+                case 0x05: // set angle
+                    g_ang_ctrl.target_angle = recv_data.fdata;
+                    break;
+                case 0x06: // set Angle Kp
+                    g_ang_ctrl.pid.Kp = recv_data.fdata;
+                    break;
+                case 0x07: // set Angle Ki
+                    g_ang_ctrl.pid.Ki = recv_data.fdata;
+                    break;
+                case 0x08: // Velocity Control
+                    g_foc.ctrl_.stop();
+                    g_foc.state_.switch_type = TRUE;
+                    g_foc.type_ = FOC_Type_Velocity;
+                    break;
+                case 0x09: // Angle Control
+                    g_foc.ctrl_.stop();
+                    g_foc.state_.switch_type = TRUE;
+                    g_foc.type_ = FOC_Type_Angle;
+                    break;
+                default:
+                    break;
             }
         }
         // we need to disable dma rx channel and reset the transfer length

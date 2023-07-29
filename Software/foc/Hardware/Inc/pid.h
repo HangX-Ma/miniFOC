@@ -25,14 +25,14 @@
 
 #include "utils.h"
 
-typedef struct VelPIDParam {
+typedef struct PIDParam {
     float Kp;
     float Ki;
     float Kd;
-} VelPIDParam;
+} PIDParam;
 
 typedef struct VelCtrlParam {
-    VelPIDParam pid;
+    PIDParam pid;
 
     float voltage_limit;
     float voltage_output_ramp;
@@ -41,8 +41,18 @@ typedef struct VelCtrlParam {
 } VelCtrlParam;
 extern VelCtrlParam g_vel_ctrl;
 
+typedef struct AngCtrlParam {
+    PIDParam pid;
+
+    float voltage_limit;
+    float target_angle;
+    float ctrl_rate;
+} AngCtrlParam;
+extern AngCtrlParam g_ang_ctrl;
+
 void pid_init(void);
 float PID_velocity(float err);
+float PID_angle(float err);
 
 void pid_clear_history(void);
 

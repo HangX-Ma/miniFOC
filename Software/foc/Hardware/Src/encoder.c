@@ -191,6 +191,23 @@ static void encoder_spi2_init(void) {
     LL_SPI_Enable(SPI2);
 }
 
+#include "foc.h"
+#include "pid.h"
+void encoder_reset(void) {
+    rotation_turns_angles = 0.0f;
+    raw_angle_data_prev = (float)read_raw_angle();
+    LL_mDelay(5);
+    angle_prev = get_angle();
+    LL_mDelay(5);
+    g_foc.state_.shaft_speed = get_velocity(); // must be zero
+    LL_mDelay(5);
+    g_foc.state_.shaft_angle = get_shaft_angle();
+    // Set current shaft angle as the target angle.
+    // So the motor can stop after motion mode being switched.
+    g_ang_ctrl.target_angle = g_foc.state_.shaft_angle;
+    g_vel_ctrl.target_speed = 0.0f;
+}
+
 void encoder_init(void) {
     encoder_gpio_init();
     encoder_spi2_init();
@@ -210,7 +227,7 @@ void encoder_init(void) {
 
     // Get the initial motor magnetic angle position
     // Ensure the shaft velocity to be zero
-    raw_angle_data_prev = (float)read_raw_angle();
+    encoder_reset();
 }
 
 

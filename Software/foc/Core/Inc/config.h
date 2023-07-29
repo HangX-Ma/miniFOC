@@ -31,9 +31,10 @@
 
 
 // Contorl Period
-//  =>  Current sensor:   10 KHz
+//  =>  Current Sensor:   10 KHz
+//  =>  Torque control:   1 KHz
 //  =>  Velocity Control: 1 KHz
-//  =>  Position Control: 100 Hz
+//  =>  Position Control: 1 KHz
 
 /**
  * @dir Hardware/Inc/encoder.h
@@ -61,7 +62,8 @@
 #define SENSOR_ALIGN_VOLTAGE            0.8f
 
 /* ----------------  PID Configurations ---------------- */
-#define VEL_VOLTAGE_LIMIT               2.0f
+#define FOC_VOLTAGE_LIMIT               2.0f
+#define FOC_CONTROL_RATE                0.001f
 
 // PWM frequency 20 KHz, but we use center aligned mode, so 72MHz/1800 = 40 KHz
 // can satisfy our need.
