@@ -115,7 +115,7 @@ static float get_velocity(void) {
         timestamp = qfp_fmul(qfp_fdiv((float)((uint32_t)0xFFFFFF - tick_now_us + vel_sample_timestamp), 9.0f), 1e-6f);
     }
     // fix strange cases (overflow)
-    if((timestamp < 1e-6f && timestamp > 1e-6f) || timestamp > 0.5f) {
+    if((timestamp < 1e-9f && timestamp > -1e-9f) || timestamp > 0.5f) {
         timestamp = 1e-3f;
     }
 
@@ -229,12 +229,16 @@ void encoder_init(void) {
 
 
 #include "vofa_usart.h"
-static float encoder_test_buf[1];
+static float encoder_test_buf[2];
 void encoder_test(void) {
     encoder_test_buf[0] = g_encoder.get_shaft_angle();
     if (g_encoder.is_error()) {
         encoder_test_buf[0] = -1.11;
     }
-    vofa_usart_dma_send_config(encoder_test_buf, 1);
-    LL_mDelay(100);
+    encoder_test_buf[1] = g_encoder.get_shaft_velocity();
+    if (g_encoder.is_error()) {
+        encoder_test_buf[1] = -2.22;
+    }
+    vofa_usart_dma_send_config(encoder_test_buf, 2);
+    LL_mDelay(10);
 }

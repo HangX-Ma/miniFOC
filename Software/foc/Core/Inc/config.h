@@ -43,6 +43,12 @@
  * @brief Target motor rotation velocity, controlled by host using USART.
  */
 
+/**
+ * @dir Hardware/Inc/foc.h
+ * @param g_foc
+ * @brief FOC related functions. Align sensor, set phase voltage and so on.
+ */
+
 
 /* ----------------  FOC Configurations ---------------- */
 #define MOTOR_VM                        11.1f
