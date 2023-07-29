@@ -1,6 +1,6 @@
 #include "vofa_usart.h"
 
-#include "bldc_config.h"
+#include "foc.h"
 #include "led.h"
 
 #include "stm32f1xx_ll_bus.h"
@@ -11,7 +11,6 @@
 
 SendFrame_t send_frame;
 RecvFrame_t recv_frame;
-float g_target_motor_vel = 0;
 
 static BOOL set_vofa_frame_tail(uint32_t tail) {
     if (tail > VOFA_SEND_FRAME_TAIL) {
@@ -121,15 +120,15 @@ void vofa_usart_init(void) {
     PB6   ------> USART1_TX
     PB7   ------> USART1_RX
     */
-    GPIO_InitStruct.Pin = USARTx_TX_PIN;
-    GPIO_InitStruct.Mode = LL_GPIO_MODE_ALTERNATE;
-    GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_HIGH;
-    GPIO_InitStruct.Pull = LL_GPIO_PULL_UP;
+    GPIO_InitStruct.Pin        = USARTx_TX_PIN;
+    GPIO_InitStruct.Mode       = LL_GPIO_MODE_ALTERNATE;
+    GPIO_InitStruct.Speed      = LL_GPIO_SPEED_FREQ_HIGH;
+    GPIO_InitStruct.Pull       = LL_GPIO_PULL_UP;
     GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
     LL_GPIO_Init(USARTx_TX_RX_GPIO_PORT, &GPIO_InitStruct);
 
-    GPIO_InitStruct.Pin = USARTx_RX_PIN;
-    GPIO_InitStruct.Mode = LL_GPIO_MODE_FLOATING;
+    GPIO_InitStruct.Pin        = USARTx_RX_PIN;
+    GPIO_InitStruct.Mode       = LL_GPIO_MODE_FLOATING;
     LL_GPIO_Init(USARTx_TX_RX_GPIO_PORT, &GPIO_InitStruct);
 
     LL_GPIO_AF_EnableRemap_USART1();
@@ -138,13 +137,13 @@ void vofa_usart_init(void) {
     NVIC_SetPriority(USART1_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(), 0, 0));
     NVIC_EnableIRQ(USART1_IRQn);
 
-    USART_InitStruct.BaudRate = 115200;
-    USART_InitStruct.DataWidth = LL_USART_DATAWIDTH_8B;
-    USART_InitStruct.StopBits = LL_USART_STOPBITS_1;
-    USART_InitStruct.Parity = LL_USART_PARITY_NONE;
-    USART_InitStruct.TransferDirection = LL_USART_DIRECTION_TX_RX;
+    USART_InitStruct.BaudRate            = 115200;
+    USART_InitStruct.DataWidth           = LL_USART_DATAWIDTH_8B;
+    USART_InitStruct.StopBits            = LL_USART_STOPBITS_1;
+    USART_InitStruct.Parity              = LL_USART_PARITY_NONE;
+    USART_InitStruct.TransferDirection   = LL_USART_DIRECTION_TX_RX;
     USART_InitStruct.HardwareFlowControl = LL_USART_HWCONTROL_NONE;
-    USART_InitStruct.OverSampling = LL_USART_OVERSAMPLING_16;
+    USART_InitStruct.OverSampling        = LL_USART_OVERSAMPLING_16;
     LL_USART_Init(USARTx_INSTANCE, &USART_InitStruct);
     LL_USART_ConfigAsyncMode(USARTx_INSTANCE);
     LL_USART_Enable(USARTx_INSTANCE);
@@ -161,6 +160,7 @@ void USARTx_DMA_TX_IRQHandler(void) {
     }
 }
 
+#include "pid.h"
 void USARTx_DMA_RX_IRQHandler(void) {
     // If data receiving complete, clear the TC5 flag
     if (LL_DMA_IsActiveFlag_TC5(DMA1) != RESET) {
@@ -174,27 +174,30 @@ void USARTx_DMA_RX_IRQHandler(void) {
             switch (cmd) {
             case 0x01:                         // control motor start/stop
                 if (recv_data.chars[0] == 1) { // start
-                    LED_STATE_TOGGLE();
-                    g_bldc.start_pwm();
+                    LED_STATE_ON();
+                    g_foc.ctrl_.vel_start();
                 } else if (recv_data.chars[0] == 2) { // stop
-                    LED_STATE_TOGGLE();
-                    g_bldc.stop_pwm();
+                    LED_STATE_OFF();
+                    g_foc.ctrl_.vel_stop();
                 }
                 break;
             case 0x02: // set velocity
-                g_target_motor_vel = recv_data.fdata;
+                // The voltage limitation constrains the speed!
+                g_vel_ctrl.target_speed = recv_data.fdata;
                 break;
             case 0x03: // set Speed Kp
+                g_vel_ctrl.pid.Kp = recv_data.fdata;
                 break;
             case 0x04: // set Speed Ki
+                g_vel_ctrl.pid.Ki = recv_data.fdata;
                 break;
             case 0x05: // set Current Kp
                 break;
             case 0x06: // set Current Ki
                 break;
-            case 0x07: // set Current Kp
+            case 0x07: // enable Speed loop adjustment
                 break;
-            case 0x08: // set Current Ki
+            case 0x08: // enable Current loop adjustment
                 break;
             default:
                 break;

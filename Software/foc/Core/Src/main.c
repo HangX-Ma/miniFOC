@@ -22,6 +22,7 @@
 #include "current_monitor.h"
 #include "encoder.h"
 #include "foc.h"
+#include "pid.h"
 #include "led.h"
 #include "oled.h"
 #include "qfplib-m3.h"
@@ -60,7 +61,9 @@ int main(void) {
     bldc_init();
     current_mointor_init();
     encoder_init();
+    pid_init();
     foc_init();
+
     // Motor alignment start!
     LL_mDelay(500);
     g_foc.align_sensor();
@@ -69,6 +72,7 @@ int main(void) {
     // oled_test();
     //* Initialize all configured peripherals end
 
+    float vel_debugger_buf[2];
     /* Infinite loop */
 #if USART_FLOAT_TEST
     float buf[3];
@@ -95,6 +99,11 @@ int main(void) {
         // bldc_test1_invariant_duty();
         // bldc_test2_svpwm();
         // bldc_test3_svpwm_with_angle();
+        // print out control info
+        vel_debugger_buf[0] = g_foc.state_.electrical_angle;
+        vel_debugger_buf[1] = g_foc.state_.vel;
+        vofa_usart_dma_send_config(vel_debugger_buf, 2);
+        LL_mDelay(100);
         // ------------ Encoder test ------------
         // encoder_test();
         // ------------ Current Monitor test ------------

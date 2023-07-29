@@ -5,9 +5,11 @@
 #include "qfplib-m3.h"
 #include "vofa_usart.h"
 #include "led.h"
+#include "pid.h"
 #include <math.h>
 
 #include "stm32f1xx_ll_utils.h"
+#include "stm32f1xx_ll_tim.h"
 
 FOC g_foc;
 
@@ -118,13 +120,14 @@ static void align_sensor(void) {
     printf("\n[Motor]: Start sensor alignment...\r\n");
 
     // we need to start pwm output first
-    LED_STATE_OFF();
+    LED_STATE_ON();
     g_bldc.start_pwm();
+    LL_mDelay(500);
 
     /* We want to ensure the sensor direction and the pole pairs number */
     // forward 2PI electrical angle
     for(int i = 0; i <= 1000; i++) {
-        e_angle = qfp_fadd(-_PI_2, qfp_fdiv(qfp_fmul(_2PI, i), 1000.0f));
+        e_angle = qfp_fadd(_3PI_2, qfp_fdiv(qfp_fmul(_2PI, i), 1000.0f));
         g_foc.set_phase_voltage(SENSOR_ALIGN_VOLTAGE, 0, e_angle);
         LL_mDelay(2);
     }
@@ -132,7 +135,7 @@ static void align_sensor(void) {
 
     // turn back
     for(int i = 1000; i >= 0; i--) {
-        e_angle = qfp_fadd(-_PI_2, qfp_fdiv(qfp_fmul(_2PI, i), 1000.0f));
+        e_angle = qfp_fadd(_3PI_2, qfp_fdiv(qfp_fmul(_2PI, i), 1000.0f));
         g_foc.set_phase_voltage(SENSOR_ALIGN_VOLTAGE, 0, e_angle);
         LL_mDelay(2);
     }
@@ -155,6 +158,7 @@ static void align_sensor(void) {
         return;
     }
 
+#if ESTIMATE_ENCODER_DIR
     //* determine the sensor direction
     if(forward_angle < back_angle) {
         printf("[Motor]: Encoder dir is CCW\r\n");
@@ -164,35 +168,110 @@ static void align_sensor(void) {
         printf("[Motor]: Encoder dir is CW\r\n");
         g_encoder.dir_ = CW;
     }
+#else
+    g_encoder.dir_ = CW;
+#endif
 
+#if ESTIMATE_POLE_PAIRS
     //* calculate motor pole pairs
     printf("[Motor]: Pole pairs checking...\r\n");
     // 0.5 is arbitrary number it can be lower or higher!
     // If the default pole pairs isn't correct, we use the calculated one!
     if( abs(qfp_fsub(qfp_fmul(delta_abs_angle, g_foc.property_.pole_pairs), _2PI)) > 0.5f ) {
         g_foc.property_.pole_pairs = qfp_fadd(qfp_fdiv(_2PI, delta_abs_angle), 0.5f);
-        printf("[Motor]: Estimated pole pairs = %d\r\n", g_foc.property_.pole_pairs);
+        if (g_foc.property_.pole_pairs > MOTOR_POLE_PAIRS + 1 || g_foc.property_.pole_pairs < MOTOR_POLE_PAIRS - 1) {
+            g_foc.property_.pole_pairs = MOTOR_POLE_PAIRS;
+            printf("[Motor]: Estimate pole pairs error.\n");
+            LED_STATE_OFF();
+            // stop pwm output. Motor will be stopped and this also can avoid emergency situation
+            g_bldc.stop_pwm();
+            return;
+        } else {
+            printf("[Motor]: Estimated pole pairs = %d\r\n", g_foc.property_.pole_pairs);
+        }
     } else {
         printf("[Motor]: Ok!\r\n");
     }
+#endif
 
     // lock electrical angle to zero
-    g_foc.set_phase_voltage(SENSOR_ALIGN_VOLTAGE, 0, -_PI_2);
+    g_foc.set_phase_voltage(SENSOR_ALIGN_VOLTAGE, 0, _3PI_2);
     LL_mDelay(1000);
 
     // collect the current mechanical angle to calculate the zero electrical angle offset
-    g_foc.property_.zero_electrical_angle_offset = normalize_angle(qfp_fmul(g_encoder.get_shaft_angle(), g_foc.property_.pole_pairs));
+    g_foc.property_.zero_electrical_angle_offset =
+            normalize_angle(qfp_fmul(g_encoder.get_shaft_angle(), g_foc.property_.pole_pairs));
     printf("[Motor]: Zero electrical angle is degree %d\r\n",
             (int)qfp_fmul(qfp_fdiv(g_foc.property_.zero_electrical_angle_offset, _PI), 180.0f));
     LL_mDelay(100);
 
-    // Try to stop motor at zero point
-    g_foc.set_phase_voltage(0, 0, 0);
-    LL_mDelay(500);
-
     LED_STATE_OFF();
     // stop pwm output. Motor will be stopped and this also can avoid emergency situation
     g_bldc.stop_pwm();
+}
+
+static void vel_ctrl_tim2_init(void) {
+    LL_TIM_InitTypeDef TIM_InitStruct = {0};
+
+    /* Peripheral clock enable */
+    LL_APB1_GRP1_EnableClock(LL_APB1_GRP1_PERIPH_TIM2);
+
+    /* TIM2 interrupt Init */
+    NVIC_SetPriority(TIM2_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(),0, 0));
+    NVIC_EnableIRQ(TIM2_IRQn);
+
+        // Velocity control frequency: 72 MHz / 72000 = 1 KHz
+    TIM_InitStruct.Prescaler     = 36 - 1;
+    TIM_InitStruct.CounterMode   = LL_TIM_COUNTERMODE_UP;
+    TIM_InitStruct.Autoreload    = 2000 - 1;
+    TIM_InitStruct.ClockDivision = LL_TIM_CLOCKDIVISION_DIV1;
+    LL_TIM_Init(TIM2, &TIM_InitStruct);
+
+    LL_TIM_EnableARRPreload(TIM2);
+    LL_TIM_SetClockSource(TIM2, LL_TIM_CLOCKSOURCE_INTERNAL);
+    LL_TIM_SetTriggerOutput(TIM2, LL_TIM_TRGO_RESET);
+    LL_TIM_DisableMasterSlaveMode(TIM2);
+}
+
+#include "vofa_usart.h"
+
+// static float buf[3];
+
+//! ------------------- VELOCITY CONTROL -------------------
+static float vel_Uq = 0.0f;
+void VELOCITY_CTRL_IRQHandler(void) {
+    if (LL_TIM_IsActiveFlag_UPDATE(TIM2) != RESET) {
+        g_foc.state_.electrical_angle = g_foc.get_electrical_angle(g_encoder.get_shaft_angle());
+        g_foc.state_.vel              = g_encoder.get_shaft_velocity();
+        vel_Uq = PID_velocity(qfp_fsub(g_vel_ctrl.target_speed, g_foc.state_.vel));
+        // buf[0] = g_foc.state_.electrical_angle;
+        // buf[1] = g_foc.state_.vel;
+        // buf[2] = vel_Uq;
+        // vofa_usart_dma_send_config(buf, 3);
+        g_foc.set_phase_voltage(vel_Uq, 0.0f, g_foc.state_.electrical_angle);
+        LL_TIM_ClearFlag_UPDATE(TIM2);
+    }
+}
+
+static void foc_vel_ctrl_start(void) {
+    vel_Uq = 0.0f;
+    g_foc.state_.vel = 0.0f;
+    g_foc.state_.electrical_angle = 0.0f;
+    pid_clear_history();
+
+    g_bldc.start_pwm();
+    // enable TIM2 update
+    LL_TIM_EnableIT_UPDATE(TIM2);
+    // start TIM2 counter
+    LL_TIM_EnableCounter(TIM2);
+}
+
+static void foc_vel_ctrl_stop(void) {
+    g_bldc.stop_pwm();
+    // start TIM2 counter
+    LL_TIM_DisableCounter(TIM2);
+    // enable TIM2 update
+    LL_TIM_DisableIT_UPDATE(TIM2);
 }
 
 //! YOU MUST CALL ENCODER INIT FIRST
@@ -200,7 +279,16 @@ void foc_init(void) {
     g_foc.property_.pole_pairs = MOTOR_POLE_PAIRS;
     g_foc.property_.zero_electrical_angle_offset = 0.0f;
 
-    g_foc.set_phase_voltage    = set_phase_voltage;
-    g_foc.get_electrical_angle = get_electrical_angle;
-    g_foc.align_sensor         = align_sensor;
+    g_foc.state_.vel              = 0.0f;
+    g_foc.state_.electrical_angle = 0.0f;
+
+    g_foc.ctrl_.vel_start         = foc_vel_ctrl_start;
+    g_foc.ctrl_.vel_stop          = foc_vel_ctrl_stop;
+
+    g_foc.set_phase_voltage       = set_phase_voltage;
+    g_foc.get_electrical_angle    = get_electrical_angle;
+    g_foc.align_sensor            = align_sensor;
+
+    vel_ctrl_tim2_init();
 }
+

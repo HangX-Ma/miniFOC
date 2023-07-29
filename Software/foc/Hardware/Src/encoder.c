@@ -1,12 +1,12 @@
 #include "encoder.h"
 #include "delay.h"
 #include "qfplib-m3.h"
+#include "pid.h"
 
 #include "stm32f1xx_ll_utils.h"
 #include "stm32f1xx_ll_spi.h"
 #include "stm32f1xx_ll_gpio.h"
 #include "stm32f1xx_ll_bus.h"
-#include "stm32f1xx_ll_tim.h"
 
 
 Encoder g_encoder;
@@ -24,10 +24,6 @@ static data_check_t data_check = {
 static float raw_angle_data_prev = 0; // last raw angle value, MAX = ENCODER_RESOLUTION
 static float angle_prev = 0; // last angle value(radian)
 static float rotation_turns_angles = 0; // how may turns the motor runs(radian)
-
-// TIM2 is set to 1 KHz
-static float vel_ctrl_rate = 0.001;
-
 
 static uint16_t spi2_transmit_rw(uint16_t outdata) {
     // wait until the SPI Tx buffer to be empty
@@ -91,7 +87,7 @@ static float get_angle(void) {
     uint8_t count = 0;
     float raw_angle_data = read_raw_angle();
     // invalid angle is a small probability event
-    while (!is_valid() && count < 10) {
+    while (!is_valid() && count < 2) {
         raw_angle_data = read_raw_angle();
         count++;
     }
@@ -119,7 +115,7 @@ static float get_velocity(void) {
     // angle change
     float d_angle = qfp_fsub(angle_curr, angle_prev);
     // velocity calculation
-    vel = qfp_fdiv(d_angle, vel_ctrl_rate);
+    vel = qfp_fdiv(d_angle, g_vel_ctrl.ctrl_rate);
 
     // prepare for next calculation
     angle_prev = angle_curr;
@@ -195,43 +191,6 @@ static void encoder_spi2_init(void) {
     LL_SPI_Enable(SPI2);
 }
 
-static void encoder_tim2_init(void) {
-    LL_TIM_InitTypeDef TIM_InitStruct = {0};
-
-    /* Peripheral clock enable */
-    LL_APB1_GRP1_EnableClock(LL_APB1_GRP1_PERIPH_TIM2);
-
-    /* TIM2 interrupt Init */
-    NVIC_SetPriority(TIM2_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(),0, 0));
-    NVIC_EnableIRQ(TIM2_IRQn);
-
-        // Velocity control frequency: 72 MHz / 72000 = 1 KHz
-    TIM_InitStruct.Prescaler     = 36 - 1;
-    TIM_InitStruct.CounterMode   = LL_TIM_COUNTERMODE_UP;
-    TIM_InitStruct.Autoreload    = 2000 - 1;
-    TIM_InitStruct.ClockDivision = LL_TIM_CLOCKDIVISION_DIV1;
-    LL_TIM_Init(TIM2, &TIM_InitStruct);
-
-    LL_TIM_EnableARRPreload(TIM2);
-    LL_TIM_SetClockSource(TIM2, LL_TIM_CLOCKSOURCE_INTERNAL);
-    LL_TIM_SetTriggerOutput(TIM2, LL_TIM_TRGO_RESET);
-    LL_TIM_DisableMasterSlaveMode(TIM2);
-
-    // enable TIM2 update
-    LL_TIM_EnableIT_UPDATE(TIM2);
-
-    // start TIM2 counter
-    LL_TIM_EnableCounter(TIM2);
-}
-
-static float shaft_velocity_print = 0.0f;
-void VELOCITY_CTRL_IRQHandler(void) {
-    if (LL_TIM_IsActiveFlag_UPDATE(TIM2) != RESET) {
-        shaft_velocity_print = get_shaft_velocity();
-    }
-    LL_TIM_ClearFlag_UPDATE(TIM2);
-}
-
 void encoder_init(void) {
     encoder_gpio_init();
     encoder_spi2_init();
@@ -246,28 +205,26 @@ void encoder_init(void) {
 
     g_encoder.get_angle          = get_angle;
     g_encoder.get_shaft_angle    = get_shaft_angle;
+    g_encoder.get_shaft_velocity = get_shaft_velocity;
     g_encoder.is_error           = is_error;
 
     // Get the initial motor magnetic angle position
     // Ensure the shaft velocity to be zero
     raw_angle_data_prev = (float)read_raw_angle();
-
-    // start TIM2 after the encoder start to work
-    encoder_tim2_init();
 }
 
 
 #include "vofa_usart.h"
-static float encoder_test_buf[2];
+static float encoder_test_buf[1];
 void encoder_test(void) {
     encoder_test_buf[0] = g_encoder.get_shaft_angle();
     if (g_encoder.is_error()) {
         encoder_test_buf[0] = -1.11;
     }
-    encoder_test_buf[1] = shaft_velocity_print;
-    if (g_encoder.is_error()) {
-        encoder_test_buf[1] = -2.22;
-    }
-    vofa_usart_dma_send_config(encoder_test_buf, 2);
+    // encoder_test_buf[1] = shaft_velocity_print;
+    // if (g_encoder.is_error()) {
+    //     encoder_test_buf[1] = -2.22;
+    // }
+    vofa_usart_dma_send_config(encoder_test_buf, 1);
     LL_mDelay(10);
 }

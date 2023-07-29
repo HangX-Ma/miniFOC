@@ -44,5 +44,6 @@ typedef enum {
 #define _2_SQRT3            1.15470053838f
 
 #define abs(x) ((x) > 0 ? (x) : (-(x)))
+#define constrain(val, low, high) ((val) < (low) ? (low) : ((val) > (high) ? (high) : (val)))
 
 #endif  //!__UTILS__H__

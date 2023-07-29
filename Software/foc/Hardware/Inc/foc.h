@@ -28,13 +28,28 @@
 
 #include "utils.h"
 
+#define VELOCITY_CTRL_IRQHandler        TIM2_IRQHandler
+
 typedef struct {
     uint8_t pole_pairs;
     float zero_electrical_angle_offset;
 } FOCProperty;
 
 typedef struct {
+    float vel;
+    float electrical_angle;
+} FOCState;
+
+typedef struct {
+    void (*vel_start)(void);
+    void (*vel_stop)(void);
+} FOCTypeCtrl;
+
+typedef struct {
     FOCProperty property_;
+    FOCState state_;
+    FOCTypeCtrl ctrl_;
+
     // methods
     void (*set_phase_voltage)(float, float, float);
     float (*get_electrical_angle)(float);
