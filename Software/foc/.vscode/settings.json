@@ -23,7 +23,8 @@
         "bldc_test.h": "c",
         "bldc_config.h": "c",
         "stm32f1xx_ll_utils.h": "c",
-        "foc.h": "c"
+        "foc.h": "c",
+        "config.h": "c"
     },
     "cmake.configureOnOpen": true,
 }

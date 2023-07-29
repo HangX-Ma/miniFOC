@@ -28,6 +28,7 @@
 typedef struct VelPIDParam {
     float Kp;
     float Ki;
+    float Kd;
 } VelPIDParam;
 
 typedef struct VelCtrlParam {
