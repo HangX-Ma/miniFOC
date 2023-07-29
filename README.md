@@ -42,6 +42,8 @@ Except for this, <span style="color: #98C379; font-weight: bold;">`Software/foc/
 - Add velocity control loop and fix the jitter problem.
 - Add position control loop.
 - Add motion switch function and fix the motor jump problem when control type switches.
+- Remove integral part in _Angle Control_. Only proportional part is left.
+    > Integral actually causes serious overshoot problem and affects the system response speed.
 
 ### 2023-07-28
 

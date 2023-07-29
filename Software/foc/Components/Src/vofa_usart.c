@@ -197,15 +197,16 @@ void USARTx_DMA_RX_IRQHandler(void) {
                 case 0x06: // set Angle Kp
                     g_ang_ctrl.pid.Kp = recv_data.fdata;
                     break;
-                case 0x07: // set Angle Ki
-                    g_ang_ctrl.pid.Ki = recv_data.fdata;
+                case 0x07:
                     break;
-                case 0x08: // Velocity Control
+                case 0x08:
+                    break;
+                case 0x09: // Velocity Control
                     g_foc.ctrl_.stop();
                     g_foc.state_.switch_type = TRUE;
                     g_foc.type_ = FOC_Type_Velocity;
                     break;
-                case 0x09: // Angle Control
+                case 0x0A: // Angle Control
                     g_foc.ctrl_.stop();
                     g_foc.state_.switch_type = TRUE;
                     g_foc.type_ = FOC_Type_Angle;

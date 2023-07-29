@@ -302,7 +302,7 @@ void foc_init(void) {
     g_foc.ctrl_.start             = foc_start;
     g_foc.ctrl_.stop              = foc_stop;
 
-    g_foc.type_                   = FOC_Type_Velocity;
+    g_foc.type_                   = FOC_Type_Angle;
 
     g_foc.set_phase_voltage       = set_phase_voltage;
     g_foc.get_electrical_angle    = get_electrical_angle;

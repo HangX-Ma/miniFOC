@@ -44,7 +44,7 @@ extern VelCtrlParam g_vel_ctrl;
 typedef struct AngCtrlParam {
     PIDParam pid;
 
-    float voltage_limit;
+    float velocity_limit;
     float target_angle;
     float ctrl_rate;
 } AngCtrlParam;

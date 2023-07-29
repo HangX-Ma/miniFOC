@@ -32,7 +32,6 @@
 
 // Contorl Period
 //  =>  Current Sensor:   10 KHz
-//  =>  Torque control:   1 KHz
 //  =>  Velocity Control: 1 KHz
 //  =>  Position Control: 1 KHz
 
@@ -63,6 +62,7 @@
 
 /* ----------------  PID Configurations ---------------- */
 #define FOC_VOLTAGE_LIMIT               2.0f
+#define FOC_ANG_SPEED_LIMIT             20.0f
 #define FOC_CONTROL_RATE                0.001f
 
 // PWM frequency 20 KHz, but we use center aligned mode, so 72MHz/1800 = 40 KHz
