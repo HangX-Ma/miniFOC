@@ -325,8 +325,8 @@ void foc_init(void) {
     g_foc.ctrl_.start             = foc_start;
     g_foc.ctrl_.stop              = foc_stop;
 
-    g_foc.motion_type_            = FOC_Motion_Type_Torque;
-    g_foc.torque_type_            = FOC_Torque_Type_Current;
+    g_foc.motion_type_            = FOC_Motion_Type_Angle;
+    g_foc.torque_type_            = FOC_Torque_Type_Voltage;
     g_foc.voltage_.d              = 0.0f;
     g_foc.voltage_.q              = 0.0f;
 

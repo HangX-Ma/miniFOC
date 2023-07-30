@@ -96,10 +96,12 @@ int main(void) {
         vofa_usart_dma_send_config(buf, 2);
         LL_mDelay(10);
 #endif
+        // NOTE: close TIM2 interrupt if you want to use the test below
         // ------------ BLDC Motor test -----------------
         // bldc_test1_invariant_duty();
         // bldc_test2_svpwm();
         // bldc_test3_svpwm_with_angle();
+
         // print out control info
         foc_debugger_buf[0] = g_foc.state_.shaft_angle;
         foc_debugger_buf[1] = g_foc.state_.shaft_speed;
