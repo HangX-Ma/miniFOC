@@ -37,13 +37,17 @@ Except for this, <span style="color: #98C379; font-weight: bold;">`Software/foc/
 
 ## Development Logs
 
+- Add current sense monitor feedback, thus, creating a current control loop.
+    > :x: Current phase sequence is necessary to be identified. I haven't solve the it. Motor can not work when current feedback added.
+- Add _Torque Control_ part, reconstruct the control logic and delete some abundant codes.
+
 ### 2023-07-29
 
 - Add velocity control loop and fix the jitter problem.
 - Add position control loop.
 - Add motion switch function and fix the motor jump problem when control type switches.
 - Remove integral part in _Angle Control_. Only proportional part is left.
-    > Integral actually causes serious overshoot problem and affects the system response speed.
+    > :heavy_exclamation_mark: Integral part actually causes serious overshoot problem and affects the system response speed.
 
 ### 2023-07-28
 
