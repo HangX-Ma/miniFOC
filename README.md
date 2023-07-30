@@ -20,6 +20,13 @@ Except for this, <span style="color: #98C379; font-weight: bold;">`Software/foc/
 
 > I will try to use sensor-less control strategy if the fundamental functions all perform well.
 
+## Driver Parameters
+
+- Input voltage range: 8 V ~ 60 V (Drv8313)
+- Maximum current: 2 A (Drv8313)
+- Serial port baud rate: 115200
+- MCU: STM32F103C8T6, 64 KB flash, 32 KB RAM
+
 ## Environment
 
 - **Serial Port Tool:** [Vofa+](https://www.vofa.plus/downloads/?v=7/17/2023)
@@ -27,6 +34,14 @@ Except for this, <span style="color: #98C379; font-weight: bold;">`Software/foc/
 - **Dev Tools:** VSCode, CMake, OpenOCD, STLInk-v2, STM32CubeMX
 - **Debugger:** Cortex-Debug
 - **Library:** [u8g2](https://github.com/olikraus/u8g2), [Qfplib-M3](https://www.quinapalus.com/qfplib-m3.html)
+
+## Function Features
+
+- [x] Using space vector pulse width modulation
+- [x] Torque control without current sensor
+- [x] Rotational speed closed loop control
+- [x] Rotation angle closed loop control
+- [ ] Torque control with current sensor
 
 ## Problem Found
 
