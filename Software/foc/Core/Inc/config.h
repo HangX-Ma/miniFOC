@@ -60,9 +60,11 @@
 #define MOTOR_POLE_PAIRS                7
 #define SENSOR_ALIGN_VOLTAGE            0.8f
 
-/* ----------------  PID Configurations ---------------- */
+/* ----------------  FOC PID Configurations ---------------- */
 #define FOC_VOLTAGE_LIMIT               2.0f
-#define FOC_ANG_SPEED_LIMIT             20.0f
+#define FOC_VOLTAGE_RAMP                100.0f
+#define FOC_CURRENT_LIMIT               1.0f
+#define FOC_ANG_SPEED_LIMIT             30.0f
 #define FOC_CONTROL_RATE                0.001f
 
 // PWM frequency 20 KHz, but we use center aligned mode, so 72MHz/1800 = 40 KHz

@@ -31,11 +31,27 @@ typedef struct PIDParam {
     float Kd;
 } PIDParam;
 
+typedef struct PIDPrevData {
+    float err;
+    float integral;
+    float derivative;
+    float output;
+} PIDPrevData;
+
+typedef struct TorCtrlParam {
+    float target_torque;
+    float voltage_limit;
+    float current_limit;
+} TorCtrlParam;
+extern TorCtrlParam g_tor_ctrl;
+
 typedef struct VelCtrlParam {
     PIDParam pid;
+    PIDPrevData prev_data;
 
     float voltage_limit;
-    float voltage_output_ramp;
+    float current_limit;
+    float voltage_ramp;
     float target_speed;
     float ctrl_rate;
 } VelCtrlParam;
@@ -50,9 +66,22 @@ typedef struct AngCtrlParam {
 } AngCtrlParam;
 extern AngCtrlParam g_ang_ctrl;
 
+typedef struct CurrCtrlParam {
+    PIDParam pid;
+    PIDPrevData prev_data;
+
+    float voltage_limit;
+    float voltage_ramp;
+    float ctrl_rate;
+} CurrCtrlParam;
+extern CurrCtrlParam g_Iq_ctrl;
+extern CurrCtrlParam g_Id_ctrl;
+
 void pid_init(void);
+float torque_clamp(void);
 float PID_velocity(float err);
 float PID_angle(float err);
+float PID_current(CurrCtrlParam *ctrl, float err);
 
 void pid_clear_history(void);
 

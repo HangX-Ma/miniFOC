@@ -195,6 +195,11 @@ RotorStatorCurrent get_RS_current(float e_angle) {
     return RS_current_curr;
 }
 
+void current_monitor_reset(void) {
+    RS_current_prev.Id = 0.0f;
+    RS_current_prev.Iq = 0.0f;
+}
+
 static float vofa_buf[2];
 void current_monitor_test(float e_angle) {
     RotorStatorCurrent current = get_RS_current(e_angle);

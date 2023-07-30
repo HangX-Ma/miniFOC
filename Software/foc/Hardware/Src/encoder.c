@@ -165,14 +165,14 @@ static void encoder_spi2_init(void) {
         => PB14   ------> SPI2_MISO
         => PB15   ------> SPI2_MOSI
     */
-    GPIO_InitStruct.Pin        = ENCODER_SPI_SCK_PIN | ENCODER_SPI_MOSI_PIN;
-    GPIO_InitStruct.Mode       = LL_GPIO_MODE_ALTERNATE;
-    GPIO_InitStruct.Speed      = LL_GPIO_SPEED_FREQ_HIGH;
-    GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
+    GPIO_InitStruct.Pin              = ENCODER_SPI_SCK_PIN | ENCODER_SPI_MOSI_PIN;
+    GPIO_InitStruct.Mode             = LL_GPIO_MODE_ALTERNATE;
+    GPIO_InitStruct.Speed            = LL_GPIO_SPEED_FREQ_HIGH;
+    GPIO_InitStruct.OutputType       = LL_GPIO_OUTPUT_PUSHPULL;
     LL_GPIO_Init(ENCODER_GPIO_PORT, &GPIO_InitStruct);
 
-    GPIO_InitStruct.Pin        = ENCODER_SPI_MISO_PIN;
-    GPIO_InitStruct.Mode       = LL_GPIO_MODE_FLOATING;
+    GPIO_InitStruct.Pin              = ENCODER_SPI_MISO_PIN;
+    GPIO_InitStruct.Mode             = LL_GPIO_MODE_FLOATING;
     LL_GPIO_Init(ENCODER_GPIO_PORT, &GPIO_InitStruct);
 
     SPI_InitStruct.TransferDirection = LL_SPI_FULL_DUPLEX;

@@ -7,6 +7,7 @@
 #include "led.h"
 #include "pid.h"
 #include <math.h>
+#include "current_monitor.h"
 
 #include "stm32f1xx_ll_utils.h"
 #include "stm32f1xx_ll_tim.h"
@@ -239,25 +240,45 @@ static void vel_ctrl_tim2_init(void) {
 }
 
 //! ------------------- FOC CONTROL -------------------
-static float Uq_ = 0.0f;
 static float shaft_speed;
+static float target_q;
+static RotorStatorCurrent RS_current;
+
 void FOC_CTRL_IRQHandler(void) {
     if (LL_TIM_IsActiveFlag_UPDATE(TIM2) != RESET) {
         g_foc.state_.shaft_angle      = g_encoder.get_shaft_angle();
         g_foc.state_.electrical_angle = g_foc.get_electrical_angle(g_foc.state_.shaft_angle);
         g_foc.state_.shaft_speed      = g_encoder.get_shaft_velocity();
 
-        switch (g_foc.type_) {
-            case FOC_Type_Velocity:
-                Uq_            = PID_velocity(qfp_fsub(g_vel_ctrl.target_speed, g_foc.state_.shaft_speed));
-                g_foc.set_phase_voltage(Uq_, 0.0f, g_foc.state_.electrical_angle);
+        switch (g_foc.motion_type_) {
+            case FOC_Motion_Type_Torque:
+                target_q = torque_clamp();
                 break;
-            case FOC_Type_Angle:
-                shaft_speed    = PID_angle(qfp_fsub(g_ang_ctrl.target_angle, g_foc.state_.shaft_angle));
-                Uq_            = PID_velocity(qfp_fsub(shaft_speed, g_foc.state_.shaft_speed /* actual speed */));
-                g_foc.set_phase_voltage(Uq_, 0.0f, g_foc.state_.electrical_angle);
+            case FOC_Motion_Type_Velocity:
+                target_q = PID_velocity(qfp_fsub(g_vel_ctrl.target_speed, g_foc.state_.shaft_speed));
                 break;
+            case FOC_Motion_Type_Angle:
+                shaft_speed = PID_angle(qfp_fsub(g_ang_ctrl.target_angle, g_foc.state_.shaft_angle));
+                target_q    = PID_velocity(qfp_fsub(shaft_speed, g_foc.state_.shaft_speed /* actual speed */));
+                break;
+            default:
+                // Nothing happens...
+                goto out;
         }
+        if (g_foc.torque_type_ == FOC_Torque_Type_Voltage) {
+            g_foc.voltage_.q = target_q;
+            g_foc.voltage_.d = 0.0f;
+        } else if (g_foc.torque_type_ == FOC_Torque_Type_Current) {
+            RS_current = get_RS_current(g_foc.state_.electrical_angle);
+            g_foc.voltage_.q = PID_current(&g_Iq_ctrl, qfp_fsub(target_q, RS_current.Iq));
+            g_foc.voltage_.d = PID_current(&g_Id_ctrl, /* target_d = 0.0f */ -RS_current.Id);
+        } else {
+            // avoid undefined situation. Prohibit the motor running.
+            g_foc.voltage_.q = 0.0f;
+            g_foc.voltage_.d = 0.0f;
+        }
+        g_foc.set_phase_voltage(g_foc.voltage_.q, g_foc.voltage_.d, g_foc.state_.electrical_angle);
+out:
         LL_TIM_ClearFlag_UPDATE(TIM2);
     }
 }
@@ -266,8 +287,10 @@ static void foc_start(void) {
     // We only reset those values when we switch motion type.
     // Otherwise, this will lead to a motor jump.
     if (g_foc.state_.switch_type == TRUE) {
-        Uq_ = 0.0f;
+        g_foc.voltage_.d = 0.0f;
+        g_foc.voltage_.q = 0.0f;
         pid_clear_history();
+        current_monitor_reset();
 
         // reset switch flag
         g_foc.state_.switch_type = FALSE;
@@ -302,7 +325,10 @@ void foc_init(void) {
     g_foc.ctrl_.start             = foc_start;
     g_foc.ctrl_.stop              = foc_stop;
 
-    g_foc.type_                   = FOC_Type_Angle;
+    g_foc.motion_type_            = FOC_Motion_Type_Torque;
+    g_foc.torque_type_            = FOC_Torque_Type_Current;
+    g_foc.voltage_.d              = 0.0f;
+    g_foc.voltage_.q              = 0.0f;
 
     g_foc.set_phase_voltage       = set_phase_voltage;
     g_foc.get_electrical_angle    = get_electrical_angle;

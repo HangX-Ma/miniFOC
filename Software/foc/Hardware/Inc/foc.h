@@ -47,17 +47,29 @@ typedef struct {
     void (*stop)(void);
 } FOCTypeCtrl;
 
-typedef enum FOCType {
-    // FOC_Type_Torque,
-    FOC_Type_Velocity,
-    FOC_Type_Angle,
-} FOCType;
+typedef enum FOCMotionType {
+    FOC_Motion_Type_Torque,
+    FOC_Motion_Type_Velocity,
+    FOC_Motion_Type_Angle,
+} FOCMotionType;
+
+typedef enum FOCTorqueType {
+    FOC_Torque_Type_Voltage,
+    FOC_Torque_Type_Current,
+} FOCTorqueType;
+
+typedef struct {
+    float d;
+    float q;
+} FOCVoltage;
 
 typedef struct {
     FOCProperty property_;
     FOCState state_;
     FOCTypeCtrl ctrl_;
-    FOCType type_;
+    FOCMotionType motion_type_;
+    FOCTorqueType torque_type_;
+    FOCVoltage voltage_;
 
     // methods
     void (*set_phase_voltage)(float, float, float);
