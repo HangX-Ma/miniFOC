@@ -169,22 +169,25 @@ RotorStatorCurrent get_RS_current(float e_angle) {
     PhaseCurrent phase_current;
     RotorStatorCurrent RS_current_curr;
     float adc_val1, adc_val2;
+    float I_alpha, I_beta;
 
     adc_val1 = qfp_fdiv(qfp_fmul((float)current_monitor_adc.chx[0], ADCx_VOLTAGE_REFERENCE), (float)ADCx_RESOLUTION);
     adc_val2 = qfp_fdiv(qfp_fmul((float)current_monitor_adc.chx[1], ADCx_VOLTAGE_REFERENCE), (float)ADCx_RESOLUTION);
 
     phase_current.Ia   = qfp_fdiv(qfp_fdiv((adc_val1 - ADCx_VOLTAGE_BIAS), CURRENT_SENSE_REGISTER), INA199x1_GAIN);
     phase_current.Ib   = qfp_fdiv(qfp_fdiv((adc_val2 - ADCx_VOLTAGE_BIAS), CURRENT_SENSE_REGISTER), INA199x1_GAIN);
-    phase_current.Ib   = qfp_fadd(qfp_fmul(_1_SQRT3, phase_current.Ia), qfp_fmul(_2_SQRT3, phase_current.Ib));
+
+    I_alpha = phase_current.Ia;
+    I_beta  = qfp_fadd(qfp_fmul(_1_SQRT3, phase_current.Ia), qfp_fmul(_2_SQRT3, phase_current.Ib));
 
     RS_current_curr.Id = qfp_fadd(
-                           qfp_fmul(phase_current.Ia, qfp_fcos(e_angle)),
-                           qfp_fmul(phase_current.Ib, qfp_fsin(e_angle))
+                           qfp_fmul(I_alpha, qfp_fcos(e_angle)),
+                           qfp_fmul(I_beta, qfp_fsin(e_angle))
                          );
 
-    RS_current_curr.Iq  = qfp_fsub(
-                           qfp_fmul(phase_current.Ib, qfp_fcos(e_angle)),
-                           qfp_fmul(phase_current.Ia, qfp_fsin(e_angle))
+    RS_current_curr.Iq = qfp_fsub(
+                           qfp_fmul(I_beta, qfp_fcos(e_angle)),
+                           qfp_fmul(I_alpha, qfp_fsin(e_angle))
                          );
     LPF_current(&RS_current_curr.Id, &RS_current_prev.Id);
     LPF_current(&RS_current_curr.Iq, &RS_current_prev.Iq);
