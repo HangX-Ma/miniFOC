@@ -103,13 +103,13 @@ int main(void) {
         // bldc_test3_svpwm_with_angle();
 
         // print out control info
-        // foc_debugger_buf[0] = g_foc.state_.shaft_angle;
-        // foc_debugger_buf[1] = g_foc.state_.shaft_speed;
-        // foc_debugger_buf[2] = g_foc.state_.electrical_angle;
-        // vofa_usart_dma_send_config(foc_debugger_buf, 3);
-        foc_debugger_buf[0] = g_foc.state_.q;
-        foc_debugger_buf[1] = g_foc.state_.d;
-        vofa_usart_dma_send_config(foc_debugger_buf, 2);
+        foc_debugger_buf[0] = g_foc.state_.shaft_angle;
+        foc_debugger_buf[1] = g_foc.state_.shaft_speed;
+        foc_debugger_buf[2] = g_foc.state_.electrical_angle;
+        vofa_usart_dma_send_config(foc_debugger_buf, 3);
+        // foc_debugger_buf[0] = g_foc.state_.q;
+        // foc_debugger_buf[1] = g_foc.state_.d;
+        // vofa_usart_dma_send_config(foc_debugger_buf, 2);
         LL_mDelay(100);
         // ------------ Encoder test ------------
         // encoder_test();
