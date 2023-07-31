@@ -11,13 +11,17 @@ AngCtrlParam g_ang_ctrl;
 CurrCtrlParam g_Iq_ctrl;
 CurrCtrlParam g_Id_ctrl;
 
-float torque_clamp(void) {
-    float output;
+float PID_torque(float err) {
+    float proportional, output;
 
+    // u_p  = P *e(k)
+    proportional = qfp_fmul(g_tor_ctrl.pid.Kp, err);
+
+    output = proportional;
     if (g_foc.torque_type_ == FOC_Torque_Type_Voltage) {
-        output = constrain(g_tor_ctrl.target_torque, -g_tor_ctrl.voltage_limit, g_tor_ctrl.voltage_limit);
+        output = constrain(output, -g_tor_ctrl.voltage_limit, g_tor_ctrl.voltage_limit);
     } else if (g_foc.torque_type_ == FOC_Torque_Type_Current) {
-        output = constrain(g_tor_ctrl.target_torque, -g_tor_ctrl.current_limit, g_tor_ctrl.current_limit);
+        output = constrain(output, -g_tor_ctrl.current_limit, g_tor_ctrl.current_limit);
     } else {
         output = 0.0f;
     }
@@ -141,6 +145,9 @@ float PID_current(CurrCtrlParam *ctrl, float err) {
 void pid_init(void) {
     pid_clear_history();
     // init torque control parameters
+    g_tor_ctrl.pid.Kp = 0.0f;
+    g_tor_ctrl.pid.Ki = 0.0f;
+    g_tor_ctrl.pid.Kd = 0.0f;
     // torque needs to be greater than 0.6 under current loop control
     g_tor_ctrl.target_torque = 0.0f;
     g_tor_ctrl.voltage_limit = FOC_VOLTAGE_LIMIT;

@@ -24,7 +24,10 @@
         "bldc_config.h": "c",
         "stm32f1xx_ll_utils.h": "c",
         "foc.h": "c",
-        "config.h": "c"
+        "config.h": "c",
+        "*.tcc": "c",
+        "cmath": "c",
+        "qfplib-m3.h": "c"
     },
     "cmake.configureOnOpen": true,
 }

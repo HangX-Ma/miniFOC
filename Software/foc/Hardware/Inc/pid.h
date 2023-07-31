@@ -39,6 +39,8 @@ typedef struct PIDPrevData {
 } PIDPrevData;
 
 typedef struct TorCtrlParam {
+    PIDParam pid;
+
     float target_torque;
     float voltage_limit;
     float current_limit;
@@ -78,7 +80,7 @@ extern CurrCtrlParam g_Iq_ctrl;
 extern CurrCtrlParam g_Id_ctrl;
 
 void pid_init(void);
-float torque_clamp(void);
+float PID_torque(float err);
 float PID_velocity(float err);
 float PID_angle(float err);
 float PID_current(CurrCtrlParam *ctrl, float err);

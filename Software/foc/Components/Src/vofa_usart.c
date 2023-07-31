@@ -224,6 +224,9 @@ void USARTx_DMA_RX_IRQHandler(void) {
                 case 0x0D: // set target Torque
                     g_tor_ctrl.target_torque = recv_data.fdata;
                     break;
+                case 0x0E: // set Torque Kp
+                    g_tor_ctrl.pid.Kp = recv_data.fdata;
+                    break;
                 default:
                     break;
             }

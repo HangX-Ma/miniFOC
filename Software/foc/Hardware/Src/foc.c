@@ -240,6 +240,7 @@ static void vel_ctrl_tim2_init(void) {
 }
 
 //! ------------------- FOC CONTROL -------------------
+#include "foc_app.h"
 static float shaft_speed;
 static float target_q;
 static RotorStatorCurrent RS_current;
@@ -252,7 +253,8 @@ void FOC_CTRL_IRQHandler(void) {
 
         switch (g_foc.motion_type_) {
             case FOC_Motion_Type_Torque:
-                target_q = torque_clamp();
+                ratchet_mode();
+                target_q = PID_torque(g_tor_ctrl.target_torque);
                 break;
             case FOC_Motion_Type_Velocity:
                 target_q = PID_velocity(qfp_fsub(g_vel_ctrl.target_speed, g_foc.state_.shaft_speed));
@@ -332,7 +334,7 @@ void foc_init(void) {
     g_foc.ctrl_.start             = foc_start;
     g_foc.ctrl_.stop              = foc_stop;
 
-    g_foc.motion_type_            = FOC_Motion_Type_Angle;
+    g_foc.motion_type_            = FOC_Motion_Type_Torque;
     g_foc.torque_type_            = FOC_Torque_Type_Voltage;
     g_foc.voltage_.d              = 0.0f;
     g_foc.voltage_.q              = 0.0f;

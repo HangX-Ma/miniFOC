@@ -61,6 +61,7 @@ Except for this, <span style="color: #98C379; font-weight: bold;">`Software/foc/
 - Replace the PWMA current sensor and the current loop start to work.
     > I finally only give Q and D with Kp = 0.6 and make the current loop work. But actually current loop version performs not as good as non current loop version.
 - Torque needs to be greater than 0.6 under current loop control.
+- Add ratchet mode under torque control.
 
 ### 2023-07-30
 
