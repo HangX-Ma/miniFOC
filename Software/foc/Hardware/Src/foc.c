@@ -131,7 +131,7 @@ static void align_sensor(void) {
     /* We want to ensure the sensor direction and the pole pairs number */
     // forward 2PI electrical angle
     for(int i = 0; i <= 100; i++) {
-        e_angle = qfp_fadd(_3PI_2, qfp_fdiv(qfp_fmul(_2PI, i), 100.0f));
+        e_angle = qfp_fadd(-_PI_2, qfp_fdiv(qfp_fmul(_2PI, i), 100.0f));
         g_foc.set_phase_voltage(SENSOR_ALIGN_VOLTAGE, 0, e_angle);
         LL_mDelay(20);
     }
@@ -139,7 +139,7 @@ static void align_sensor(void) {
 
     // turn back
     for(int i = 100; i >= 0; i--) {
-        e_angle = qfp_fadd(_3PI_2, qfp_fdiv(qfp_fmul(_2PI, i), 100.0f));
+        e_angle = qfp_fadd(-_PI_2, qfp_fdiv(qfp_fmul(_2PI, i), 100.0f));
         g_foc.set_phase_voltage(SENSOR_ALIGN_VOLTAGE, 0, e_angle);
         LL_mDelay(20);
     }
@@ -199,8 +199,7 @@ static void align_sensor(void) {
     }
 #endif
 
-    // lock electrical angle to zero
-    g_foc.set_phase_voltage(SENSOR_ALIGN_VOLTAGE, 0, _3PI_2);
+    g_foc.set_phase_voltage(SENSOR_ALIGN_VOLTAGE, 0, -_PI_2);
     LL_mDelay(1000);
 
     // collect the current mechanical angle to calculate the zero electrical angle offset
@@ -273,8 +272,11 @@ void FOC_CTRL_IRQHandler(void) {
             g_foc.voltage_.d = 0.0f;
         } else if (g_foc.torque_type_ == FOC_Torque_Type_Current) {
             RS_current = get_RS_current(g_foc.state_.electrical_angle);
+            // save current state for easy debug
             g_foc.voltage_.q = PID_current(&g_Iq_ctrl, qfp_fsub(target_q, RS_current.Iq));
             g_foc.voltage_.d = PID_current(&g_Id_ctrl, /* target_d = 0.0f */ -RS_current.Id);
+            g_foc.state_.q   = g_foc.voltage_.q;
+            g_foc.state_.d   = g_foc.voltage_.d;
         } else {
             // avoid undefined situation. Prohibit the motor running.
             g_foc.voltage_.q = 0.0f;
@@ -323,13 +325,15 @@ void foc_init(void) {
     g_foc.state_.shaft_angle      = 0.0f;
     g_foc.state_.shaft_speed      = 0.0f;
     g_foc.state_.electrical_angle = 0.0f;
+    g_foc.state_.q                = 0.0f;
+    g_foc.state_.d                = 0.0f;
     g_foc.state_.switch_type      = TRUE;
 
     g_foc.ctrl_.start             = foc_start;
     g_foc.ctrl_.stop              = foc_stop;
 
-    g_foc.motion_type_            = FOC_Motion_Type_Angle;
-    g_foc.torque_type_            = FOC_Torque_Type_Voltage;
+    g_foc.motion_type_            = FOC_Motion_Type_Torque;
+    g_foc.torque_type_            = FOC_Torque_Type_Current;
     g_foc.voltage_.d              = 0.0f;
     g_foc.voltage_.q              = 0.0f;
 

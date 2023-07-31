@@ -39,6 +39,8 @@ typedef struct {
     float shaft_angle;
     float shaft_speed;
     float electrical_angle;
+    float q;
+    float d;
     BOOL switch_type;
 } FOCState;
 
