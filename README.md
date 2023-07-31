@@ -1,8 +1,8 @@
 # miniFOC
 
-This repository records my development of miniFOC. I have an immature design and those ideas haven't been verified.
+This repository records my development of miniFOC. I have an immature design ~~and those ideas haven't been verified~~.
 
-So _**DON'T USE ANY MATERIALS DIRECTLY!**_ I won't response for any mistakes.
+~~So _**DON'T USE ANY MATERIALS DIRECTLY!**_ I won't response for any mistakes.~~
 
 Except for this, <span style="color: #98C379; font-weight: bold;">`Software/foc/foc.ioc`</span> is only used for configuration reference.
 
