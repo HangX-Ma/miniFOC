@@ -183,8 +183,8 @@ void pid_init(void) {
     g_Id_ctrl.pid.Ki = 0.0f;
     g_Id_ctrl.pid.Kd = 0.0f;
 
-    g_Iq_ctrl.voltage_limit = FOC_VOLTAGE_LIMIT;
-    g_Iq_ctrl.voltage_ramp  = FOC_VOLTAGE_RAMP;
+    g_Id_ctrl.voltage_limit = FOC_VOLTAGE_LIMIT;
+    g_Id_ctrl.voltage_ramp  = FOC_VOLTAGE_RAMP;
     g_Id_ctrl.ctrl_rate     = FOC_CONTROL_RATE;
 }
 
