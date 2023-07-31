@@ -56,6 +56,8 @@ Except for this, <span style="color: #98C379; font-weight: bold;">`Software/foc/
 ### 2023-07-31
 
 - Find a project procedure problem that you must reconfirm the encoder direction if you reassemble your hardware.
+- Only low speed mode can support the motor position rebound test. Otherwise, the motor will be damaged.
+    > :sob: My motor seems to be damaged.
 
 ### 2023-07-30
 

@@ -12,6 +12,9 @@ Warning:
 2. Don't use the STM32CubeMX directly. It only gives you a reference
    to my configurations.
 
+3. Only low speed mode can support the motor position rebound test.
+   Otherwise, the motor will be damaged.
+
 Note:
 ========
 
