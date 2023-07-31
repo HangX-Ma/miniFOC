@@ -113,6 +113,9 @@ static void set_phase_voltage(float Uq, float Ud, float e_angle) {
     g_bldc.set_pwm_c_duty((uint32_t)qfp_fmul(Tc, (float)PWM_RELOAD_PERIOD));
 }
 
+// Encoder DIR needs to be reserved. Otherwise, the FOC will stick into one
+// position if you call any function that rely on the encoder feedback.
+#define ESTIMATE_ENCODER_DIR    (1)
 static void align_sensor(void) {
     // electrical direction needs to be correspond to the mechanical angle
     float e_angle; // electrical angle
@@ -171,7 +174,7 @@ static void align_sensor(void) {
         g_encoder.dir_ = CW;
     }
 #else
-    g_encoder.dir_ = CW;
+    g_encoder.dir_ = CCW;
 #endif
 
 #if ESTIMATE_POLE_PAIRS

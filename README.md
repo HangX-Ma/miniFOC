@@ -22,7 +22,7 @@ Except for this, <span style="color: #98C379; font-weight: bold;">`Software/foc/
 
 ## Driver Parameters
 
-- Input voltage range: 8 V ~ 60 V (Drv8313)
+- Input voltage range: 8 V ~ 40 V (Drv8313, ME3116)
 - Maximum current: 2 A (Drv8313)
 - Serial port baud rate: 115200
 - MCU: STM32F103C8T6, 64 KB flash, 32 KB RAM
@@ -49,8 +49,15 @@ Except for this, <span style="color: #98C379; font-weight: bold;">`Software/foc/
 - Magnetic attached to motor will affect the motor itself, my friend suggests me to use sensorless control strategy.
 - More power ports need to be reserved, such as `GND`, `3V3`.
 - SPI OLED ports sequence needs to be `GND`, `VCC`, `SCK`, `MOSI`, `RST`, `DC`, `CS`.
+- `nFault` pin of the DRV8313 needs to be controlled and monitored by the MCU. Currently, only unplugging battery can release the DRV8313 off the fault state.
 
 ## Development Logs
+
+### 2023-07-31
+
+- Find a project procedure problem that you must reconfirm the encoder direction if you reassemble your hardware.
+
+### 2023-07-30
 
 - Add current sense monitor feedback, thus, creating a current control loop.
     > :x: Current phase sequence is necessary to be identified. I haven't solve the it. Motor can not work when current feedback added.
