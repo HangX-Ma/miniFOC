@@ -24,3 +24,5 @@ Note:
 2. If the motor suddenly stops, it may be now protected by the DRV8313,
    you need to pull off the battery to release the fault state of DRV8313.
 
+3. Torque needs to be greater than 0.6 under current loop control
+

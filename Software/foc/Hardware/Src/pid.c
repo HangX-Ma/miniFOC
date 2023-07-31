@@ -141,6 +141,7 @@ float PID_current(CurrCtrlParam *ctrl, float err) {
 void pid_init(void) {
     pid_clear_history();
     // init torque control parameters
+    // torque needs to be greater than 0.6 under current loop control
     g_tor_ctrl.target_torque = 0.0f;
     g_tor_ctrl.voltage_limit = FOC_VOLTAGE_LIMIT;
     g_tor_ctrl.current_limit = FOC_CURRENT_LIMIT;
@@ -169,7 +170,7 @@ void pid_init(void) {
 
     // init current control parameters
     // Iq
-    g_Iq_ctrl.pid.Kp = 0.0f;
+    g_Iq_ctrl.pid.Kp = 0.6f;
     g_Iq_ctrl.pid.Ki = 0.0f;
     g_Iq_ctrl.pid.Kd = 0.0f;
 
@@ -179,7 +180,7 @@ void pid_init(void) {
 
 
     // Id
-    g_Id_ctrl.pid.Kp = 0.0f;
+    g_Id_ctrl.pid.Kp = 0.6f;
     g_Id_ctrl.pid.Ki = 0.0f;
     g_Id_ctrl.pid.Kd = 0.0f;
 
