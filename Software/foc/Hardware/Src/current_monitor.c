@@ -163,6 +163,7 @@ static void LPF_current(float *curr, float *prev) {
     *prev = *curr;
 }
 
+#include "foc.h"
 // rotor and stator current (Iq and Id)
 static RotorStatorCurrent RS_current_prev = {0};
 RotorStatorCurrent get_RS_current(float e_angle) {
@@ -174,11 +175,19 @@ RotorStatorCurrent get_RS_current(float e_angle) {
     adc_val1 = qfp_fdiv(qfp_fmul((float)current_monitor_adc.chx[0], ADCx_VOLTAGE_REFERENCE), (float)ADCx_RESOLUTION);
     adc_val2 = qfp_fdiv(qfp_fmul((float)current_monitor_adc.chx[1], ADCx_VOLTAGE_REFERENCE), (float)ADCx_RESOLUTION);
 
-    phase_current.Ia   = qfp_fdiv(qfp_fdiv((adc_val1 - ADCx_VOLTAGE_BIAS), CURRENT_SENSE_REGISTER), INA199x1_GAIN);
-    phase_current.Ib   = qfp_fdiv(qfp_fdiv((adc_val2 - ADCx_VOLTAGE_BIAS), CURRENT_SENSE_REGISTER), INA199x1_GAIN);
+    // debug
+    // g_foc.state_.q   = adc_val1;
+    // g_foc.state_.d   = adc_val2;
+
+    phase_current.Ia = qfp_fdiv(qfp_fdiv((qfp_fsub(adc_val1, ADCx_VOLTAGE_BIAS)), CURRENT_SENSE_REGISTER), INA199x1_GAIN);
+    phase_current.Ib = qfp_fdiv(qfp_fdiv((qfp_fsub(adc_val2, ADCx_VOLTAGE_BIAS)), CURRENT_SENSE_REGISTER), INA199x1_GAIN);
 
     I_alpha = phase_current.Ia;
     I_beta  = qfp_fadd(qfp_fmul(_1_SQRT3, phase_current.Ia), qfp_fmul(_2_SQRT3, phase_current.Ib));
+
+    // debug
+    // g_foc.state_.q   = I_alpha;
+    // g_foc.state_.d   = I_beta;
 
     RS_current_curr.Id = qfp_fadd(
                            qfp_fmul(I_alpha, qfp_fcos(e_angle)),

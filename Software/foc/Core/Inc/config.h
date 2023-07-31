@@ -56,7 +56,7 @@
 
 
 /* ----------------  FOC Configurations ---------------- */
-#define MOTOR_VM                        11.1f
+#define MOTOR_VM                        12.0f
 #define MOTOR_POLE_PAIRS                7
 #define SENSOR_ALIGN_VOLTAGE            0.8f
 

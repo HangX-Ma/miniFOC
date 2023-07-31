@@ -57,7 +57,8 @@ Except for this, <span style="color: #98C379; font-weight: bold;">`Software/foc/
 
 - Find a project procedure problem that you must reconfirm the encoder direction if you reassemble your hardware.
 - Only low speed mode can support the motor position rebound test. Otherwise, the motor will be damaged.
-    > :sob: My motor seems to be damaged.
+    > :sob: My motor seems to be damaged. (Update: It recovered!)
+- Replace the PWMA current sensor and the current loop start to work. But I haven't find a good parameters for it.
 
 ### 2023-07-30
 

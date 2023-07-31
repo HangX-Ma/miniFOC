@@ -161,6 +161,7 @@ void USARTx_DMA_TX_IRQHandler(void) {
 }
 
 #include "pid.h"
+#include "current_monitor.h"
 void USARTx_DMA_RX_IRQHandler(void) {
     // If data receiving complete, clear the TC5 flag
     if (LL_DMA_IsActiveFlag_TC5(DMA1) != RESET) {
@@ -175,6 +176,7 @@ void USARTx_DMA_RX_IRQHandler(void) {
                 case 0x01:                         // control motor start/stop
                     if (recv_data.chars[0] == 1) { // start
                         LED_STATE_ON();
+                        current_monitor_reset();
                         g_foc.ctrl_.start();
                     } else if (recv_data.chars[0] == 2) { // stop
                         LED_STATE_OFF();
