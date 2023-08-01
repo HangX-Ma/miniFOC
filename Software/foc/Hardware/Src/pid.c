@@ -103,41 +103,41 @@ float PID_angle(float err) {
 }
 
 // PI controller
-float PID_current(CurrCtrlParam *ctrl, float err) {
+float PID_current(CurrCtrlParam *pCtrl, float err) {
     float proportional, integral, output;
     float output_rate;
 
     // u_p  = P *e(k)
-    proportional = qfp_fmul(ctrl->pid.Kp, err);
+    proportional = qfp_fmul(pCtrl->pid.Kp, err);
 
     // Tustin transform of the integral part
     // u_ik = u_ik_1  + I*Ts/2*(ek + ek_1)
     integral =
         qfp_fadd(
-            ctrl->prev_data.integral,
+            pCtrl->prev_data.integral,
             qfp_fmul(
-                qfp_fmul(ctrl->pid.Ki, ctrl->ctrl_rate),
-                qfp_fmul(qfp_fadd(err, ctrl->prev_data.err), 0.5f) // filter
+                qfp_fmul(pCtrl->pid.Ki, pCtrl->ctrl_rate),
+                qfp_fmul(qfp_fadd(err, pCtrl->prev_data.err), 0.5f) // filter
             )
         );
 
     // avoid integral saturation (diff Uq and Iq)
-    integral = constrain(integral, -ctrl->voltage_limit, ctrl->voltage_limit);
+    integral = constrain(integral, -pCtrl->voltage_limit, pCtrl->voltage_limit);
 
     output = qfp_fadd(proportional, integral);
-    output = constrain(output, -ctrl->voltage_limit, ctrl->voltage_limit);
+    output = constrain(output, -pCtrl->voltage_limit, pCtrl->voltage_limit);
 
     // limit the acceleration by ramping the output
-    output_rate = qfp_fdiv(qfp_fsub(output, ctrl->prev_data.output), ctrl->ctrl_rate);
-    if(output_rate > ctrl->voltage_ramp) {
-        output = qfp_fadd(ctrl->prev_data.output, qfp_fmul(ctrl->voltage_ramp, ctrl->ctrl_rate));
-    } else if (output_rate < - ctrl->voltage_ramp) {
-        output = qfp_fsub(ctrl->prev_data.output, qfp_fmul(ctrl->voltage_ramp, ctrl->ctrl_rate));
+    output_rate = qfp_fdiv(qfp_fsub(output, pCtrl->prev_data.output), pCtrl->ctrl_rate);
+    if(output_rate > pCtrl->voltage_ramp) {
+        output = qfp_fadd(pCtrl->prev_data.output, qfp_fmul(pCtrl->voltage_ramp, pCtrl->ctrl_rate));
+    } else if (output_rate < - pCtrl->voltage_ramp) {
+        output = qfp_fsub(pCtrl->prev_data.output, qfp_fmul(pCtrl->voltage_ramp, pCtrl->ctrl_rate));
     }
 
-    ctrl->prev_data.integral     = integral;
-    ctrl->prev_data.output       = output;
-    ctrl->prev_data.err          = err;
+    pCtrl->prev_data.integral     = integral;
+    pCtrl->prev_data.output       = output;
+    pCtrl->prev_data.err          = err;
 
     return output;
 }

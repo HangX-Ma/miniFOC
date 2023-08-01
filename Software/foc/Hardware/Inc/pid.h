@@ -83,7 +83,7 @@ void pid_init(void);
 float PID_torque(float err);
 float PID_velocity(float err);
 float PID_angle(float err);
-float PID_current(CurrCtrlParam *ctrl, float err);
+float PID_current(CurrCtrlParam *pCtrl, float err);
 
 void pid_clear_history(void);
 

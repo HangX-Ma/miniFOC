@@ -23,6 +23,13 @@
 #include "utils.h"
 #include "oled.h"
 
+typedef void (*page_method)(void*);
+
+typedef struct {
+    page_method painter;
+    page_method handler;
+} page_t;
+
 typedef struct MenuBase {
     void (*get_str_width)(const char *);
     void (*draw_str)(u8g2_uint_t, u8g2_uint_t, const char *);
@@ -44,3 +51,5 @@ typedef struct MenuBase {
     void (*update)(void);
 } MenuBase;
 extern MenuBase g_menu_base;
+
+void menu_init(void);

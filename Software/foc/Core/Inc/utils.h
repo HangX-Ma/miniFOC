@@ -24,6 +24,7 @@
 #define __UTILS__H__
 
 #include "stm32f103xb.h"
+#include <stdio.h>
 
 typedef uint8_t BOOL;
 typedef enum {
@@ -43,7 +44,20 @@ typedef enum {
 #define _1_SQRT3            0.57735026919f
 #define _2_SQRT3            1.15470053838f
 
+// print with newline
+#define println(fmt, ...) printf(fmt "\r\n", ##__VA_ARGS__)
+
 #define abs(x) ((x) > 0 ? (x) : (-(x)))
 #define constrain(val, low, high) ((val) < (low) ? (low) : ((val) > (high) ? (high) : (val)))
+
+// number of elements in an array
+#define ARRAY_SIZE(a) (sizeof(a) / sizeof((a)[0]))
+// byte offset of member in structure
+#define MEMBER_OFFSET(structure, member) ((int)&(((structure*)0)->member))
+// size of a member of a structure
+#define MEMBER_SIZE(structure, member) (sizeof(((structure*)0)->member))
+
+#define INLINE __inline__ __attribute__((always_inline))
+
 
 #endif  //!__UTILS__H__
