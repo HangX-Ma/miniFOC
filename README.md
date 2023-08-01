@@ -1,6 +1,8 @@
 # miniFOC
 
-This repository records my development of miniFOC. I have an immature design ~~and those ideas haven't been verified~~.
+This repository records my development of miniFOC. You can obtain the source files of the hardware and software in this repository.
+
+~~I have an immature design and those ideas haven't been verified~~.
 
 ~~So _**DON'T USE ANY MATERIALS DIRECTLY!**_ I won't response for any mistakes.~~
 
@@ -25,7 +27,7 @@ Except for this, <span style="color: #98C379; font-weight: bold;">`Software/foc/
 - Input voltage range: 8 V ~ 40 V (Drv8313, ME3116)
 - Maximum current: 2 A (Drv8313)
 - Serial port baud rate: 115200
-- MCU: STM32F103C8T6, 64 KB flash, 32 KB RAM
+- MCU: STM32F103C8T6, 64 KB flash, 20 KB RAM
 
 ## Environment
 
