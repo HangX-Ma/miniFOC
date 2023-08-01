@@ -24,7 +24,7 @@ float easing_Out_Quad(float step) {
 float easing_InOut_Quad(float step) {
     return (step < 0.5f)
         ? qfp_fmul(2.0f, QFP_QUAD(step))
-        : qfp_fsub(1.0, qfp_fdiv(QFP_QUAD(qfp_fadd(qfp_fmul(-2.0f, step), 2.0f)), 2.0f));
+        : qfp_fsub(1.0f, qfp_fdiv(QFP_QUAD(qfp_fadd(qfp_fmul(-2.0f, step), 2.0f)), 2.0f));
 }
 
 float easing_OutIn_Quad(float step) {
@@ -119,7 +119,7 @@ float easing_OutIn_Sine(float step) {
 float easing_In_Expo(float step) {
     return (step == 0.0f)
         ? 0.0f
-        : qfp_fexp(qfp_fsub(qfp_fmul(10.0f, step), 10.0));
+        : qfp_fexp(qfp_fsub(qfp_fmul(10.0f, step), 10.0f));
 }
 
 float easing_Out_Expo(float step) {
@@ -137,7 +137,7 @@ float easing_InOut_Expo(float step) {
 }
 
 float easing_Out_InExpo(float step) {
-    return (step < 0.5)
+    return (step < 0.5f)
         ? qfp_fmul(0.5f, qfp_fsub(1.0f, easing_In_Expo(qfp_fsub(1.0f, qfp_fmul(2.0f, step)))))
         : qfp_fadd(qfp_fmul(0.5f, easing_In_Expo(qfp_fsub(qfp_fmul(2.0f, step), 1.0f))), 0.5f);
 }
@@ -211,11 +211,7 @@ float easing_In_Back(float step) {
 }
 
 float easing_Out_Back(float step) {
-    const float c1 = 1.70158f;
-    const float c3 = 2.70158f;
-    float step_sub_one = qfp_fsub(step, 1.0f);
-
-    return qfp_add(1.0, qfp_fmul(step_sub_one, qfp_fmul(step, qfp_add(qfp_fmul(c3, step), c1))));
+    return qfp_fsub(1.0f, easing_In_Back(qfp_fsub(step, 1.0f)));
 }
 
 float easing_InOut_Back(float step) {
@@ -224,17 +220,8 @@ float easing_InOut_Back(float step) {
     const float c2_plus_one = 4.22658;
 
     return (step < 0.5f)
-        ? qfp_fdiv(qfp_fmul(QFP_QUAD(qfp_fmul(2.0f, step)), qfp_fsub(qfp_fmul(c2_plus_one, qfp_fmul(2.0f, step)), c2)), 2.0f)
-        : qfp_fdiv(
-            qfp_add(
-                qfp_fmul(
-                    QFP_QUAD(qfp_fsub(qfp_fmul(2.0f, step), 2.0f)),
-                    qfp_fadd(qfp_fmul(c2_plus_one, qfp_fsub(qfp_fmul(2.0f, step), 2.0f)), c2)
-                ),
-                2.0f
-            ),
-            2.0f
-        );
+        ? qfp_fmul(easing_In_Back(qfp_fmul(step, 2.0f)), 0.5f)
+        : qfp_fsub(1.0f, qfp_fmul(easing_In_Back(qfp_fsub(2.0f, qfp_fmul(step, 2.0f))), 0.5f));
 }
 
 float easing_OutIn_Back(float step) {
@@ -244,7 +231,7 @@ float easing_OutIn_Back(float step) {
 }
 
 // Bounce指数衰减的反弹缓动
-float easing_In_Bounce(float step) {
+float easing_Out_Bounce(float step) {
     const float n1 = 7.5625f;
     const float d1 = 2.75f;
     float step_tmp = 0.0f;
@@ -265,7 +252,7 @@ float easing_In_Bounce(float step) {
     return qfp_add(qfp_fmul(n1, QFP_QUAD(step_tmp)), 0.984375f);
 }
 
-float easing_Out_Bounce(float step) {
+float easing_In_Bounce(float step) {
     return qfp_fsub(1.0f, easing_In_Bounce(qfp_fsub(1.0f, step)));
 }
 

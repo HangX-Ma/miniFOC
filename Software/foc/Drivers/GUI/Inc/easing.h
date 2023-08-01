@@ -91,8 +91,8 @@ float easing_InOut_Back(float step);
 float easing_OutIn_Back(float step);
 
 // Bounce指数衰减的反弹缓动
-float easing_In_Bounce(float step);
 float easing_Out_Bounce(float step);
+float easing_In_Bounce(float step);
 float easing_InOut_Bounce(float step);
 float easing_OutIn_Bounce(float step);
 
