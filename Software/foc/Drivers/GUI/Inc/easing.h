@@ -3,7 +3,7 @@
  * @author HangX-Ma (contour.9x@gmail.com)
  * @brief easing function
  * @version 0.1
- * @date 2022-08-05
+ * @date 2023-08-02
  *
  * @copyright Copyright (c) 2022 - 2023
  *
@@ -96,5 +96,6 @@ float easing_In_Bounce(float step);
 float easing_InOut_Bounce(float step);
 float easing_OutIn_Bounce(float step);
 
+typedef float (*easing_t)(float);
 
 #endif  //!__EASING__H__
