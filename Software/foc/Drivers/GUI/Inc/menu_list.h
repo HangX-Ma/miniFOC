@@ -33,6 +33,7 @@ typedef struct {
 } menu_item_t;
 
 typedef struct {
+    page_t callback_;
 
 } MenuList;
 

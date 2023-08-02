@@ -193,7 +193,7 @@ float easing_InOut_Elastic(float step) {
         ? 1.0f
         : (step < 0.5f)
         ? qfp_fdiv(-qfp_fmul(qfp_fexp(qfp_fsub(qfp_fmul(20.0f, step), 10.0f)), qfp_fsin(qfp_fmul(qfp_fsub(qfp_fmul(20.0f, step), 11.125f), c5))), 2.0f)
-        : qfp_fadd(qfp_fdiv(qfp_fmul(qfp_fexp(qfp_add(qfp_fmul(-20.0f, step), 10.0f)), qfp_fsin(qfp_fmul(qfp_fsub(qfp_fmul(20.0f, step), 11.125f), c5))), 2.0f), 1.0f);
+        : qfp_fadd(qfp_fdiv(qfp_fmul(qfp_fexp(qfp_fadd(qfp_fmul(-20.0f, step), 10.0f)), qfp_fsin(qfp_fmul(qfp_fsub(qfp_fmul(20.0f, step), 11.125f), c5))), 2.0f), 1.0f);
 }
 
 float easing_OutIn_Elastic(float step) {
@@ -215,13 +215,21 @@ float easing_Out_Back(float step) {
 }
 
 float easing_InOut_Back(float step) {
-    const float c1 = 1.70158f;
     const float c2 = 3.22658f;
     const float c2_plus_one = 4.22658;
 
     return (step < 0.5f)
-        ? qfp_fmul(easing_In_Back(qfp_fmul(step, 2.0f)), 0.5f)
-        : qfp_fsub(1.0f, qfp_fmul(easing_In_Back(qfp_fsub(2.0f, qfp_fmul(step, 2.0f))), 0.5f));
+        ? qfp_fdiv(qfp_fmul(QFP_QUAD(qfp_fmul(2.0f, step)), qfp_fsub(qfp_fmul(c2_plus_one, qfp_fmul(2.0f, step)), c2)), 2.0f)
+        : qfp_fdiv(
+            qfp_fadd(
+                qfp_fmul(
+                    QFP_QUAD(qfp_fsub(qfp_fmul(2.0f, step), 2.0f)),
+                    qfp_fadd(qfp_fmul(c2_plus_one, qfp_fsub(qfp_fmul(2.0f, step), 2.0f)), c2)
+                ),
+                2.0f
+            ),
+            2.0f
+        );
 }
 
 float easing_OutIn_Back(float step) {
@@ -241,15 +249,15 @@ float easing_Out_Bounce(float step) {
     }
     if (step < qfp_fdiv(2.0f, d1)) {
         step_tmp = qfp_fsub(step, qfp_fdiv(1.5f, d1));
-        return qfp_add(qfp_fmul(n1, QFP_QUAD(step_tmp)), 0.75f);
+        return qfp_fadd(qfp_fmul(n1, QFP_QUAD(step_tmp)), 0.75f);
     }
     if (step < qfp_fdiv(2.5f, d1)) {
         step_tmp = qfp_fsub(step, qfp_fdiv(2.25f, d1));
-        return qfp_add(qfp_fmul(n1, QFP_QUAD(step_tmp)), 0.9375f);
+        return qfp_fadd(qfp_fmul(n1, QFP_QUAD(step_tmp)), 0.9375f);
     }
 
     step_tmp = qfp_fsub(step, qfp_fdiv(2.625f, d1));
-    return qfp_add(qfp_fmul(n1, QFP_QUAD(step_tmp)), 0.984375f);
+    return qfp_fadd(qfp_fmul(n1, QFP_QUAD(step_tmp)), 0.984375f);
 }
 
 float easing_In_Bounce(float step) {
@@ -258,8 +266,8 @@ float easing_In_Bounce(float step) {
 
 float easing_InOut_Bounce(float step) {
     return (step < 0.5f)
-        ? qfp_fdiv(qfp_fsub(1.0f, easeOutBounce(qfp_fsub(1.0f, qfp_fmul(2.0f, step)))), 2.0f)
-        : qfp_fdiv(qfp_add(1.0f, easeOutBounce(qfp_fsub(qfp_fmul(2.0f, step), 1.0f))), 2.0f);
+        ? qfp_fdiv(qfp_fsub(1.0f, easing_Out_Bounce(qfp_fsub(1.0f, qfp_fmul(2.0f, step)))), 2.0f)
+        : qfp_fdiv(qfp_fadd(1.0f, easing_Out_Bounce(qfp_fsub(qfp_fmul(2.0f, step), 1.0f))), 2.0f);
 }
 
 float easing_OutIn_Bounce(float step) {
