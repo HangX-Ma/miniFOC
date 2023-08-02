@@ -3,20 +3,20 @@
 
 #include <stdio.h>
 
-MenuBase g_menu_base;
+GUIBase g_gui_base;
 static char str_buf[16];
 
-static void get_str_width(const char *str) {
-    u8g2_GetStrWidth(&u8g2, str);
+static u8g2_uint_t get_str_width(const char *str) {
+    return u8g2_GetStrWidth(&u8g2, str);
 }
 
-static void draw_str(u8g2_uint_t x, u8g2_uint_t y, const char *str) {
-    u8g2_DrawStr(&u8g2, x, y, str);
+static u8g2_uint_t draw_str(u8g2_uint_t x, u8g2_uint_t y, const char *str) {
+    return u8g2_DrawStr(&u8g2, x, y, str);
 }
 
-static void draw_num(u8g2_uint_t x, u8g2_uint_t y, float num) {
+static u8g2_uint_t draw_num(u8g2_uint_t x, u8g2_uint_t y, float num) {
     sprintf(str_buf, "%.2f", num);
-    u8g2_DrawStr(&u8g2, x, y, str_buf);
+    return u8g2_DrawStr(&u8g2, x, y, str_buf);
 }
 
 static void draw_pixel(u8g2_uint_t x, u8g2_uint_t y) {
@@ -95,22 +95,22 @@ static void update(void) {
 }
 
 void menu_init(void) {
-    g_menu_base.get_str_width           = get_str_width;
-    g_menu_base.draw_str                = draw_str;
-    g_menu_base.draw_num                = draw_num;
-    g_menu_base.draw_pixel              = draw_pixel;
-    g_menu_base.draw_hline              = draw_hline;
-    g_menu_base.draw_vline              = draw_vline;
-    g_menu_base.draw_line               = draw_line;
-    g_menu_base.draw_rect               = draw_rect;
-    g_menu_base.draw_round_rect         = draw_round_rect;
-    g_menu_base.draw_fill_rect          = draw_fill_rect;
-    g_menu_base.draw_fill_round_rect    = draw_fill_round_rect;
-    g_menu_base.draw_circle             = draw_circle;
-    g_menu_base.draw_circle_full        = draw_circle_full;
-    g_menu_base.draw_circle_full_center = draw_circle_full_center;
-    g_menu_base.draw_rotated_rect       = draw_rotated_rect;
-    g_menu_base.set_color               = set_color;
-    g_menu_base.clear                   = clear;
-    g_menu_base.update                  = update;
+    g_gui_base.get_str_width           = get_str_width;
+    g_gui_base.draw_str                = draw_str;
+    g_gui_base.draw_num                = draw_num;
+    g_gui_base.draw_pixel              = draw_pixel;
+    g_gui_base.draw_hline              = draw_hline;
+    g_gui_base.draw_vline              = draw_vline;
+    g_gui_base.draw_line               = draw_line;
+    g_gui_base.draw_rect               = draw_rect;
+    g_gui_base.draw_round_rect         = draw_round_rect;
+    g_gui_base.draw_fill_rect          = draw_fill_rect;
+    g_gui_base.draw_fill_round_rect    = draw_fill_round_rect;
+    g_gui_base.draw_circle             = draw_circle;
+    g_gui_base.draw_circle_full        = draw_circle_full;
+    g_gui_base.draw_circle_full_center = draw_circle_full_center;
+    g_gui_base.draw_rotated_rect       = draw_rotated_rect;
+    g_gui_base.set_color               = set_color;
+    g_gui_base.clear                   = clear;
+    g_gui_base.update                  = update;
 }

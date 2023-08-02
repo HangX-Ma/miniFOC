@@ -23,10 +23,10 @@
 #include "utils.h"
 #include "oled.h"
 
-typedef struct MenuBase {
-    void (*get_str_width)(const char *);
-    void (*draw_str)(u8g2_uint_t, u8g2_uint_t, const char *);
-    void (*draw_num)(u8g2_uint_t, u8g2_uint_t, float);
+typedef struct GUIBase {
+    u8g2_uint_t (*get_str_width)(const char *);
+    u8g2_uint_t (*draw_str)(u8g2_uint_t, u8g2_uint_t, const char *);
+    u8g2_uint_t (*draw_num)(u8g2_uint_t, u8g2_uint_t, float);
     void (*draw_pixel)(u8g2_uint_t, u8g2_uint_t);
     void (*draw_hline)(u8g2_uint_t, u8g2_uint_t, u8g2_uint_t);
     void (*draw_vline)(u8g2_uint_t, u8g2_uint_t, u8g2_uint_t);
@@ -42,14 +42,14 @@ typedef struct MenuBase {
     void (*set_color)(uint8_t);
     void (*clear)(void);
     void (*update)(void);
-} MenuBase;
-extern MenuBase g_menu_base;
+} GUIBase;
+extern GUIBase g_gui_base;
 
-typedef void (*page_method)(void*);
+typedef void (*callback_t)(void*);
 typedef struct {
     BOOL repaint_;
-    page_method painter;
-    page_method handler;
+    callback_t painter;
+    callback_t handler;
 } page_t;
 
 #define page_new(painter_callback, handler_callback) {  \

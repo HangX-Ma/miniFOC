@@ -28,7 +28,8 @@
         "*.tcc": "c",
         "cmath": "c",
         "qfplib-m3.h": "c",
-        "easing.h": "c"
+        "easing.h": "c",
+        "menu_list.h": "c"
     },
     "cmake.configureOnOpen": true,
 }

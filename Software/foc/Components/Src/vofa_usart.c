@@ -2,6 +2,7 @@
 
 #include "foc.h"
 #include "led.h"
+#include "vkey.h"
 
 #include "stm32f1xx_ll_bus.h"
 #include "stm32f1xx_ll_dma.h"
@@ -226,6 +227,15 @@ void USARTx_DMA_RX_IRQHandler(void) {
                     break;
                 case 0x0E: // set Torque Kp
                     g_tor_ctrl.pid.Kp = recv_data.fdata;
+                    break;
+                case 0x11: // virtual key PREV
+                    g_vkeys[VKEY_ID_PREV] = TRUE;
+                    break;
+                case 0x12: // virtual key OK
+                    g_vkeys[VKEY_ID_OK] = TRUE;
+                    break;
+                case 0x13: // virtual key NEXT
+                    g_vkeys[VKEY_ID_NEXT] = TRUE;
                     break;
                 default:
                     break;

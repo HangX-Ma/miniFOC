@@ -25,6 +25,7 @@
 
 #include "utils.h"
 #include "base.h"
+#include "tween.h"
 
 typedef struct {
     uint8_t id;
@@ -35,6 +36,59 @@ typedef struct {
 typedef struct {
     page_t callback_;
 
+    uint16_t width_;
+    uint16_t height_;
+
+    menu_item_t* items_;
+    uint8_t      item_num_;
+
+    // configurations
+    uint8_t display_num_;       // number of items that can be displayed per page
+    float   height_line_;       // each line height
+    float   height_slider_;     // each scroll height
+
+    // index
+    uint8_t masked_index_;      // [0, min(item_num_, display_count)), index of the masked item in page(光标)
+    uint8_t selected_index_;    // [0, item_num_), current selected item indexes
+
+    // pixel position and easing
+    uint8_t x_padding_;
+    float   y_padding_;
+    Tween   width_mask_;
+    Tween   y_mask_;
+    uint8_t x_slider_;
+    Tween   y_slider_;
+    Tween   y_title_offset_;
 } MenuList;
+
+typedef struct MenuListPainterCallback {
+    void (*update_easing)(MenuList*);
+    void (*draw_items)(MenuList*);
+    void (*draw_scroll)(MenuList*);
+    void (*draw_item_mask)(MenuList*);
+    void (*by_default)(MenuList*);
+} MenuListPainterCallback;
+
+typedef struct MenuListHandlerCallback {
+    void (*switch_to_prev)(MenuList*);
+    void (*switch_to_next)(MenuList*);
+    void (*by_default)(MenuList*);
+} MenuListHandlerCallback;
+
+typedef struct MenuListCallback {
+    MenuListPainterCallback painter;
+    MenuListHandlerCallback handler;
+} MenuListCallback;
+extern MenuListCallback g_menu_list_callback;
+
+MenuList menu_list_init(
+    menu_item_t items[],
+    uint8_t     item_num,
+    uint8_t     display_count, // default = 1
+    callback_t  painter,
+    callback_t  handler
+);
+
+void menu_list_callback_init(void);
 
 #endif  //!__MENU_LIST__H__
