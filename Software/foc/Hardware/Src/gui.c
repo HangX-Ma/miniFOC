@@ -101,10 +101,9 @@ static void gui_painter_about(page_t* pg) {
     (void)pg;
     g_gui_base.clear();
     g_gui_base.set_color(1);
-    g_gui_base.draw_str(2, 12, "MCU : STM32");
-    g_gui_base.draw_str(2, 28, "FLASH : 512KB");
-    g_gui_base.draw_str(2, 44, "SRAM : 256KB");
-    g_gui_base.draw_str(2, 60, "RTC SRAM : 16KB");
+    g_gui_base.draw_str(2, 12, "MCU : STM32F103C8T6");
+    g_gui_base.draw_str(2, 28, "FLASH : 64 KB");
+    g_gui_base.draw_str(2, 44, "SRAM : 20 KB");
     g_gui_base.update();
 }
 
@@ -121,9 +120,9 @@ static void gui_handler_about(page_t* pg) {
 }
 
 menu_item_t menu_main[] = {
-    {PAGE_ID_LOGO,  "MainUI", 0},
-    {PAGE_ID_ABOUT, "- About", 0},
-    // {PAGE_ID_EASING_CHART, "- Easing Chart", 0},
+    {PAGE_ID_LOGO,         "MainUI",         0},
+    {PAGE_ID_ABOUT,        "- About",        0},
+    {PAGE_ID_EASING_CHART, "- Easing Chart", 0},
 };
 
 void gui_handler_main(MenuList* pMenuList)
@@ -235,19 +234,19 @@ void gui_handler_easing_chart(MenuList* pMenuList) {
                     g_tween_handler.start_relative(&tween, tween.frame_num_);
 
                     float x_offset = qfp_fdiv(qfp_fsub((float)OLED_WIDTH, tween.end_), 2.0f);
-                    float y_offset = qfp_fadd(qfp_fdiv(qfp_fsub((float)OLED_HEIGHT, tween.end_), 2.0f), tween.start_);
+                    float y_offset = qfp_fadd(qfp_fdiv(qfp_fsub((float)OLED_HEIGHT, tween.end_), 2.0f), tween.end_);
 
                     g_gui_base.clear();
 
-                    int16_t x1 = -1, y1 = -1, x2, y2;
+                    float x1 = -1.0f, y1 = -1.0f, x2, y2;
                     while (!g_tween_handler.finished(&tween)) {
                         g_tween_handler.update(&tween);
-                        x2 = (int16_t)qfp_fadd(x_offset, (float)tween.frame_idx_);
-                        y2 = (int16_t)qfp_fsub(y_offset, g_tween_handler.curr_pixel_pos(&tween));
-                        if (x1 == -1) {
+                        x2 = qfp_fadd(x_offset, (float)tween.frame_idx_);
+                        y2 = qfp_fsub(y_offset, g_tween_handler.curr_pixel_pos(&tween));
+                        if (x1 == -1.0f) {
                             x1 = x2;
                         }
-                        if (y1 == -1) {
+                        if (y1 == -1.0f) {
                             y1 = y2;
                         }
                         g_gui_base.draw_line(x1, y1, x2, y2);
@@ -296,10 +295,10 @@ void gui_init(void) {
     PAGE_REGISTER(PAGE_ID_ABOUT, page_about);
 
     menu_list_main   = menu_list_init(menu_main, ARRAY_SIZE(menu_main), 4, 0, gui_handler_main);
-    // menu_list_easing = menu_list_init(menu_easing, ARRAY_SIZE(menu_easing), 5, 0, gui_handler_easing_chart);
+    menu_list_easing = menu_list_init(menu_easing, ARRAY_SIZE(menu_easing), 5, 0, gui_handler_easing_chart);
 
     PAGE_REGISTER(PAGE_ID_MAIN_MENU_LIST, menu_list_main);
-    // PAGE_REGISTER(PAGE_ID_EASING_CHART, menu_list_easing);
+    PAGE_REGISTER(PAGE_ID_EASING_CHART, menu_list_easing);
 
     gui_switch(PAGE_ID_FIRST);
 }

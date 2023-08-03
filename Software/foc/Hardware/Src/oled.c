@@ -169,7 +169,7 @@ void oled_init(void) {
     oled_spi1_init();
 
     u8g2Init(&u8g2);
-    u8g2_SetFont(&u8g2, u8g2_font_ncenB08_tr);
+    u8g2_SetFont(&u8g2, u8g2_font_helvR08_te);
     g_u8g2_buf_ptr = u8g2_GetBufferPtr(&u8g2);
     g_u8g2_buf_len = 8 * u8g2_GetBufferTileHeight(&u8g2) * u8g2_GetBufferTileWidth(&u8g2);
 }
