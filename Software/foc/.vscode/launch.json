@@ -15,6 +15,7 @@
             "interface": "swd",
             "device": "STM32F103C8Tx",
             "showDevDebugOutput": "raw",
+            "svdFile": "STM32F103xx.svd",
             "configFiles": [
                 "${workspaceFolder}/stlink.cfg"
             ],
