@@ -34,7 +34,9 @@ typedef struct {
 } menu_item_t;
 
 typedef struct {
-    page_t callback_;
+    BOOL repaint_;
+    callback_t painter;
+    callback_t handler;
 
     uint16_t width_;
     uint16_t height_;
@@ -61,26 +63,6 @@ typedef struct {
     Tween   y_title_offset_;
 } MenuList;
 
-typedef struct MenuListPainterCallback {
-    void (*update_easing)(MenuList*);
-    void (*draw_items)(MenuList*);
-    void (*draw_scroll)(MenuList*);
-    void (*draw_item_mask)(MenuList*);
-    void (*by_default)(MenuList*);
-} MenuListPainterCallback;
-
-typedef struct MenuListHandlerCallback {
-    void (*switch_to_prev)(MenuList*);
-    void (*switch_to_next)(MenuList*);
-    void (*by_default)(MenuList*);
-} MenuListHandlerCallback;
-
-typedef struct MenuListCallback {
-    MenuListPainterCallback painter;
-    MenuListHandlerCallback handler;
-} MenuListCallback;
-extern MenuListCallback g_menu_list_callback;
-
 MenuList menu_list_init(
     menu_item_t items[],
     uint8_t     item_num,
@@ -89,6 +71,14 @@ MenuList menu_list_init(
     callback_t  handler
 );
 
-void menu_list_callback_init(void);
+void menu_list_callback_painter_update_easing(MenuList* pMenuList);
+void menu_list_callback_painter_draw_items(MenuList* pMenuList);
+void menu_list_callback_painter_draw_scroll(MenuList* pMenuList);
+void menu_list_callback_painter_draw_item_mask(MenuList* pMenuList);
+void menu_list_callback_painter_by_default(MenuList* pMenuList);
+
+void menu_list_callback_handler_switch_to_prev(MenuList* pMenuList);
+void menu_list_callback_handler_switch_to_next(MenuList* pMenuList);
+void menu_list_callback_handler_by_default(MenuList* pMenuList);
 
 #endif  //!__MENU_LIST__H__

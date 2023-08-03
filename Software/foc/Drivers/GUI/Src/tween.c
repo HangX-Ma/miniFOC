@@ -33,7 +33,7 @@ Tween tween_create(
         .current_      = 0.0f,
         .offset_       = offset,
 
-        .frame_num_    = (frame_num < 2) ? 2: frame_num,
+        .frame_num_    = (frame_num < 2) ? 2 : frame_num,
         .frame_idx_    = 0,
 
         .easing        = (easing_callback == 0)
@@ -49,7 +49,7 @@ Tween tween_create(
     return tween;
 }
 
-static void tween_start_absolute(Tween* pTween, float from, float to) {
+void tween_start_absolute(Tween* pTween, float from, float to) {
     pTween->start_     = from;
     pTween->end_       = to;
     pTween->delta_     = to - from;
@@ -68,16 +68,16 @@ static void tween_start_absolute(Tween* pTween, float from, float to) {
     }
 }
 
-static void tween_start_relative(Tween* pTween, float dist) {
-    tween_start_absolute(pTween, pTween->start_, qfp_fadd(pTween->end_, dist));
+void tween_start_relative(Tween* pTween, float dist) {
+    tween_start_absolute(pTween, pTween->current_, qfp_fadd(pTween->end_, dist));
 }
 
-static void tween_stop(Tween* pTween, float current) {
+void tween_stop(Tween* pTween, float current) {
     pTween->repeat_times_ = 0;
     pTween->current_ = current;
 }
 
-static void tween_update(Tween* pTween) {
+void tween_update(Tween* pTween) {
     // finish
     if (pTween->repeat_times_ == 0) {
         return;
@@ -86,21 +86,21 @@ static void tween_update(Tween* pTween) {
     // next frame
     pTween->frame_idx_ += 1;
     // check index overflow
-    if (pTween->frame_idx_ > pTween->frame_num_ - 1) {
+    if (pTween->frame_idx_ > pTween->frame_num_) {
         if (pTween->mode_ & TWEEN_DIR_YOYO) {
             // reverse direction
             pTween->dir_ = !pTween->dir_;
             // skip start frame or stop frame
-            pTween->frame_idx_ = 1;
+            pTween->frame_idx_ = 2;
         } else {
-            pTween->frame_idx_ = 0;
+            pTween->frame_idx_ = 1;
         }
     }
     // check last frame
-    if (pTween->frame_idx_ == pTween->frame_num_ - 1) {
+    if (pTween->frame_idx_ == pTween->frame_num_) {
         // at last frame
         pTween->step_ = 1.0f;
-        pTween->current_ = pTween->dir_ ? pTween->end_ : pTween->start_;
+        pTween->current_ = pTween->dir_ ? pTween->start_ : pTween->end_;
         // decrease repeated times
         if (!(pTween->mode_ & TWEEN_TIMES_INFINITE)) {
             pTween->repeat_times_ -= 1;
@@ -110,7 +110,7 @@ static void tween_update(Tween* pTween) {
         }
     } else {
         // calculate the step
-        pTween->step_ = qfp_fdiv((float)pTween->frame_idx_, (float)(pTween->frame_num_ - 1));
+        pTween->step_ = qfp_fdiv((float)(pTween->frame_idx_ - 1), (float)(pTween->frame_num_ - 1));
         // calculate the pixel position
         pTween->current_ = pTween->dir_
                             ? qfp_fsub(pTween->end_, qfp_fmul(pTween->delta_, pTween->easing(pTween->step_)))
@@ -118,11 +118,11 @@ static void tween_update(Tween* pTween) {
     }
 }
 
-static BOOL tween_finished(Tween* pTween) {
+BOOL tween_finished(Tween* pTween) {
     return pTween->repeat_times_ == 0;
 }
 
-static float tween_pixel_position(Tween* pTween) {
+float tween_pixel_position(Tween* pTween) {
     return qfp_fadd(pTween->current_, pTween->offset_);
 }
 

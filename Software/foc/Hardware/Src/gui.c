@@ -5,7 +5,9 @@
 #define X_PADDING          (4)
 
 page_t* pages[PAGE_ID_LAST] = {0};
-PageID page_selected;  // index of rendering
+volatile PageID page_selected;  // index of rendering
+
+#define PAGE_REGISTER(ID, page) pages[ID] = (page_t*)&page
 
 /* ----------------- EFFECT ------------- */
 void effect_win10_loading() {
@@ -88,7 +90,7 @@ void gui_handler_logo(page_t* pg) {
             break;
         default:
             g_gui_base.effect_disappear();
-            PAGE_SWITCH(PAGE_ID_MAIN_MENU_LIST);
+            gui_switch(PAGE_ID_MAIN_MENU_LIST);
             break;
     }
 }
@@ -113,15 +115,15 @@ static void gui_handler_about(page_t* pg) {
             break;
         default:
             g_gui_base.effect_disappear();
-            PAGE_SWITCH(PAGE_ID_MAIN_MENU_LIST);
+            gui_switch(PAGE_ID_MAIN_MENU_LIST);
             break;
     }
 }
 
-const menu_item_t menu_main[] = {
-    {PAGE_ID_LOGO,         "MainUI",        0},
-    {PAGE_ID_EASING_CHART, "-Easing Chart", 0},
-    {PAGE_ID_ABOUT,        "-About",        0},
+menu_item_t menu_main[] = {
+    {PAGE_ID_LOGO,  "MainUI", 0},
+    {PAGE_ID_ABOUT, "- About", 0},
+    // {PAGE_ID_EASING_CHART, "- Easing Chart", 0},
 };
 
 void gui_handler_main(MenuList* pMenuList)
@@ -130,10 +132,10 @@ void gui_handler_main(MenuList* pMenuList)
         case VKEY_ID_NONE:
             break;
         case VKEY_ID_PREV:
-            g_menu_list_callback.handler.switch_to_prev(pMenuList);
+            menu_list_callback_handler_switch_to_prev(pMenuList);
             break;
         case VKEY_ID_NEXT:
-            g_menu_list_callback.handler.switch_to_next(pMenuList);
+            menu_list_callback_handler_switch_to_next(pMenuList);
             break;
         case VKEY_ID_OK:
 
@@ -142,14 +144,14 @@ void gui_handler_main(MenuList* pMenuList)
                 case PAGE_ID_EASING_CHART:
                 case PAGE_ID_ABOUT: {
                     g_gui_base.effect_disappear();
-                    PAGE_SWITCH(pMenuList->items_[pMenuList->selected_index_].id);
+                    gui_switch(pMenuList->items_[pMenuList->selected_index_].id);
                     break;
                 }
                 default:
                     break;
             }
 
-            pMenuList->callback_.repaint_ = TRUE;
+            pMenuList->repaint_ = TRUE;
             break;
         default:
             break;
@@ -166,7 +168,7 @@ float easing_Customized(const float t) {
     return t;
 }
 
-static const menu_item_t menu_easing[] = {
+static menu_item_t menu_easing[] = {
     {FUNC_ID_EASING, "- Custom",        easing_Customized},
     {FUNC_ID_EASING, "- Linear  ",      easing_Linear},
     {FUNC_ID_EASING, "- InQuad  ",      easing_In_Quad},
@@ -217,10 +219,10 @@ void gui_handler_easing_chart(MenuList* pMenuList) {
         case VKEY_ID_NONE:
             break;
         case VKEY_ID_PREV:
-            g_menu_list_callback.handler.switch_to_prev(pMenuList);
+            menu_list_callback_handler_switch_to_prev(pMenuList);
             break;
         case VKEY_ID_NEXT:
-            g_menu_list_callback.handler.switch_to_next(pMenuList);
+            menu_list_callback_handler_switch_to_next(pMenuList);
             break;
         case VKEY_ID_OK: {
             switch (pMenuList->items_[pMenuList->selected_index_].id) {
@@ -257,13 +259,13 @@ void gui_handler_easing_chart(MenuList* pMenuList) {
                     while (vkey_scan() == VKEY_ID_NONE) {}
 
                     // repaint
-                    pMenuList->callback_.repaint_ = TRUE;
+                    pMenuList->repaint_ = TRUE;
 
                     break;
                 }
                 case FUNC_ID_RETURN: {
                     g_gui_base.effect_disappear();
-                    PAGE_SWITCH(PAGE_ID_MAIN_MENU_LIST);
+                    gui_switch(PAGE_ID_MAIN_MENU_LIST);
                     break;
                 }
             }
@@ -275,28 +277,44 @@ void gui_handler_easing_chart(MenuList* pMenuList) {
 }
 
 
+static page_t page_logo;
+static page_t page_about;
+static MenuList menu_list_main;
+static MenuList menu_list_easing;
 
 void gui_init(void) {
     //! init process needs in order!
     vkey_init();
     gui_base_init();
     tween_handler_init();
-    menu_list_callback_init();
 
-    page_t page_logo  = page_new(gui_painter_logo, gui_handler_logo);
-    page_t page_about = page_new(gui_painter_about, gui_handler_about);
+
+    page_logo  = gui_page_new(gui_painter_logo, gui_handler_logo);
+    page_about = gui_page_new(gui_painter_about, gui_handler_about);
 
     PAGE_REGISTER(PAGE_ID_LOGO, page_logo);
     PAGE_REGISTER(PAGE_ID_ABOUT, page_about);
-    MenuList menu_list_main   = menu_list_init(menu_main, ARRAY_SIZE(menu_main), 4, 0, gui_handler_main);
-    // MenuList menu_list_easing = menu_list_init(menu_easing, ARRAY_SIZE(menu_easing), 5, 0, gui_handler_easing_chart);
+
+    menu_list_main   = menu_list_init(menu_main, ARRAY_SIZE(menu_main), 4, 0, gui_handler_main);
+    // menu_list_easing = menu_list_init(menu_easing, ARRAY_SIZE(menu_easing), 5, 0, gui_handler_easing_chart);
 
     PAGE_REGISTER(PAGE_ID_MAIN_MENU_LIST, menu_list_main);
     // PAGE_REGISTER(PAGE_ID_EASING_CHART, menu_list_easing);
 
-    PAGE_SWITCH(PAGE_ID_FIRST);
+    gui_switch(PAGE_ID_FIRST);
 }
 
 void gui_render(void) {
-    PAGE_RENDER();
+    pages[page_selected]->handler(pages[page_selected]);
+    if (pages[page_selected]->repaint_) {
+        pages[page_selected]->repaint_ = FALSE;
+        pages[page_selected]->painter(pages[page_selected]);
+    }
+}
+
+void gui_switch(uint8_t id) {
+    page_selected = id;
+    if (pages[page_selected] != 0) {
+        pages[page_selected]->repaint_ = TRUE;
+    }
 }

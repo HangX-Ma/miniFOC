@@ -135,3 +135,12 @@ void gui_base_init(void) {
     g_gui_base.update                  = update;
     g_gui_base.effect_disappear        = effect_disappear;
 }
+
+page_t gui_page_new(void* painter_callback, void* handler_callback) {
+    page_t page = {
+        .repaint_ = TRUE,
+        .painter  = painter_callback,
+        .handler  = handler_callback,
+    };
+    return page;
+}

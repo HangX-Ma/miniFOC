@@ -71,7 +71,7 @@ typedef struct Tween {
 
     // Notice that the frames include 'start frame' and 'stop frame'
     uint16_t frame_num_;    //< The total number of the frames, whose minimum value is 2(start, stop).
-    uint16_t frame_idx_;    //< Current frame index. Range: [0, frame_num - 1]
+    uint16_t frame_idx_;    //< Current frame index. Range: [0, frame_num]
 
     float (*easing)(float); //< easing functions
     float step_;            //< This is the normalized input value for easing functions. Range: [0, 1]
@@ -97,6 +97,20 @@ typedef struct TweenHandler {
 // easing functions array
 // extern const easing_t g_easing_array[11][4]; // [TweenTransitionType][TweenEaseType]
 extern TweenHandler g_tween_handler;
+
+// Tween tween_create(
+//     TweenMode mode,            // default: TWEEN_TIMES_SINGLE | TWEEN_DIR_FORWARD
+//     easing_t  easing_callback, // default: 0 (easing_Linear)
+//     float     offset,          // default: 0 (pixel offset)
+//     uint16_t  frame_num,       // default: 2 (start/stop fram)
+//     uint16_t  duration         // default: 0 (None)
+// );
+// void tween_start_absolute(Tween* pTween, float from, float to);
+// void tween_start_relative(Tween* pTween, float dist);
+// void tween_stop(Tween* pTween, float current);
+// void tween_update(Tween* pTween);
+// BOOL tween_finished(Tween* pTween);
+// float tween_pixel_position(Tween* pTween);
 
 void tween_handler_init(void);
 

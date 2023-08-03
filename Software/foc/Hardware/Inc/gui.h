@@ -47,23 +47,8 @@ typedef enum PageID {
     FUNC_ID_EASING = FUNC_ID_RETURN + 1,
 } PageID;
 
-extern page_t* pages[PAGE_ID_LAST];
-extern PageID page_selected;  // index of rendering
-
-#define PAGE_REGISTER(ID, page) pages[ID] = (page_t*)&page
-
-#define PAGE_SWITCH(ID)                 \
-    if (pages[page_selected = ID] != 0) \
-    pages[page_selected = ID]->repaint_ = TRUE
-
-#define PAGE_RENDER()                                        \
-    pages[page_selected]->handler(pages[page_selected]);     \
-    if (pages[page_selected]->repaint_) {                    \
-        pages[page_selected]->repaint_ = FALSE;              \
-        pages[page_selected]->painter(pages[page_selected]); \
-    }
-
 void gui_init(void);
 void gui_render(void);
+void gui_switch(uint8_t id);
 
 #endif  //!__GUI__H__

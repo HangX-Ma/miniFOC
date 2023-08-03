@@ -56,11 +56,7 @@ typedef struct {
     callback_t handler;
 } page_t;
 
-#define page_new(painter_callback, handler_callback) {  \
-        TRUE, painter_callback, handler_callback        \
-    }
-
-
 void gui_base_init(void);
+page_t gui_page_new(void* painter_callback, void* handler_callback);
 
 #endif  //!__BASE__H__
