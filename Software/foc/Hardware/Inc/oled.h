@@ -26,7 +26,7 @@
 #include "utils.h"
 #include "u8g2.h"
 
-#define OLED_SCK_MOSI_GPIO_PORT  GPIOA
+#define OLED_SCK_MOSI_GPIO_PORT     GPIOA
 #define OLED_SCK_PIN                LL_GPIO_PIN_5
 #define OLED_MOSI_PIN               LL_GPIO_PIN_7
 
