@@ -20,10 +20,13 @@
  * limitations under the License.
  */
 
+#ifndef __BASE__H__
+#define __BASE__H__
+
 #include "utils.h"
 #include "oled.h"
 
-typedef struct GUIBase {
+typedef struct {
     u8g2_uint_t (*get_str_width)(const char *);
     u8g2_uint_t (*draw_str)(u8g2_uint_t, u8g2_uint_t, const char *);
     u8g2_uint_t (*draw_num)(u8g2_uint_t, u8g2_uint_t, float);
@@ -42,6 +45,7 @@ typedef struct GUIBase {
     void (*set_color)(uint8_t);
     void (*clear)(void);
     void (*update)(void);
+    void (*effect_disappear)(void);
 } GUIBase;
 extern GUIBase g_gui_base;
 
@@ -53,8 +57,10 @@ typedef struct {
 } page_t;
 
 #define page_new(painter_callback, handler_callback) {  \
-        true, painter_callback, handler_callback        \
+        TRUE, painter_callback, handler_callback        \
     }
 
 
-void menu_init(void);
+void gui_base_init(void);
+
+#endif  //!__BASE__H__

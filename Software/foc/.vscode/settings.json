@@ -29,7 +29,8 @@
         "cmath": "c",
         "qfplib-m3.h": "c",
         "easing.h": "c",
-        "menu_list.h": "c"
+        "menu_list.h": "c",
+        "gui.h": "c"
     },
     "cmake.configureOnOpen": true,
 }

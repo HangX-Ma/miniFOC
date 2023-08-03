@@ -94,7 +94,27 @@ static void update(void) {
     u8g2_SendBuffer(&u8g2);
 }
 
-void menu_init(void) {
+static void effect_disappear(void) {
+    uint16_t i;
+
+    for (i = 0; i < g_u8g2_buf_len; i += 2)
+        g_u8g2_buf_ptr[i] &= 0x55;
+    update();
+
+    for (i = 1; i < g_u8g2_buf_len; i += 2)
+        g_u8g2_buf_ptr[i] &= 0xAA;
+    update();
+
+    for (i = 0; i < g_u8g2_buf_len; i += 2)
+        g_u8g2_buf_ptr[i] &= 0x00;
+    update();
+
+    for (i = 1; i < g_u8g2_buf_len; i += 2)
+        g_u8g2_buf_ptr[i] &= 0x00;
+    update();
+}
+
+void gui_base_init(void) {
     g_gui_base.get_str_width           = get_str_width;
     g_gui_base.draw_str                = draw_str;
     g_gui_base.draw_num                = draw_num;
@@ -113,4 +133,5 @@ void menu_init(void) {
     g_gui_base.set_color               = set_color;
     g_gui_base.clear                   = clear;
     g_gui_base.update                  = update;
+    g_gui_base.effect_disappear        = effect_disappear;
 }

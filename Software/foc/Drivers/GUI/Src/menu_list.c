@@ -193,7 +193,7 @@ MenuList menu_list_init(
         .x_slider_  = OLED_WIDTH - 2,
         .y_slider_  = g_tween_handler.create(
                             TWEEN_MODE_DEFAULT,
-                            g_easing_array[TWEEN_TRANS_CUBIC][TWEEN_EASE_OUT],
+                            easing_Out_Cubic,
                             0.0f, /* offset = 0 */
                             MENU_LIST_FRAME_NUM,
                             0 /* duration = 0 */
@@ -201,14 +201,14 @@ MenuList menu_list_init(
 
         .width_mask_ = g_tween_handler.create(
                             TWEEN_MODE_DEFAULT,
-                            g_easing_array[TWEEN_TRANS_CUBIC][TWEEN_EASE_OUT],
+                            easing_Out_Cubic,
                             0.0f, /* offset = 0 */
                             MENU_LIST_FRAME_NUM,
                             0 /* duration = 0 */
                         ),
         .y_mask_     = g_tween_handler.create(
                             TWEEN_MODE_DEFAULT,
-                            g_easing_array[TWEEN_TRANS_CUBIC][TWEEN_EASE_OUT],
+                            easing_Out_Cubic,
                             0.0f, /* offset = 0 */
                             MENU_LIST_FRAME_NUM,
                             0 /* duration = 0 */
@@ -216,7 +216,7 @@ MenuList menu_list_init(
 
         .y_title_offset_ = g_tween_handler.create(
                             TWEEN_MODE_DEFAULT,
-                            g_easing_array[TWEEN_TRANS_LINEAR][TWEEN_EASE_IN],
+                            easing_Linear,
                             0.0f, /* offset = 0 */
                             MENU_LIST_FRAME_NUM,
                             0 /* duration = 0 */

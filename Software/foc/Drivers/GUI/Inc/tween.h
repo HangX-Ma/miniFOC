@@ -95,7 +95,7 @@ typedef struct TweenHandler {
 #define TWEEN_MODE_REPEAT_NTIMES(n)         (TWEEN_TIMES_REPEAT | (n << TWEEN_MODE_BIT_CNT))
 
 // easing functions array
-extern easing_t g_easing_array[11][4]; // [TweenTransitionType][TweenEaseType]
+// extern const easing_t g_easing_array[11][4]; // [TweenTransitionType][TweenEaseType]
 extern TweenHandler g_tween_handler;
 
 void tween_handler_init(void);

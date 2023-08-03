@@ -3,7 +3,7 @@
  * @author HangX-Ma (contour.9x@gmail.com)
  * @brief oled fundamental functions
  * @version 0.1
- * @date 2022-08-05
+ * @date 2023-08-02
  *
  * @copyright Copyright (c) 2022 - 2023
  *

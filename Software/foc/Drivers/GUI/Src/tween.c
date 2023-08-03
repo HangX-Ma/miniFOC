@@ -1,19 +1,19 @@
 #include "tween.h"
 #include "qfplib-m3.h"
 
-easing_t g_easing_array[11][4] = { // [TweenTransitionType][TweenEaseType]
-    {easing_Linear,     easing_Linear,      easing_Linear,        easing_Linear},
-    {easing_In_Quad,    easing_Out_Quad,    easing_InOut_Quad,    easing_OutIn_Quad,},
-    {easing_In_Cubic,   easing_Out_Cubic,   easing_InOut_Cubic,   easing_OutIn_Cubic,},
-    {easing_In_Quart,   easing_Out_Quart,   easing_InOut_Quart,   easing_OutIn_Quart,},
-    {easing_In_Quint,   easing_Out_Quint,   easing_InOut_Quint,   easing_OutIn_Quint,},
-    {easing_In_Sine,    easing_Out_Sine,    easing_InOut_Sine,    easing_OutIn_Sine,},
-    {easing_In_Expo,    easing_Out_Expo,    easing_InOut_Expo,    easing_Out_InExpo,},
-    {easing_In_Circ,    easing_Out_Circ,    easing_InOut_Circ,    easing_OutIn_Circ,},
-    {easing_In_Elastic, easing_Out_Elastic, easing_InOut_Elastic, easing_OutIn_Elastic,},
-    {easing_In_Back,    easing_Out_Back,    easing_InOut_Back,    easing_OutIn_Back,},
-    {easing_Out_Bounce, easing_In_Bounce,   easing_InOut_Bounce,  easing_OutIn_Bounce,},
-};
+// const easing_t g_easing_array[11][4] = { // [TweenTransitionType][TweenEaseType]
+//     {easing_Linear,     easing_Linear,      easing_Linear,        easing_Linear},
+//     {easing_In_Quad,    easing_Out_Quad,    easing_InOut_Quad,    easing_OutIn_Quad,},
+//     {easing_In_Cubic,   easing_Out_Cubic,   easing_InOut_Cubic,   easing_OutIn_Cubic,},
+//     {easing_In_Quart,   easing_Out_Quart,   easing_InOut_Quart,   easing_OutIn_Quart,},
+//     {easing_In_Quint,   easing_Out_Quint,   easing_InOut_Quint,   easing_OutIn_Quint,},
+//     {easing_In_Sine,    easing_Out_Sine,    easing_InOut_Sine,    easing_OutIn_Sine,},
+//     {easing_In_Expo,    easing_Out_Expo,    easing_InOut_Expo,    easing_Out_InExpo,},
+//     {easing_In_Circ,    easing_Out_Circ,    easing_InOut_Circ,    easing_OutIn_Circ,},
+//     {easing_In_Elastic, easing_Out_Elastic, easing_InOut_Elastic, easing_OutIn_Elastic,},
+//     {easing_In_Back,    easing_Out_Back,    easing_InOut_Back,    easing_OutIn_Back,},
+//     {easing_In_Bounce,  easing_Out_Bounce,  easing_InOut_Bounce,  easing_OutIn_Bounce,},
+// };
 
 TweenHandler g_tween_handler;
 
@@ -37,7 +37,7 @@ Tween tween_create(
         .frame_idx_    = 0,
 
         .easing        = (easing_callback == 0)
-                            ? g_easing_array[TWEEN_TRANS_LINEAR][TWEEN_EASE_IN]
+                            ? easing_Linear
                             : easing_callback,
         .step_         = 0.0f,
 

@@ -27,8 +27,9 @@
 
 typedef enum {
     VKEY_ID_NONE  = 0,
+
     VKEY_ID_START = 1,
-    VKEY_ID_PREV  = 1,
+    VKEY_ID_PREV  = VKEY_ID_START,
     VKEY_ID_OK    = 2,
     VKEY_ID_NEXT  = 3,
     VKEY_ID_SIZE  = 4,

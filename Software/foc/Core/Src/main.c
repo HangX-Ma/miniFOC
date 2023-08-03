@@ -27,6 +27,7 @@
 #include "oled.h"
 #include "qfplib-m3.h"
 #include "vofa_usart.h"
+#include "gui.h"
 
 void SystemClock_Config(void);
 
@@ -70,7 +71,8 @@ int main(void) {
     LL_mDelay(500);
     g_foc.align_sensor();
 
-    // oled_init();
+    oled_init();
+    gui_init();
     // oled_test();
     //* Initialize all configured peripherals end
 
@@ -110,11 +112,13 @@ int main(void) {
         // foc_debugger_buf[0] = g_foc.state_.q;
         // foc_debugger_buf[1] = g_foc.state_.d;
         // vofa_usart_dma_send_config(foc_debugger_buf, 2);
-        LL_mDelay(100);
+        LL_mDelay(10);
         // ------------ Encoder test ------------
         // encoder_test();
         // ------------ Current Monitor test ------------
         // current_monitor_test(bldc_test2_svpwm());
+        // ------------ GUI test ------------
+        gui_render();
     }
 }
 
