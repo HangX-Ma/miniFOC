@@ -61,15 +61,15 @@ int main(void) {
     //* Initialize all configured peripherals start
     led_init();
     vofa_usart_init();
-    bldc_init();
-    current_mointor_init();
-    encoder_init();
-    pid_init();
-    foc_init();
+    // bldc_init();
+    // current_mointor_init();
+    // encoder_init();
+    // pid_init();
+    // foc_init();
 
-    // Motor alignment start!
-    LL_mDelay(500);
-    g_foc.align_sensor();
+    // // Motor alignment start!
+    // LL_mDelay(500);
+    // g_foc.align_sensor();
 
     oled_init();
     gui_init();

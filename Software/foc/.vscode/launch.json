@@ -7,17 +7,22 @@
         {
             "name": "Cortex Debug",
             "cwd": "${workspaceFolder}",
-            "executable": "./build/miniFOC.elf",
+            "executable": "${workspaceFolder}/build/miniFOC.elf",
             "request": "launch",
             "type": "cortex-debug",
             "runToEntryPoint": "main",
             "servertype": "openocd",
             "interface": "swd",
-            "device": "STM32F103xB",
+            "device": "STM32F103C8Tx",
+            "showDevDebugOutput": "raw",
             "configFiles": [
                 "${workspaceFolder}/stlink.cfg"
             ],
-            "preLaunchTask": "cortex-build"
+            "preLaunchTask": "cortex-build",
+            "liveWatch": {
+                "enabled": true,
+                "samplesPerSecond": 3
+            }
         }
     ]
 }

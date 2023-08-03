@@ -289,10 +289,10 @@ void gui_init(void) {
     PAGE_REGISTER(PAGE_ID_LOGO, page_logo);
     PAGE_REGISTER(PAGE_ID_ABOUT, page_about);
     MenuList menu_list_main   = menu_list_init(menu_main, ARRAY_SIZE(menu_main), 4, 0, gui_handler_main);
-    MenuList menu_list_easing = menu_list_init(menu_easing, ARRAY_SIZE(menu_easing), 5, 0, gui_handler_easing_chart);
+    // MenuList menu_list_easing = menu_list_init(menu_easing, ARRAY_SIZE(menu_easing), 5, 0, gui_handler_easing_chart);
 
     PAGE_REGISTER(PAGE_ID_MAIN_MENU_LIST, menu_list_main);
-    PAGE_REGISTER(PAGE_ID_EASING_CHART, menu_list_easing);
+    // PAGE_REGISTER(PAGE_ID_EASING_CHART, menu_list_easing);
 
     PAGE_SWITCH(PAGE_ID_FIRST);
 }
