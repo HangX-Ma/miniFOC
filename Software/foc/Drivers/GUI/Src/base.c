@@ -60,6 +60,10 @@ static void draw_circle_full_center(u8g2_uint_t cx, u8g2_uint_t cy, u8g2_uint_t 
     draw_circle_full(OLED_WIDTH / 2 + cx, OLED_HEIGHT / 2 + cy, r);
 }
 
+static void draw_disc_full(u8g2_uint_t x0, u8g2_uint_t y0, u8g2_uint_t r) {
+    u8g2_DrawDisc(&u8g2, x0, y0, r, U8G2_DRAW_ALL);
+}
+
 /**
  * @param x0 x axis value of rect center
  * @param y0 y axis value of rect center
@@ -127,6 +131,7 @@ void gui_base_init(void) {
     g_gui_base.draw_circle             = draw_circle;
     g_gui_base.draw_circle_full        = draw_circle_full;
     g_gui_base.draw_circle_full_center = draw_circle_full_center;
+    g_gui_base.draw_disc_full          = draw_disc_full;
     g_gui_base.draw_rotated_rect       = draw_rotated_rect;
     g_gui_base.set_color               = set_color;
     g_gui_base.clear                   = clear;

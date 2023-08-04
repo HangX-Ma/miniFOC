@@ -32,7 +32,8 @@
         "menu_list.h": "c",
         "gui.h": "c",
         "mini-printf.h": "c",
-        "base.h": "c"
+        "base.h": "c",
+        "tween.h": "c"
     },
     "cmake.configureOnOpen": true,
 }

@@ -41,6 +41,7 @@ typedef struct {
     void (*draw_circle)(u8g2_uint_t, u8g2_uint_t, u8g2_uint_t, uint8_t);
     void (*draw_circle_full)(u8g2_uint_t, u8g2_uint_t, u8g2_uint_t);
     void (*draw_circle_full_center)(u8g2_uint_t, u8g2_uint_t, u8g2_uint_t);
+    void (*draw_disc_full)(u8g2_uint_t, u8g2_uint_t, u8g2_uint_t);
     void (*draw_rotated_rect)(float, float, float, float, float);
     void (*set_color)(uint8_t);
     void (*clear)(void);
