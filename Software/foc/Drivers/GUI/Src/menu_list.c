@@ -183,7 +183,7 @@ MenuList menu_list_init(
         .width_  = (uint16_t)OLED_WIDTH,
         .height_ = (uint16_t)OLED_HEIGHT,
 
-        .items_         = items,
+        .items_         = (menu_item_t*)items,
         .item_num_      = item_num,
         .display_num_   = display_num == 0 ? 1 : display_num,
         .height_line_   = (float)(((uint8_t)OLED_HEIGHT) / display_num),

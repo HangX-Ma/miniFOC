@@ -1,10 +1,8 @@
 #include "base.h"
 #include "qfplib-m3.h"
 
-#include <stdio.h>
-
 GUIBase g_gui_base;
-static char str_buf[16];
+char str_buf[10];
 
 static u8g2_uint_t get_str_width(const char *str) {
     return u8g2_GetStrWidth(&u8g2, str);

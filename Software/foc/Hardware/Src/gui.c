@@ -16,28 +16,27 @@ void effect_win10_loading() {
 
     Tween tween = g_tween_handler.create(
             TWEEN_MODE_REPEAT_NTIMES(2) | TWEEN_DIR_FORWARD,
-            easing_Linear,
-            0,
+            easing_Out_Quart,
+            0.0f,
             15,
             30
         );
 
-    g_tween_handler.start_absolute(&tween, 0, 1);  // generate linear time order
+    g_tween_handler.start_absolute(&tween, 0.0f, 1.0f);  // generate linear time order
 
-    float t, rad;
     while (!g_tween_handler.finished(&tween)) {
         g_tween_handler.update(&tween);
         g_gui_base.clear();
         for (uint8_t i = 0; i < cnt; ++i) {
-            t = qfp_fsub(tween.current_, qfp_fmul(i, 0.05f));
+            float t = qfp_fsub(tween.current_, qfp_fmul((float)i, 0.05f));
             if (t < 0) {
                 t = qfp_fadd(t, 1.0f);
             }
             // angle (rad, 3.14rad -> 180°)
-            rad = qfp_fadd(qfp_fmul(-easing_Out_Cubic(t), _2PI), _PI);
+            float rad = qfp_fadd(qfp_fmul(-easing_InOut_Cubic(t), _2PI), _PI);
             g_gui_base.draw_circle_full_center(
-                    (u8g2_uint_t)qfp_fmul((float)r, qfp_fsin((float)rad)),
-                    (u8g2_uint_t)qfp_fmul((float)r, qfp_fcos((float)rad)),
+                    qfp_fmul((float)r, qfp_fsin(rad)),
+                    qfp_fmul((float)r, qfp_fcos(rad)),
                     1
                 );
         }
@@ -51,7 +50,7 @@ void effect_rotating_rect() {
             easing_Out_Quart,
             0,
             15,
-            50
+            120
         );
 
     g_tween_handler.start_absolute(&tween, 0, 1);  // generate linear time order
@@ -119,10 +118,14 @@ static void gui_handler_about(page_t* pg) {
     }
 }
 
-menu_item_t menu_main[] = {
-    {PAGE_ID_LOGO,         "MainUI",         0},
-    {PAGE_ID_ABOUT,        "- About",        0},
-    {PAGE_ID_EASING_CHART, "- Easing Chart", 0},
+/* ---------------- Main ---------------- */
+const menu_item_t menu_main[] = {
+    {PAGE_ID_LOGO,              "MainUI",                0},
+    {PAGE_ID_TOR_PID_MENU_LIST, "- Torque PID Editor",   0},
+    {PAGE_ID_VEL_PID_MENU_LIST, "- Velocity PID Editor", 0},
+    {PAGE_ID_ANG_PID_MENU_LIST, "- Angle PID Editor",    0},
+    {PAGE_ID_EASING_CHART,      "- Easing Chart",        0},
+    {PAGE_ID_ABOUT,             "- About",               0},
 };
 
 void gui_handler_main(MenuList* pMenuList)
@@ -146,6 +149,14 @@ void gui_handler_main(MenuList* pMenuList)
                     gui_switch(pMenuList->items_[pMenuList->selected_index_].id);
                     break;
                 }
+                case PAGE_ID_TOR_PID_MENU_LIST:
+                case PAGE_ID_VEL_PID_MENU_LIST:
+                case PAGE_ID_ANG_PID_MENU_LIST: {
+                    // effect_win10_loading();
+                    // effect_rotating_rect();
+                    gui_switch(pMenuList->items_[pMenuList->selected_index_].id);
+                    break;
+                }
                 default:
                     break;
             }
@@ -157,6 +168,139 @@ void gui_handler_main(MenuList* pMenuList)
     }
 }
 
+/* ---------------- PID BASE ---------------- */
+enum {
+    FUNC_ID_EDIT_KP = FUNC_ID_RETURN + 1,
+    FUNC_ID_EDIT_KI,
+};
+
+PIDSliderBase Torque_Kp = {"Editing Kp", 0.0f, 2.5f, 0.0f, 0.1f};
+// PIDSliderBase Torque_Ki = {"Forbidden", 0.0f, 0.0f, 0.0f, 0.0f};
+
+PIDSliderBase Velocity_Kp = {"Editing Kp", 0.0f, 0.5f, 0.05f, 0.01f};
+PIDSliderBase Velocity_Ki = {"Editing Ki", 0.0f, 2.0f, 1.0f, 0.1f};
+
+PIDSliderBase Angle_Kp = {"Editing Kp", 0.0f, 8.0f, 4.0f, 0.5f};
+// PIDSliderBase Angle_Ki = {"Forbidden", 0.0f, 0.0f, 0.0f, 0.0f};
+
+const menu_item_t menu_tor_pid[] = {
+    {FUNC_ID_EDIT_KP, "- Proportion", &Torque_Kp},
+    // {FUNC_ID_EDIT_KI, "- Integral",   &Torque_Ki},
+    {FUNC_ID_RETURN, "Return", 0},
+};
+
+const menu_item_t menu_vel_pid[] = {
+    {FUNC_ID_EDIT_KP, "- Proportion", &Velocity_Kp},
+    {FUNC_ID_EDIT_KI, "- Integral",   &Velocity_Ki},
+    {FUNC_ID_RETURN, "Return", 0},
+};
+
+const menu_item_t menu_ang_pid[] = {
+    {FUNC_ID_EDIT_KP, "- Proportion", &Angle_Kp},
+    // {FUNC_ID_EDIT_KI, "- Integral",   &Angle_Ki},
+    {FUNC_ID_RETURN, "Return", 0},
+};
+
+void gui_hander_pid(MenuList* pMenuList)
+{
+    switch (vkey_scan()) {
+        case VKEY_ID_NONE:
+            break;
+        case VKEY_ID_PREV:
+            menu_list_callback_handler_switch_to_prev(pMenuList);
+            break;
+        case VKEY_ID_NEXT:
+            menu_list_callback_handler_switch_to_next(pMenuList);
+            break;
+        case VKEY_ID_OK:
+
+            switch (pMenuList->items_[pMenuList->selected_index_].id) {
+                case FUNC_ID_EDIT_KP:
+                case FUNC_ID_EDIT_KI: {
+                    BOOL repaint = TRUE;
+                    for (uint16_t i = 0; i < g_u8g2_buf_len; i++)
+                        g_u8g2_buf_ptr[i] &= (i % 2 == 0 ? 0x55 : 0xAA);
+                    g_gui_base.update();
+                    PIDSliderBase* pid_slider;
+                    while (1) {
+                        switch (vkey_scan()) {
+                            case VKEY_ID_NONE:
+                                break;
+                            case VKEY_ID_PREV:
+                                pid_slider = (PIDSliderBase*)(pMenuList->items_[pMenuList->selected_index_].arg);
+                                if (pid_slider->curr > qfp_fadd(pid_slider->min, pid_slider->step)) {
+                                    pid_slider->curr = qfp_fsub(pid_slider->curr, pid_slider->step);
+                                } else {
+                                    pid_slider->curr = pid_slider->min;
+                                }
+                                repaint = TRUE;
+                                break;
+                            case VKEY_ID_NEXT:
+                                pid_slider = (PIDSliderBase*)(pMenuList->items_[pMenuList->selected_index_].arg);
+                                if (pid_slider->curr < qfp_fsub(pid_slider->max, pid_slider->step)) {
+                                    pid_slider->curr = qfp_fadd(pid_slider->curr, pid_slider->step);
+                                } else {
+                                    pid_slider->curr = pid_slider->max;
+                                }
+                                repaint = TRUE;
+                                break;
+                            case VKEY_ID_OK:
+                                pMenuList->repaint_ = TRUE;
+                                return;
+                            default:
+                                break;
+                        }
+
+                        if (repaint) {
+                            repaint = FALSE;
+
+                            g_gui_base.draw_rect(16, 16, 96, 31);
+                            g_gui_base.set_color(2);
+                            g_gui_base.draw_rect(17, 17, 94, 29);
+                            g_gui_base.set_color(1);
+
+                            g_gui_base.draw_fill_rect(18, 36, 60, 8);
+
+                            pid_slider = (PIDSliderBase*)(pMenuList->items_[pMenuList->selected_index_].arg);
+
+                            g_gui_base.draw_rect(
+                                20, // x
+                                38, // y
+                                qfp_fmul(
+                                    qfp_fdiv(
+                                        qfp_fsub(pid_slider->curr, pid_slider->min),
+                                        qfp_fsub(pid_slider->max, pid_slider->min)
+                                    ),
+                                    56.0f
+                                ),  // w
+                                4   // h
+                            );
+                            g_gui_base.draw_str(22, 30, pid_slider->description);
+                            g_gui_base.draw_num(81, 44, pid_slider->curr);
+
+                            g_gui_base.update();
+                        }
+                    }
+                    break;
+                }
+                case FUNC_ID_RETURN: {
+                    g_gui_base.effect_disappear();
+                    gui_switch(PAGE_ID_MAIN_MENU_LIST);
+                    break;
+                }
+                default:
+                    break;
+            }
+        default:
+            break;
+    }
+}
+
+/* ---------------- EASING FUNC ---------------- */
+enum {
+    FUNC_ID_EASING = FUNC_ID_RETURN + 1,
+};
+
 float easing_Customized(const float t) {
     if (t < 0.3f) {
         return t;
@@ -167,7 +311,7 @@ float easing_Customized(const float t) {
     return t;
 }
 
-static menu_item_t menu_easing[] = {
+const menu_item_t menu_easing[] = {
     {FUNC_ID_EASING, "- Custom",        easing_Customized},
     {FUNC_ID_EASING, "- Linear  ",      easing_Linear},
     {FUNC_ID_EASING, "- InQuad  ",      easing_In_Quad},
@@ -279,6 +423,9 @@ void gui_handler_easing_chart(MenuList* pMenuList) {
 static page_t page_logo;
 static page_t page_about;
 static MenuList menu_list_main;
+static MenuList menu_list_tor_pid;
+static MenuList menu_list_vel_pid;
+static MenuList menu_list_ang_pid;
 static MenuList menu_list_easing;
 
 void gui_init(void) {
@@ -294,10 +441,16 @@ void gui_init(void) {
     PAGE_REGISTER(PAGE_ID_LOGO, page_logo);
     PAGE_REGISTER(PAGE_ID_ABOUT, page_about);
 
-    menu_list_main   = menu_list_init(menu_main, ARRAY_SIZE(menu_main), 4, 0, gui_handler_main);
-    menu_list_easing = menu_list_init(menu_easing, ARRAY_SIZE(menu_easing), 5, 0, gui_handler_easing_chart);
+    menu_list_main    = menu_list_init(menu_main, ARRAY_SIZE(menu_main), 4, 0, gui_handler_main);
+    menu_list_tor_pid = menu_list_init(menu_tor_pid, ARRAY_SIZE(menu_tor_pid), 4, 0, gui_hander_pid);
+    menu_list_vel_pid = menu_list_init(menu_vel_pid, ARRAY_SIZE(menu_vel_pid), 4, 0, gui_hander_pid);
+    menu_list_ang_pid = menu_list_init(menu_ang_pid, ARRAY_SIZE(menu_ang_pid), 4, 0, gui_hander_pid);
+    menu_list_easing  = menu_list_init(menu_easing, ARRAY_SIZE(menu_easing), 5, 0, gui_handler_easing_chart);
 
     PAGE_REGISTER(PAGE_ID_MAIN_MENU_LIST, menu_list_main);
+    PAGE_REGISTER(PAGE_ID_TOR_PID_MENU_LIST, menu_list_tor_pid);
+    PAGE_REGISTER(PAGE_ID_VEL_PID_MENU_LIST, menu_list_vel_pid);
+    PAGE_REGISTER(PAGE_ID_ANG_PID_MENU_LIST, menu_list_ang_pid);
     PAGE_REGISTER(PAGE_ID_EASING_CHART, menu_list_easing);
 
     gui_switch(PAGE_ID_FIRST);

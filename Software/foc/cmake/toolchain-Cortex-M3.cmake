@@ -73,7 +73,7 @@ add_link_options(
     # LINKER: To pass options to the linker tool.
     # CMake uses the LINKER: prefix to indicate a linker specific directive.
     LINKER:--gc-sections # linker ld will delete unused function, reducing executable file size.
-    # -u _printf_float # This can enable float variable print
+    -u _printf_float # This can enable float variable print
 )
 
 # This is a standard definition that basically says the toolchain

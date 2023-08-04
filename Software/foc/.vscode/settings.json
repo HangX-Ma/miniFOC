@@ -30,7 +30,9 @@
         "qfplib-m3.h": "c",
         "easing.h": "c",
         "menu_list.h": "c",
-        "gui.h": "c"
+        "gui.h": "c",
+        "mini-printf.h": "c",
+        "base.h": "c"
     },
     "cmake.configureOnOpen": true,
 }

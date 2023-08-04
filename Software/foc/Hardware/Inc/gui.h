@@ -36,16 +36,27 @@ typedef enum PageID {
     PAGE_ID_FIRST = 0,
 
     PAGE_ID_MAIN_MENU_LIST = PAGE_ID_FIRST,
+    // PAGE_ID_MODE_SWITCH_MENU_LIST,
+    PAGE_ID_TOR_PID_MENU_LIST,
+    PAGE_ID_VEL_PID_MENU_LIST,
+    PAGE_ID_ANG_PID_MENU_LIST,
 
     PAGE_ID_LOGO,
-    PAGE_ID_ABOUT,
     PAGE_ID_EASING_CHART,
+    PAGE_ID_ABOUT,
 
     PAGE_ID_LAST,
 
     FUNC_ID_RETURN = PAGE_ID_LAST + 1,
-    FUNC_ID_EASING = FUNC_ID_RETURN + 1,
 } PageID;
+
+typedef struct PIDSliderBase {
+    char* description;
+    float min;
+    float max;
+    float curr;
+    float step;
+} PIDSliderBase;
 
 void gui_init(void);
 void gui_render(void);
