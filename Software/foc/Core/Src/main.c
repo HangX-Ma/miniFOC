@@ -29,6 +29,10 @@
 #include "vofa_usart.h"
 #include "gui.h"
 
+
+#define FOC_MOTOR_INIT      (1)
+
+
 void SystemClock_Config(void);
 
 float foc_debugger_buf[3];
