@@ -309,6 +309,7 @@ static void foc_start(void) {
     LL_TIM_EnableIT_UPDATE(TIM2);
     // start TIM2 counter
     LL_TIM_EnableCounter(TIM2);
+    g_foc.state_.power_on = TRUE;
 }
 
 static void foc_stop(void) {
@@ -317,6 +318,7 @@ static void foc_stop(void) {
     LL_TIM_DisableCounter(TIM2);
     // enable TIM2 update
     LL_TIM_DisableIT_UPDATE(TIM2);
+    g_foc.state_.power_on = FALSE;
 }
 
 //! YOU MUST CALL ENCODER INIT FIRST
@@ -329,6 +331,7 @@ void foc_init(void) {
     g_foc.state_.electrical_angle = 0.0f;
     g_foc.state_.q                = 0.0f;
     g_foc.state_.d                = 0.0f;
+    g_foc.state_.power_on         = FALSE;
     g_foc.state_.switch_type      = TRUE;
 
     g_foc.ctrl_.start             = foc_start;

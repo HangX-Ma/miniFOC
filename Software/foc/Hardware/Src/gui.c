@@ -1,6 +1,8 @@
 #include "gui.h"
 #include "config.h"
 #include "qfplib-m3.h"
+#include "foc.h"
+#include "stm32f1xx_ll_utils.h"
 
 #define X_PADDING          (4)
 
@@ -69,6 +71,30 @@ void effect_rotating_rect() {
     g_gui_base.set_color(1);
 }
 
+void effect_done(MenuList *pMenuList) {
+    // Blur the background
+    for (uint16_t i = 0; i < g_u8g2_buf_len; i++)
+        g_u8g2_buf_ptr[i] &= (i % 2 == 0 ? 0x55 : 0xAA);
+
+    g_gui_base.update();
+
+    g_gui_base.set_color(2);
+    g_gui_base.draw_fill_rect(16, 16, 96, 31);
+
+    g_gui_base.set_color(1);
+    g_gui_base.draw_rect(16, 16, 96, 31);
+    g_gui_base.set_color(2);
+    g_gui_base.draw_rect(17, 17, 94, 29);
+    g_gui_base.set_color(1);
+
+    g_gui_base.draw_str(56, 32, "OK!");
+    g_gui_base.update();
+
+    while (vkey_scan() == VKEY_ID_NONE) {}
+
+    pMenuList->repaint_ = TRUE;
+}
+
 /* ---------------- LOGO ---------------- */
 void gui_painter_logo(page_t* pg) {
     (void)pg;
@@ -120,12 +146,13 @@ static void gui_handler_about(page_t* pg) {
 
 /* ---------------- Main ---------------- */
 const menu_item_t menu_main[] = {
-    {PAGE_ID_LOGO,              "MainUI",                0},
-    {PAGE_ID_TOR_PID_MENU_LIST, "- Torque PID Editor",   0},
-    {PAGE_ID_VEL_PID_MENU_LIST, "- Velocity PID Editor", 0},
-    {PAGE_ID_ANG_PID_MENU_LIST, "- Angle PID Editor",    0},
-    {PAGE_ID_EASING_CHART,      "- Easing Chart",        0},
-    {PAGE_ID_ABOUT,             "- About",               0},
+    {PAGE_ID_LOGO,                  "MainUI",                0},
+    {PAGE_ID_MOTOR_MODE_MENU_LIST,  "- Switch Motor Mode",   0},
+    {PAGE_ID_TOR_PID_MENU_LIST,     "- Torque PID Editor",   0},
+    {PAGE_ID_VEL_PID_MENU_LIST,     "- Velocity PID Editor", 0},
+    {PAGE_ID_ANG_PID_MENU_LIST,     "- Angle PID Editor",    0},
+    {PAGE_ID_EASING_CHART,          "- Easing Chart",        0},
+    {PAGE_ID_ABOUT,                 "- About",               0},
 };
 
 void gui_handler_main(MenuList* pMenuList)
@@ -149,6 +176,7 @@ void gui_handler_main(MenuList* pMenuList)
                     gui_switch(pMenuList->items_[pMenuList->selected_index_].id);
                     break;
                 }
+                case PAGE_ID_MOTOR_MODE_MENU_LIST:
                 case PAGE_ID_TOR_PID_MENU_LIST:
                 case PAGE_ID_VEL_PID_MENU_LIST:
                 case PAGE_ID_ANG_PID_MENU_LIST: {
@@ -163,6 +191,57 @@ void gui_handler_main(MenuList* pMenuList)
 
             pMenuList->repaint_ = TRUE;
             break;
+        default:
+            break;
+    }
+}
+
+/* ---------------- MOTOR MODE ---------------- */
+enum {
+    FUNC_ID_MOTOR_TORQUE_MODE = FUNC_ID_RETURN + 1,
+    FUNC_ID_MOTOR_VELOCITY_MODE,
+    FUNC_ID_MOTOR_ANGLE_MODE,
+};
+
+const menu_item_t menu_motor_mode[] = {
+    {FUNC_ID_MOTOR_TORQUE_MODE,     "- Torque Mode",   0},
+    {FUNC_ID_MOTOR_VELOCITY_MODE,   "- Velocity Mode", 0},
+    {FUNC_ID_MOTOR_ANGLE_MODE,      "- Angle Mode",    0},
+    {FUNC_ID_RETURN,                "Return",        0},
+};
+
+
+void gui_handler_motor_mode(MenuList* pMenuList) {
+    switch (vkey_scan()) {
+        case VKEY_ID_NONE:
+            break;
+        case VKEY_ID_PREV:
+            menu_list_callback_handler_switch_to_prev(pMenuList);
+            break;
+        case VKEY_ID_NEXT:
+            menu_list_callback_handler_switch_to_next(pMenuList);
+            break;
+        case VKEY_ID_OK:
+
+            switch (pMenuList->items_[pMenuList->selected_index_].id) {
+                case FUNC_ID_MOTOR_TORQUE_MODE:
+                    g_foc.motion_type_ = FOC_Motion_Type_Torque;
+                    effect_done(pMenuList);
+                    break;
+                case FUNC_ID_MOTOR_VELOCITY_MODE:
+                    g_foc.motion_type_ = FOC_Motion_Type_Velocity;
+                    effect_done(pMenuList);
+                    break;
+                case FUNC_ID_MOTOR_ANGLE_MODE:
+                    g_foc.motion_type_ = FOC_Motion_Type_Angle;
+                    effect_done(pMenuList);
+                    break;
+                case FUNC_ID_RETURN: {
+                    g_gui_base.effect_disappear();
+                    gui_switch(PAGE_ID_MAIN_MENU_LIST);
+                    break;
+                }
+            }
         default:
             break;
     }
@@ -201,7 +280,7 @@ const menu_item_t menu_ang_pid[] = {
     {FUNC_ID_RETURN, "Return", 0},
 };
 
-void gui_hander_pid(MenuList* pMenuList)
+void gui_handler_pid(MenuList* pMenuList)
 {
     switch (vkey_scan()) {
         case VKEY_ID_NONE:
@@ -429,6 +508,7 @@ void gui_handler_easing_chart(MenuList* pMenuList) {
 static page_t page_logo;
 static page_t page_about;
 static MenuList menu_list_main;
+static MenuList menu_list_motor_mode;
 static MenuList menu_list_tor_pid;
 static MenuList menu_list_vel_pid;
 static MenuList menu_list_ang_pid;
@@ -446,13 +526,15 @@ void gui_init(void) {
     PAGE_REGISTER(PAGE_ID_LOGO, page_logo);
     PAGE_REGISTER(PAGE_ID_ABOUT, page_about);
 
-    menu_list_main    = menu_list_init(menu_main, ARRAY_SIZE(menu_main), 4, 0, gui_handler_main);
-    menu_list_tor_pid = menu_list_init(menu_tor_pid, ARRAY_SIZE(menu_tor_pid), 4, 0, gui_hander_pid);
-    menu_list_vel_pid = menu_list_init(menu_vel_pid, ARRAY_SIZE(menu_vel_pid), 4, 0, gui_hander_pid);
-    menu_list_ang_pid = menu_list_init(menu_ang_pid, ARRAY_SIZE(menu_ang_pid), 4, 0, gui_hander_pid);
-    menu_list_easing  = menu_list_init(menu_easing, ARRAY_SIZE(menu_easing), 5, 0, gui_handler_easing_chart);
+    menu_list_main       = menu_list_init(menu_main, ARRAY_SIZE(menu_main), 4, 0, gui_handler_main);
+    menu_list_motor_mode = menu_list_init(menu_motor_mode, ARRAY_SIZE(menu_motor_mode), 4, 0, gui_handler_motor_mode);
+    menu_list_tor_pid    = menu_list_init(menu_tor_pid, ARRAY_SIZE(menu_tor_pid), 4, 0, gui_handler_pid);
+    menu_list_vel_pid    = menu_list_init(menu_vel_pid, ARRAY_SIZE(menu_vel_pid), 4, 0, gui_handler_pid);
+    menu_list_ang_pid    = menu_list_init(menu_ang_pid, ARRAY_SIZE(menu_ang_pid), 4, 0, gui_handler_pid);
+    menu_list_easing     = menu_list_init(menu_easing, ARRAY_SIZE(menu_easing), 5, 0, gui_handler_easing_chart);
 
     PAGE_REGISTER(PAGE_ID_MAIN_MENU_LIST, menu_list_main);
+    PAGE_REGISTER(PAGE_ID_MOTOR_MODE_MENU_LIST, menu_list_motor_mode);
     PAGE_REGISTER(PAGE_ID_TOR_PID_MENU_LIST, menu_list_tor_pid);
     PAGE_REGISTER(PAGE_ID_VEL_PID_MENU_LIST, menu_list_vel_pid);
     PAGE_REGISTER(PAGE_ID_ANG_PID_MENU_LIST, menu_list_ang_pid);

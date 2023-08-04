@@ -41,6 +41,7 @@ typedef struct {
     float electrical_angle;
     float q;
     float d;
+    BOOL power_on;
     BOOL switch_type;
 } FOCState;
 
