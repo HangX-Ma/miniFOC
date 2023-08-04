@@ -253,7 +253,7 @@ void FOC_CTRL_IRQHandler(void) {
 
         switch (g_foc.motion_type_) {
             case FOC_Motion_Type_Torque:
-                ratchet_mode();
+                torque_ratchet_mode();
                 target_q = PID_torque(g_tor_ctrl.target_torque);
                 break;
             case FOC_Motion_Type_Velocity:

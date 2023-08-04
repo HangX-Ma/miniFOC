@@ -204,8 +204,9 @@ void encoder_reset(void) {
     g_foc.state_.shaft_angle = get_shaft_angle();
     // Set current shaft angle as the target angle.
     // So the motor can stop after motion mode being switched.
-    g_ang_ctrl.target_angle = g_foc.state_.shaft_angle;
-    g_vel_ctrl.target_speed = 0.0f;
+    g_ang_ctrl.target_angle  = g_foc.state_.shaft_angle;
+    g_vel_ctrl.target_speed  = 0.0f;
+    g_tor_ctrl.target_torque = 0.0f;
 }
 
 void encoder_init(void) {

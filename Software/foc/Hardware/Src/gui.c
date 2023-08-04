@@ -440,7 +440,6 @@ void gui_init(void) {
     gui_base_init();
     tween_handler_init();
 
-
     page_logo  = gui_page_new(gui_painter_logo, gui_handler_logo);
     page_about = gui_page_new(gui_painter_about, gui_handler_about);
 

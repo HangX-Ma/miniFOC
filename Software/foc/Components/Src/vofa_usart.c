@@ -212,20 +212,25 @@ void USARTx_DMA_RX_IRQHandler(void) {
                 case 0x0A: // set Current D Ki
                     g_Id_ctrl.pid.Ki = recv_data.fdata;
                     break;
-                case 0x0B: // Velocity Control
+                case 0x0B: // Torque Control
+                    g_foc.ctrl_.stop();
+                    g_foc.state_.switch_type = TRUE;
+                    g_foc.motion_type_ = FOC_Motion_Type_Torque;
+                    break;
+                case 0x0C: // Velocity Control
                     g_foc.ctrl_.stop();
                     g_foc.state_.switch_type = TRUE;
                     g_foc.motion_type_ = FOC_Motion_Type_Velocity;
                     break;
-                case 0x0C: // Angle Control
+                case 0x0D: // Angle Control
                     g_foc.ctrl_.stop();
                     g_foc.state_.switch_type = TRUE;
                     g_foc.motion_type_ = FOC_Motion_Type_Angle;
                     break;
-                case 0x0D: // set target Torque
+                case 0x0E: // set target Torque
                     g_tor_ctrl.target_torque = recv_data.fdata;
                     break;
-                case 0x0E: // set Torque Kp
+                case 0x0F: // set Torque Kp
                     g_tor_ctrl.pid.Kp = recv_data.fdata;
                     break;
                 case 0x11: // virtual key PREV

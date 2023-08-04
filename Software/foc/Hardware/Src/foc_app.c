@@ -14,7 +14,7 @@ float find_attractor(float angle){
     return qfp_fmul((float)idx, attractor_distance);
 }
 
-void ratchet_mode(void) {
+void torque_ratchet_mode(void) {
     g_tor_ctrl.target_torque = attract_angle - g_foc.state_.shaft_angle;
     attract_angle = find_attractor(g_foc.state_.shaft_angle);
 }
