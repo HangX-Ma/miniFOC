@@ -218,8 +218,10 @@ void gui_hander_pid(MenuList* pMenuList)
                 case FUNC_ID_EDIT_KP:
                 case FUNC_ID_EDIT_KI: {
                     BOOL repaint = TRUE;
+                    // Blur the background
                     for (uint16_t i = 0; i < g_u8g2_buf_len; i++)
                         g_u8g2_buf_ptr[i] &= (i % 2 == 0 ? 0x55 : 0xAA);
+
                     g_gui_base.update();
                     PIDSliderBase* pid_slider;
                     while (1) {
@@ -254,6 +256,10 @@ void gui_hander_pid(MenuList* pMenuList)
                         if (repaint) {
                             repaint = FALSE;
 
+                            g_gui_base.set_color(2);
+                            g_gui_base.draw_fill_rect(16, 16, 96, 31);
+
+                            g_gui_base.set_color(1);
                             g_gui_base.draw_rect(16, 16, 96, 31);
                             g_gui_base.set_color(2);
                             g_gui_base.draw_rect(17, 17, 94, 29);

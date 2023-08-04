@@ -158,11 +158,11 @@ void menu_list_callback_handler_by_default(MenuList* pMenuList) {
 }
 
 MenuList menu_list_init(
-    menu_item_t items[],
-    uint8_t     item_num,
-    uint8_t     display_num, /* default = 1 */
-    callback_t  painter,
-    callback_t  handler
+    const menu_item_t items[],
+    const uint8_t     item_num,
+    const uint8_t     display_num, /* default = 1 */
+    const callback_t  painter,
+    const callback_t  handler
 )
 {
     // no item
