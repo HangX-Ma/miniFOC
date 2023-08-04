@@ -2,48 +2,68 @@
 
 This repository records my development of miniFOC. You can obtain the source files of the hardware and software in this repository.
 
-~~I have an immature design and those ideas haven't been verified~~.
+## Introduction
 
-~~So _**DON'T USE ANY MATERIALS DIRECTLY!**_ I won't response for any mistakes.~~
+This FOC driver board has three control mode, _Torque_, _Velocity_, _Angle_. You can control the motor accurately and smoothly using _**Voltage Control**_, because I haven't solved the _**Current Loop Control**_ problem.
 
-Except for this, <span style="color: #98C379; font-weight: bold;">`Software/foc/foc.ioc`</span> is only used for configuration reference.
+Vofa+ can be used to control the motor conveniently. I also design a group of virtual keys to test the menu UI. You can find Vofa+ command configuration [vofa+.cmds.json](/Software/foc/vofa+.cmds.json) and [foc_debugger.tab.json](/Software/foc/foc_debugger.tab.json) that can assist you build up your debug platform quickly.
+
+I have added a `Torque Ratchet Mode` under torque control. You can have a try.
+
+> **NOTE:** <span style="color: #98C379; font-weight: bold;">`Software/foc/foc.ioc`</span> is only used for configuration reference.
+>
+> **NOTE:** :heavy_exclamation_mark: The hardware design is immature, which has some line sequence mistakes.
+
+You can check the pin set via [cubemx-settings](assets/cubemx-settings.png). Vofa+ debugger tab can also be found in [assets/vofaplus.png](assets/vofaplus.png).
 
 <div align="center">
     <img src="assets/miniFOC.svg" alt="miniFOC design(concept), HangX-Ma" width=600 />
     <br>
     <font size="2" color="#999"><u>miniFOC design(concept), HangX-Ma</u></font>
+    <br>
+    <br>
 </div>
 
 <div align="center">
-    <img src="assets/cubemx-settings.png" alt="Current STM32CubeMX settings, HangX-Ma" width=400 />
+    <img src="assets/all-components.png" alt="FOC board and other components, HangX-Ma" width=400 />
     <br>
-    <font size="2" color="#999"><u>Current STM32CubeMX settings, HangX-Ma</u></font>
+    <font size="2" color="#999"><u>FOC board and other components, HangX-Ma</u></font>
+    <br>
+    <br>
 </div>
 
 > I will try to use sensor-less control strategy if the fundamental functions all perform well.
 
 ## Driver Parameters
 
-- Input voltage range: 8 V ~ 40 V (Drv8313, ME3116)
-- Maximum current: 2 A (Drv8313)
-- Serial port baud rate: 115200
-- MCU: STM32F103C8T6, 64 KB flash, 20 KB RAM
+- **Input voltage range:** 8 V ~ 40 V (Drv8313, ME3116)
+- **Voltage supply:** 12V
+- **Maximum current:** 2 A (Drv8313)
+- **Serial port baud rate:** 115200
+- **MCU:** STM32F103C8T6, 64 KB flash, 20 KB RAM
+- **OLED:** SSD1306, 128 x 64, 7 wires SPI
 
 ## Environment
 
 - **Serial Port Tool:** [Vofa+](https://www.vofa.plus/downloads/?v=7/17/2023)
 - **OLED UI:** [WouoUI](https://github.com/RQNG/WouoUI), [uYanki/menu](https://github.com/uYanki/board-stm32f103rc-berial/tree/main/7.Example/hal/gui/u8g2/02_menu)
-- **Dev Tools:** VSCode, CMake, OpenOCD, STLInk-v2, STM32CubeMX
+- **Dev Tools:** VSCode, CMake, OpenOCD, STLInk-v2, CMSIS-DAPv2, STM32CubeMX
 - **Debugger:** Cortex-Debug
 - **Library:** [u8g2](https://github.com/olikraus/u8g2), [Qfplib-M3](https://www.quinapalus.com/qfplib-m3.html)
 
-## Function Features
+## Features
 
 - [x] Using space vector pulse width modulation
 - [x] Torque control without current sensor
 - [x] Rotational speed closed loop control
 - [x] Rotation angle closed loop control
 - [ ] Torque control with current sensor
+- [x] Smooth UI that can be controlled by virtual keys currently via Vofa
+
+## FOC Application
+
+- <span style="color: #E06C75; font-weight: bold;">Torque Ratchet Mode:</span> Under torque control, the motor will act like a ratchet.
+- TODO
 
 ## Problem Found
 
@@ -54,6 +74,10 @@ Except for this, <span style="color: #98C379; font-weight: bold;">`Software/foc/
 - `nFault` pin of the DRV8313 needs to be controlled and monitored by the MCU. Currently, only unplugging battery can release the DRV8313 off the fault state.
 
 ## Development Logs
+
+### 2023-08-01 to 2023-08-04
+
+- Add OLED smooth menu UI and make control relationship between UI and motor. The motor information such that **Motor Control Mode**, **Motor State**, **Control Target**, **Shaft Velocity**, **Shaft Angle**. The animation in _MainUI_ will show you the state of motor!
 
 ### 2023-07-31
 
