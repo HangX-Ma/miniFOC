@@ -89,7 +89,7 @@ float PID_angle(float err) {
     float proportional, output;
 
     // If the 'err' is too small, I don't want the motor to adjust itself.
-    if (abs(err) < 0.05f) {
+    if (abs(err) < 0.04f) {
         return 0.0f;
     }
 

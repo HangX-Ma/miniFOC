@@ -6,7 +6,8 @@
 
 #include "stm32f1xx_ll_utils.h"
 
-#define X_PADDING          (8)
+#define X_PADDING           (64)
+#define X_VAL_PADDING       (36)
 
 page_t* pages[PAGE_ID_LAST] = {0};
 volatile PageID page_selected;  // index of rendering
@@ -98,6 +99,12 @@ void effect_done(MenuList *pMenuList) {
 }
 
 /* ---------------- LOGO ---------------- */
+// normalize angle to range [0, 2PI]
+static float normalize(float angle) {
+    float _fmod = fmodf(angle, _2PI);
+    return _fmod >= 0 ? _fmod : qfp_fadd(_fmod, _2PI);
+}
+
 void gui_painter_logo(page_t* pg) {
     (void)pg;
 
@@ -109,42 +116,54 @@ void gui_painter_logo(page_t* pg) {
         g_gui_base.clear();
 
         g_gui_base.draw_str(2, 12, " Motor Info ");
+        // Motor Info mask
         g_gui_base.set_color(2);
-        g_gui_base.draw_round_rect(2, 2, 56, 12, 1);
-        g_gui_base.draw_str(X_PADDING, 24, "Mode:");
+        g_gui_base.draw_round_rect(2, 1, 56, 14, 1);
 
-        g_gui_base.draw_str(X_PADDING, 36, "State:");
-        g_gui_base.draw_str(X_PADDING + 36, 36, g_foc.state_.power_on ? "ON " : "OFF");
+        g_gui_base.draw_str(X_PADDING, 12, "Mode:");
+        g_gui_base.draw_str(X_PADDING, 24, "State:");
+        g_gui_base.draw_str(X_PADDING, 36, "Target:");
+        g_gui_base.draw_str(X_PADDING, 48, "Vel:");
+        g_gui_base.draw_str(X_PADDING, 60, "Ang:");
 
-        g_gui_base.draw_str(X_PADDING, 48, "Target:");
+        // show state
+        g_gui_base.draw_str(X_PADDING+ X_VAL_PADDING, 24, g_foc.state_.power_on ? "ON " : "OFF");
+        // velocity
+        g_gui_base.draw_num(X_PADDING + X_VAL_PADDING, 48, g_foc.state_.shaft_speed);
 
         switch (g_foc.motion_type_) {
             case FOC_Motion_Type_Torque:
-                g_gui_base.draw_str(X_PADDING + 36, 24, "TOR");
-                g_gui_base.draw_num(X_PADDING + 36, 48, g_tor_ctrl.target_torque);
+                g_gui_base.draw_str(X_PADDING + X_VAL_PADDING, 12, "TOR");
+                g_gui_base.draw_num(X_PADDING + X_VAL_PADDING, 36, g_tor_ctrl.target_torque);
+                // normalized angle
+                g_gui_base.draw_num(X_PADDING + X_VAL_PADDING, 60, normalize(g_foc.state_.shaft_angle));
                 break;
             case FOC_Motion_Type_Velocity:
-                g_gui_base.draw_str(X_PADDING + 36, 24, "VEL");
-                g_gui_base.draw_num(X_PADDING + 36, 48, g_vel_ctrl.target_speed);
+                g_gui_base.draw_str(X_PADDING + X_VAL_PADDING, 12, "VEL");
+                g_gui_base.draw_num(X_PADDING + X_VAL_PADDING, 36, g_vel_ctrl.target_speed);
+                // normalized angle
+                g_gui_base.draw_num(X_PADDING + X_VAL_PADDING, 60, normalize(g_foc.state_.shaft_angle));
                 break;
             case FOC_Motion_Type_Angle:
-                g_gui_base.draw_str(X_PADDING + 36, 24, "ANG");
-                g_gui_base.draw_num(X_PADDING + 36, 48, g_ang_ctrl.target_angle);
+                g_gui_base.draw_str(X_PADDING + X_VAL_PADDING, 12, "ANG");
+                g_gui_base.draw_num(X_PADDING + X_VAL_PADDING, 36, g_ang_ctrl.target_angle);
+                // shaft angle
+                g_gui_base.draw_num(X_PADDING + X_VAL_PADDING, 60, g_foc.state_.shaft_angle);
                 break;
             default:
-                g_gui_base.draw_str(X_PADDING + 36, 24, "NAN");
+                g_gui_base.draw_str(X_PADDING + X_VAL_PADDING, 12, "NAN");
                 break;
         }
 
         // draw central circle
-        g_gui_base.draw_disc_full(100, 28, 10);
+        g_gui_base.draw_disc_full(32, 38, 10);
         g_gui_base.update();
 
         // draw a rotated ball
         angle = qfp_fsub(qfp_fmul(qfp_fdiv(_2PI, 255.0f), (float)step), _PI);
         g_gui_base.draw_disc_full(
-            100 + qfp_fmul(r, qfp_fcos(angle)),
-            28 + qfp_fmul(r, qfp_fsin(angle)),
+            32 + qfp_fmul(r, qfp_fcos(angle)),
+            38 + qfp_fmul(r, qfp_fsin(angle)),
             3
         );
         if (g_foc.state_.power_on) {
