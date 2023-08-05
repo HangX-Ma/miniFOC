@@ -28,5 +28,6 @@
 #include "utils.h"
 
 void torque_ratchet_mode(void);
+void torque_rebound_mode(void);
 
 #endif  //!__FOC_APP__H__

@@ -19,10 +19,10 @@ float PID_torque(float err) {
     proportional = qfp_fmul(g_tor_ctrl.pid.Kp, err);
 
     // UPDATE: Voltage control with current estimation and Back-EMF compensation
-    // Uq = Id*R + Ubemf = u_p * R(phase resistance [Ohms]) + v/KV
+    // Uq = Id*R + Ubemf = u_p * R(phase resistance [Ohs]) + v/KV
     proportional =
         qfp_fadd(
-            qfp_fmul(proportional, qfp_fmul(CURRENT_SENSE_REGISTER, 1000.0f)),
+            qfp_fmul(proportional, qfp_fmul(CURRENT_SENSE_REGISTER, 100.0f /* Enlarged for easy debug */)),
             qfp_fdiv(g_foc.state_.shaft_speed, (float)FOC_KV)
         );
 

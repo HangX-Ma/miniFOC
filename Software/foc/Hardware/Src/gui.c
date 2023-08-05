@@ -273,7 +273,7 @@ enum {
     FUNC_ID_MOTOR_ANGLE_TARGET,
 };
 
-static SliderBase Torque_tar   = {"Editing Torque", 0.0f, 1.0f, 0.0f, 0.02f};
+static SliderBase Torque_tar   = {"Editing Torque", 0.0f, 5.0f, 0.0f, 0.1f};
 static SliderBase Velocity_tar = {"Editing Velocity", -50.0f, 50.0f, 0.0f, 5.0f};
 static SliderBase Angle_tar    = {"Editing Angle", -50.0f, 50.0f, 0.0f, 5.0f};
 

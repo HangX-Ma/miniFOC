@@ -24,6 +24,10 @@ float find_attractor(float angle){
 
 void torque_ratchet_mode(void) {
     normalized_angle = normalize(g_foc.state_.shaft_angle);
-    g_tor_ctrl.target_torque = attract_angle - normalized_angle;
+    g_tor_ctrl.target_torque = qfp_fsub(attract_angle, normalized_angle);
     attract_angle = find_attractor(normalized_angle);
+}
+
+void torque_rebound_mode(void) {
+    g_tor_ctrl.target_torque = -g_foc.state_.shaft_angle;
 }

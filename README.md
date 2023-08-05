@@ -75,6 +75,18 @@ You can check the pin set via [cubemx-settings](assets/cubemx-settings.png). Vof
 
 ## Development Logs
 
+### 2023-08-05
+
+- Update the voltage control with with current estimation and Back-EMF compensation. I take a reference to SimpleFOC, [Torque control using voltage](https://docs.simplefoc.com/voltage_torque_mode).
+
+<div align="center">
+    <img src="assets/voltage-control-with-back-EMF.jpg" alt="Voltage control with current estimation and Back-EMF compensation
+, HangX-Ma" width=600 />
+    <br>
+    <font size="2" color="#999"><u>Voltage control with current estimation and Back-EMF compensation
+, HangX-Ma</u></font>
+</div>
+
 ### 2023-08-01 to 2023-08-04
 
 - Add OLED smooth menu UI and make control relationship between UI and motor. The motor information such that **Motor Control Mode**, **Motor State**, **Control Target**, **Shaft Velocity**, **Shaft Angle**. The animation in _MainUI_ will show you the state of motor!
