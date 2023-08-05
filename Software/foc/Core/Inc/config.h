@@ -78,6 +78,7 @@
 #define FOC_CURRENT_LIMIT               1.0f    // A
 #define FOC_ANG_SPEED_LIMIT             30.0f   // set it low if you just start to test the motor
 #define FOC_CONTROL_RATE                0.001f  // sec
+#define FOC_KV                          900     // Motor property
 
 // PWM frequency 20 KHz, but we use center aligned mode, so 72MHz/1800 = 40 KHz
 // can satisfy our need.

@@ -2,6 +2,7 @@
 #include "config.h"
 #include "qfplib-m3.h"
 #include "foc.h"
+#include "current_monitor.h"
 
 // ref: https://docs.simplefoc.com/docs_chinese/pi_controller
 
@@ -16,6 +17,14 @@ float PID_torque(float err) {
 
     // u_p  = P *e(k)
     proportional = qfp_fmul(g_tor_ctrl.pid.Kp, err);
+
+    // UPDATE: Voltage control with current estimation and Back-EMF compensation
+    // Uq = Id*R + Ubemf = u_p * R(phase resistance [Ohms]) + v/KV
+    proportional =
+        qfp_fadd(
+            qfp_fmul(proportional, qfp_fmul(CURRENT_SENSE_REGISTER, 1000.0f)),
+            qfp_fdiv(g_foc.state_.shaft_speed, (float)FOC_KV)
+        );
 
     output = proportional;
     if (g_foc.torque_type_ == FOC_Torque_Type_Voltage) {
