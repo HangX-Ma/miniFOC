@@ -27,7 +27,10 @@
 
 #include "utils.h"
 
+extern float g_torque_rebound_init_angle;
+
 void torque_ratchet_mode(void);
 void torque_rebound_mode(void);
+
 
 #endif  //!__FOC_APP__H__

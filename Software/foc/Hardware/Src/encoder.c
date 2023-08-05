@@ -192,6 +192,7 @@ static void encoder_spi2_init(void) {
 }
 
 #include "foc.h"
+#include "foc_app.h"
 #include "pid.h"
 void encoder_reset(void) {
     rotation_turns_angles = 0.0f;
@@ -207,6 +208,9 @@ void encoder_reset(void) {
     g_ang_ctrl.target_angle  = g_foc.state_.shaft_angle;
     g_vel_ctrl.target_speed  = 0.0f;
     g_tor_ctrl.target_torque = 0.0f;
+
+    // app
+    g_torque_rebound_init_angle = g_foc.state_.shaft_angle;
 }
 
 void encoder_init(void) {

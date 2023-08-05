@@ -28,6 +28,7 @@ void torque_ratchet_mode(void) {
     attract_angle = find_attractor(normalized_angle);
 }
 
+float g_torque_rebound_init_angle = 0.0f;
 void torque_rebound_mode(void) {
-    g_tor_ctrl.target_torque = -g_foc.state_.shaft_angle;
+    g_tor_ctrl.target_torque = qfp_fsub(g_torque_rebound_init_angle, g_foc.state_.shaft_angle);
 }
