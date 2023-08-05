@@ -37,35 +37,47 @@
 
 /**
  * @dir Hardware/Inc/encoder.h
- * @param g_encoder
+ * @param g_encoder Encoder
  * @brief Use 'encoder_init' at initialization stage. Afterwards, you can use
  *        g_encoder to get motor angle and velocity.
  */
 
 /**
- * @dir Components/Inc/vofa_usart.h
- * @param g_target_motor_vel
- * @brief Target motor rotation velocity, controlled by host using USART.
+ * @dir Hardware/Inc/bldc_config.h
+ * @param g_bldc BLDC
+ * @brief 'g_bldc' manages the PWMA, PWMB, PWMC output duty. Except for this,
+ *        It can control all PWM channels output as well.
  */
 
 /**
  * @dir Hardware/Inc/foc.h
  * @param g_foc
- * @brief FOC related functions. Align sensor, set phase voltage and so on.
+ * @brief FOC related functions and properties. We can align the motor and sensor
+ *        using this 'g_foc'.
+ */
+
+/**
+ * @dir Hardware/Inc/pid.h
+ * @param g_tor_ctrl TorCtrlParam
+ * @param g_vel_ctrl VelCtrlParam
+ * @param g_ang_ctrl AngCtrlParam
+ * @param g_Iq_ctrl CurrCtrlParam
+ * @param g_Id_ctrl CurrCtrlParam
+ * @brief You can set the PID parameters for all this control sets.
  */
 
 
 /* ----------------  FOC Configurations ---------------- */
-#define MOTOR_VM                        12.0f
+#define MOTOR_VM                        12.0f   // V
 #define MOTOR_POLE_PAIRS                7
-#define SENSOR_ALIGN_VOLTAGE            0.8f
+#define SENSOR_ALIGN_VOLTAGE            0.8f    // V
 
 /* ----------------  FOC PID Configurations ---------------- */
-#define FOC_VOLTAGE_LIMIT               2.0f
-#define FOC_VOLTAGE_RAMP                100.0f
-#define FOC_CURRENT_LIMIT               1.0f
+#define FOC_VOLTAGE_LIMIT               2.0f    // V
+#define FOC_VOLTAGE_RAMP                100.0f  // V/s
+#define FOC_CURRENT_LIMIT               1.0f    // A
 #define FOC_ANG_SPEED_LIMIT             30.0f   // set it low if you just start to test the motor
-#define FOC_CONTROL_RATE                0.001f
+#define FOC_CONTROL_RATE                0.001f  // sec
 
 // PWM frequency 20 KHz, but we use center aligned mode, so 72MHz/1800 = 40 KHz
 // can satisfy our need.
