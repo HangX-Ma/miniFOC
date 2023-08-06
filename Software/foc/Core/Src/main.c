@@ -30,8 +30,8 @@
 #include "gui.h"
 
 
-#define FOC_MOTOR_INIT      (1)
-
+#define FOC_MOTOR_INIT          (1)
+#define USART_FOC_CONTROL_INFO  (1)
 
 void SystemClock_Config(void);
 
@@ -119,10 +119,10 @@ int main(void) {
         foc_debugger_buf[1] = g_foc.state_.shaft_speed;
         foc_debugger_buf[2] = g_foc.state_.electrical_angle;
         vofa_usart_dma_send_config(foc_debugger_buf, 3);
-#endif
         // foc_debugger_buf[0] = g_foc.state_.q;
         // foc_debugger_buf[1] = g_foc.state_.d;
         // vofa_usart_dma_send_config(foc_debugger_buf, 2);
+#endif
         LL_mDelay(10);
         // ------------ Encoder test ------------
         // encoder_test();

@@ -254,7 +254,7 @@ void FOC_CTRL_IRQHandler(void) {
         switch (g_foc.motion_type_) {
             case FOC_Motion_Type_Torque:
                 // torque_ratchet_mode();
-                torque_rebound_mode();
+                // torque_rebound_mode();
                 target_q = PID_torque(g_tor_ctrl.target_torque);
                 break;
             case FOC_Motion_Type_Velocity:
@@ -275,6 +275,8 @@ void FOC_CTRL_IRQHandler(void) {
             RS_current = get_RS_current(g_foc.state_.electrical_angle);
             g_foc.voltage_.q = PID_current(&g_Iq_ctrl, qfp_fsub(target_q, RS_current.Iq));
             g_foc.voltage_.d = PID_current(&g_Id_ctrl, /* target_d = 0.0f */ -RS_current.Id);
+            // feed-forward control
+            g_foc.voltage_.q = qfp_fadd(g_foc.voltage_.q, qfp_fmul(g_foc.voltage_.q, 0.001f));
             // save 'd' 'q' state for easy debug
             // g_foc.state_.q   = RS_current.Iq;
             // g_foc.state_.d   = RS_current.Id
@@ -339,7 +341,7 @@ void foc_init(void) {
     g_foc.ctrl_.stop              = foc_stop;
 
     g_foc.motion_type_            = FOC_Motion_Type_Torque;
-    g_foc.torque_type_            = FOC_Torque_Type_Voltage;
+    g_foc.torque_type_            = FOC_Torque_Type_Current;
     g_foc.voltage_.d              = 0.0f;
     g_foc.voltage_.q              = 0.0f;
 
