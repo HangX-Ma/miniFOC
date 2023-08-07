@@ -33,7 +33,8 @@
         "gui.h": "c",
         "mini-printf.h": "c",
         "base.h": "c",
-        "tween.h": "c"
+        "tween.h": "c",
+        "pid.h": "c"
     },
     "cmake.configureOnOpen": true,
 }

@@ -1,4 +1,5 @@
 #include "foc.h"
+#include "foc_app.h"
 #include "config.h"
 #include "bldc_config.h"
 #include "encoder.h"
@@ -242,6 +243,7 @@ static void vel_ctrl_tim2_init(void) {
 //! ------------------- FOC CONTROL -------------------
 #include "foc_app.h"
 static float shaft_speed;
+static TorCtrlParam *torque_ctrl;
 static float target_q;
 static RotorStatorCurrent RS_current;
 
@@ -253,9 +255,20 @@ void FOC_CTRL_IRQHandler(void) {
 
         switch (g_foc.motion_type_) {
             case FOC_Motion_Type_Torque:
-                // torque_ratchet_mode();
-                // torque_rebound_mode();
-                target_q = PID_torque(g_tor_ctrl.target_torque);
+                // select foc app mode
+                switch (g_foc_app.mode_) {
+                    case FOC_App_Ratchet_Mode:
+                        torque_ctrl = torque_ratchet_mode();
+                        break;
+                    case FOC_App_Rebound_Mode:
+                        torque_ctrl = torque_rebound_mode();
+                        break;
+                    case FOC_App_Normal_Mode:
+                    default:
+                        torque_ctrl = &g_foc_app.normal_.torque_ctrl_;
+                        break;
+                }
+                target_q = PID_torque(torque_ctrl);
                 break;
             case FOC_Motion_Type_Velocity:
                 target_q = PID_velocity(qfp_fsub(g_vel_ctrl.target_speed, g_foc.state_.shaft_speed));
@@ -341,7 +354,7 @@ void foc_init(void) {
     g_foc.ctrl_.stop              = foc_stop;
 
     g_foc.motion_type_            = FOC_Motion_Type_Torque;
-    g_foc.torque_type_            = FOC_Torque_Type_Current;
+    g_foc.torque_type_            = FOC_Torque_Type_Voltage;
     g_foc.voltage_.d              = 0.0f;
     g_foc.voltage_.q              = 0.0f;
 

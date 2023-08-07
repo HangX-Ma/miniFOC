@@ -45,7 +45,6 @@ typedef struct TorCtrlParam {
     float voltage_limit;
     float current_limit;
 } TorCtrlParam;
-extern TorCtrlParam g_tor_ctrl;
 
 typedef struct VelCtrlParam {
     PIDParam pid;
@@ -80,7 +79,7 @@ extern CurrCtrlParam g_Iq_ctrl;
 extern CurrCtrlParam g_Id_ctrl;
 
 void pid_init(void);
-float PID_torque(float err);
+float PID_torque(TorCtrlParam *pCtrl);
 float PID_velocity(float err);
 float PID_angle(float err);
 float PID_current(CurrCtrlParam *pCtrl, float err);

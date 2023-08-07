@@ -30,8 +30,8 @@
 #include "gui.h"
 
 
-#define FOC_MOTOR_INIT          (1)
-#define USART_FOC_CONTROL_INFO  (1)
+#define FOC_MOTOR_INIT          (0)
+#define USART_FOC_CONTROL_INFO  (0)
 
 void SystemClock_Config(void);
 

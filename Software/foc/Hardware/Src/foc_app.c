@@ -4,12 +4,11 @@
 #include "pid.h"
 #include "foc.h"
 #include "encoder.h"
+#include <math.h>
 
-// attractor angle variable
-static float attract_angle = 0.0f;
-// distance between attraction points
-static float attractor_distance = 60.0f / 180.f * _PI; // dimp each 45 degrees
-static float normalized_angle = 0.0f;
+FOCApp g_foc_app;
+static FOCRatchet *foc_ratchet;
+static FOCRebound *foc_rebound;
 
 // normalize angle to range [0, 2PI]
 static float normalize(float angle) {
@@ -18,17 +17,59 @@ static float normalize(float angle) {
 }
 
 float find_attractor(float angle){
-    uint32_t idx = (uint32_t)qfp_fadd(qfp_fdiv(angle, attractor_distance), 0.5f);
-    return qfp_fmul((float)idx, attractor_distance);
+    // angle dist according to attractor num
+    float attractor_dist = qfp_fdiv(_2PI, foc_ratchet->attractor_num_);
+    uint32_t idx = (uint32_t)qfp_fadd(qfp_fdiv(angle, attractor_dist), 0.5f);
+    return qfp_fmul((float)idx, attractor_dist);
 }
 
-void torque_ratchet_mode(void) {
-    normalized_angle = normalize(g_foc.state_.shaft_angle);
-    g_tor_ctrl.target_torque = qfp_fsub(attract_angle, normalized_angle);
-    attract_angle = find_attractor(normalized_angle);
+static float ratchet_normalized_angle = 0.0f; // normalized mechanical angle
+static float ratchet_attract_angle    = 0.0f; // current attract angle
+TorCtrlParam* torque_ratchet_mode(void) {
+    ratchet_normalized_angle = normalize(g_foc.state_.shaft_angle);
+    ratchet_attract_angle = find_attractor(ratchet_normalized_angle);
+    foc_ratchet->torque_ctrl_.target_torque =
+        qfp_fsub(ratchet_attract_angle, ratchet_normalized_angle);
+
+    return &foc_ratchet->torque_ctrl_;
 }
 
-float g_torque_rebound_init_angle = 0.0f;
-void torque_rebound_mode(void) {
-    g_tor_ctrl.target_torque = qfp_fsub(g_torque_rebound_init_angle, g_foc.state_.shaft_angle);
+TorCtrlParam* torque_rebound_mode(void) {
+    foc_rebound->torque_ctrl_.target_torque =
+        qfp_fsub(foc_rebound->rebound_angle_, g_foc.state_.shaft_angle);
+
+    return &foc_rebound->torque_ctrl_;
+}
+
+
+static void foc_app_reset_torque_ctrl(TorCtrlParam *pTorCtrl) {
+    pTorCtrl->pid.Kp = 0.0f;
+    pTorCtrl->pid.Ki = 0.0f; // unused in torque mode
+    pTorCtrl->pid.Kd = 0.0f; // unused in torque mode
+    // torque needs to be greater than 0.6 under current loop control
+    pTorCtrl->target_torque = 0.0f;
+    pTorCtrl->voltage_limit = FOC_VOLTAGE_LIMIT;
+    pTorCtrl->current_limit = FOC_CURRENT_LIMIT;
+}
+
+void foc_app_init(void) {
+    // init torque normal mode
+    foc_app_reset_torque_ctrl(&g_foc_app.normal_.torque_ctrl_);
+
+    // init ratchet and set default value
+    foc_app_reset_torque_ctrl(&g_foc_app.ratchet_.torque_ctrl_);
+    foc_ratchet = &g_foc_app.ratchet_;
+    foc_ratchet->attractor_num_             = 6.0f; // 60 degree per attractor
+    foc_ratchet->damp_ratio_                = 1.0f;
+    foc_ratchet->torque_ctrl_.pid.Kp        = 0.1f;
+    foc_ratchet->torque_ctrl_.voltage_limit = qfp_fdiv((float)FOC_VOLTAGE_LIMIT, foc_ratchet->damp_ratio_);
+    foc_ratchet->torque_ctrl_.current_limit = qfp_fdiv((float)FOC_CURRENT_LIMIT, foc_ratchet->damp_ratio_);
+
+    // set rebound angle to current shaft angle to avoid sudden motor rotation
+    foc_app_reset_torque_ctrl(&g_foc_app.rebound_.torque_ctrl_);
+    foc_rebound = &g_foc_app.rebound_;
+    foc_rebound->torque_ctrl_.pid.Kp        = 0.1f;
+    foc_rebound->rebound_angle_             = g_foc.state_.shaft_angle;
+
+    g_foc_app.mode_ = FOC_App_Normal_Mode;
 }

@@ -2,12 +2,14 @@
 #include "config.h"
 #include "qfplib-m3.h"
 #include "foc.h"
+#include "foc_app.h"
 #include "pid.h"
+#include <math.h>
 
 #include "stm32f1xx_ll_utils.h"
 
 #define X_PADDING           (64)
-#define X_VAL_PADDING       (36)
+#define X_VAL_PADDING       (34)
 
 page_t* pages[PAGE_ID_LAST] = {0};
 volatile PageID page_selected;  // index of rendering
@@ -74,7 +76,10 @@ void effect_rotating_rect() {
     g_gui_base.set_color(1);
 }
 
-void effect_done(MenuList *pMenuList) {
+void effect_center_string(MenuList *pMenuList, const char* str, int16_t x_offset) {
+    // range check
+    x_offset = x_offset < -56 ? -56 : x_offset > 72 ? 72 : x_offset;
+
     // Blur the background
     for (uint16_t i = 0; i < g_u8g2_buf_len; i++)
         g_u8g2_buf_ptr[i] &= (i % 2 == 0 ? 0x55 : 0xAA);
@@ -90,7 +95,7 @@ void effect_done(MenuList *pMenuList) {
     g_gui_base.draw_rect(17, 17, 94, 29);
     g_gui_base.set_color(1);
 
-    g_gui_base.draw_str(56, 32, "OK!");
+    g_gui_base.draw_str(56 + x_offset, 32, str);
     g_gui_base.update();
 
     while (vkey_scan() == VKEY_ID_NONE) {}
@@ -111,6 +116,7 @@ void gui_painter_logo(page_t* pg) {
     float r = 18.0f;
     float angle = 0.0f;
     uint8_t step = 0;
+    float target_torque;
 
     while (vkey_scan() == VKEY_ID_NONE) {
         g_gui_base.clear();
@@ -133,8 +139,23 @@ void gui_painter_logo(page_t* pg) {
 
         switch (g_foc.motion_type_) {
             case FOC_Motion_Type_Torque:
-                g_gui_base.draw_str(X_PADDING + X_VAL_PADDING, 12, "TOR");
-                g_gui_base.draw_num(X_PADDING + X_VAL_PADDING, 36, g_tor_ctrl.target_torque);
+                g_gui_base.draw_str(X_PADDING + X_VAL_PADDING, 12, "TOR-");
+                switch (g_foc_app.mode_) {
+                    case FOC_App_Ratchet_Mode:
+                        target_torque = g_foc_app.ratchet_.torque_ctrl_.target_torque;
+                        g_gui_base.draw_str(X_PADDING + X_VAL_PADDING + 22, 12, "T");
+                        break;
+                    case FOC_App_Rebound_Mode:
+                        target_torque = g_foc_app.rebound_.torque_ctrl_.target_torque;
+                        g_gui_base.draw_str(X_PADDING + X_VAL_PADDING + 22, 12, "R");
+                        break;
+                    case FOC_App_Normal_Mode:
+                    default:
+                        target_torque = g_foc_app.normal_.torque_ctrl_.target_torque;
+                        g_gui_base.draw_str(X_PADDING + X_VAL_PADDING + 22, 12, "N");
+                        break;
+                }
+                g_gui_base.draw_num(X_PADDING + X_VAL_PADDING, 36, target_torque);
                 // normalized angle
                 g_gui_base.draw_num(X_PADDING + X_VAL_PADDING, 60, normalize(g_foc.state_.shaft_angle));
                 break;
@@ -214,14 +235,13 @@ static void gui_handler_about(page_t* pg) {
 
 /* ---------------- Main ---------------- */
 const menu_item_t menu_main[] = {
-    {PAGE_ID_LOGO,                      "MainUI",                0},
-    {PAGE_ID_MOTOR_TARGET_MENU_LIST,    "- Set Motor Target",    0},
-    {PAGE_ID_MOTOR_MODE_MENU_LIST,      "- Switch Motor Mode",   0},
-    {PAGE_ID_TOR_PID_MENU_LIST,         "- Torque PID Editor",   0},
-    {PAGE_ID_VEL_PID_MENU_LIST,         "- Velocity PID Editor", 0},
-    {PAGE_ID_ANG_PID_MENU_LIST,         "- Angle PID Editor",    0},
-    {PAGE_ID_EASING_CHART,              "- Easing Chart",        0},
-    {PAGE_ID_ABOUT,                     "- About",               0},
+    {PAGE_ID_LOGO,                      "MainUI",               0},
+    {PAGE_ID_MOTOR_MODE_MENU_LIST,      "- Switch Motor Mode",  0},
+    {PAGE_ID_TOR_EDITOR_MENU_LIST,      "- Torque Editor",      0},
+    {PAGE_ID_VEL_EDITOR_MENU_LIST,      "- Velocity Editor",    0},
+    {PAGE_ID_ANG_EDITOR_MENU_LIST,      "- Angle Editor",       0},
+    {PAGE_ID_EASING_CHART,              "- Easing Chart",       0},
+    {PAGE_ID_ABOUT,                     "- About",              0},
 };
 
 void gui_handler_main(MenuList* pMenuList)
@@ -245,11 +265,10 @@ void gui_handler_main(MenuList* pMenuList)
                     gui_switch(pMenuList->items_[pMenuList->selected_index_].id);
                     break;
                 }
-                case PAGE_ID_MOTOR_TARGET_MENU_LIST:
                 case PAGE_ID_MOTOR_MODE_MENU_LIST:
-                case PAGE_ID_TOR_PID_MENU_LIST:
-                case PAGE_ID_VEL_PID_MENU_LIST:
-                case PAGE_ID_ANG_PID_MENU_LIST: {
+                case PAGE_ID_TOR_EDITOR_MENU_LIST:
+                case PAGE_ID_VEL_EDITOR_MENU_LIST:
+                case PAGE_ID_ANG_EDITOR_MENU_LIST: {
                     // effect_win10_loading();
                     // effect_rotating_rect();
                     gui_switch(pMenuList->items_[pMenuList->selected_index_].id);
@@ -266,26 +285,23 @@ void gui_handler_main(MenuList* pMenuList)
     }
 }
 
-/* ---------------- MOTOR TARGET ---------------- */
+
+/* ---------------- MOTOR APP ---------------- */
 enum {
-    FUNC_ID_MOTOR_TORQUE_TARGET = FUNC_ID_RETURN + 1,
-    FUNC_ID_MOTOR_VELOCITY_TARGET,
-    FUNC_ID_MOTOR_ANGLE_TARGET,
+    FUNC_ID_APP_NORMAL_MODE = FUNC_ID_RETURN + 1,
+    FUNC_ID_APP_RATCHET_MODE,
+    FUNC_ID_APP_REBOUND_MODE,
 };
 
-static SliderBase Torque_tar   = {"Editing Torque", 0.0f, 5.0f, 0.0f, 0.1f};
-static SliderBase Velocity_tar = {"Editing Velocity", -50.0f, 50.0f, 0.0f, 5.0f};
-static SliderBase Angle_tar    = {"Editing Angle", -50.0f, 50.0f, 0.0f, 5.0f};
 
-const menu_item_t menu_motor_target[] = {
-    {FUNC_ID_MOTOR_TORQUE_TARGET,   "- Torque Target",   &Torque_tar},
-    {FUNC_ID_MOTOR_VELOCITY_TARGET, "- Velocity Target", &Velocity_tar},
-    {FUNC_ID_MOTOR_ANGLE_TARGET,    "- Angle Target",    &Angle_tar},
-    {FUNC_ID_RETURN,                "Return",            0},
+const menu_item_t menu_motor_app[] = {
+    {FUNC_ID_APP_NORMAL_MODE,  "- Normal Mode",  0},
+    {FUNC_ID_APP_RATCHET_MODE, "- Ratchet Mode", 0},
+    {FUNC_ID_APP_REBOUND_MODE, "- Rebound Mode", 0},
+    {FUNC_ID_RETURN,           "Return",         0},
 };
 
-void gui_handler_motor_target(MenuList* pMenuList)
-{
+void gui_handler_motor_app(MenuList* pMenuList) {
     switch (vkey_scan()) {
         case VKEY_ID_NONE:
             break;
@@ -296,99 +312,29 @@ void gui_handler_motor_target(MenuList* pMenuList)
             menu_list_callback_handler_switch_to_next(pMenuList);
             break;
         case VKEY_ID_OK:
-
             switch (pMenuList->items_[pMenuList->selected_index_].id) {
-                case FUNC_ID_MOTOR_TORQUE_TARGET:
-                case FUNC_ID_MOTOR_VELOCITY_TARGET:
-                case FUNC_ID_MOTOR_ANGLE_TARGET: {
-                    BOOL repaint = TRUE;
-                    // Blur the background
-                    for (uint16_t i = 0; i < g_u8g2_buf_len; i++)
-                        g_u8g2_buf_ptr[i] &= (i % 2 == 0 ? 0x55 : 0xAA);
-
-                    g_gui_base.update();
-                    SliderBase* tar_slider;
-                    while (1) {
-                        switch (vkey_scan()) {
-                            case VKEY_ID_NONE:
-                                break;
-                            case VKEY_ID_PREV:
-                                tar_slider = (SliderBase*)(pMenuList->items_[pMenuList->selected_index_].arg);
-                                if (tar_slider->curr > qfp_fadd(tar_slider->min, tar_slider->step)) {
-                                    tar_slider->curr = qfp_fsub(tar_slider->curr, tar_slider->step);
-                                } else {
-                                    tar_slider->curr = tar_slider->min;
-                                }
-                                repaint = TRUE;
-                                break;
-                            case VKEY_ID_NEXT:
-                                tar_slider = (SliderBase*)(pMenuList->items_[pMenuList->selected_index_].arg);
-                                if (tar_slider->curr < qfp_fsub(tar_slider->max, tar_slider->step)) {
-                                    tar_slider->curr = qfp_fadd(tar_slider->curr, tar_slider->step);
-                                } else {
-                                    tar_slider->curr = tar_slider->max;
-                                }
-                                repaint = TRUE;
-                                break;
-                            case VKEY_ID_OK:
-                                pMenuList->repaint_ = TRUE;
-                                // update PID
-                                g_tor_ctrl.target_torque = Torque_tar.curr;
-                                g_vel_ctrl.target_speed  = Velocity_tar.curr;
-                                g_ang_ctrl.target_angle  = Angle_tar.curr;
-                                return;
-                            default:
-                                break;
-                        }
-
-                        if (repaint) {
-                            repaint = FALSE;
-
-                            g_gui_base.set_color(2);
-                            g_gui_base.draw_fill_rect(16, 16, 96, 31);
-
-                            g_gui_base.set_color(1);
-                            g_gui_base.draw_rect(16, 16, 96, 31);
-                            g_gui_base.set_color(2);
-                            g_gui_base.draw_rect(17, 17, 94, 29);
-                            g_gui_base.set_color(1);
-
-                            g_gui_base.draw_fill_rect(18, 36, 60, 8);
-
-                            tar_slider = (SliderBase*)(pMenuList->items_[pMenuList->selected_index_].arg);
-
-                            g_gui_base.draw_rect(
-                                20, // x
-                                38, // y
-                                qfp_fmul(
-                                    qfp_fdiv(
-                                        qfp_fsub(tar_slider->curr, tar_slider->min),
-                                        qfp_fsub(tar_slider->max, tar_slider->min)
-                                    ),
-                                    56.0f
-                                ),  // w
-                                4   // h
-                            );
-                            g_gui_base.draw_str(22, 30, tar_slider->description);
-                            g_gui_base.draw_num(81, 44, tar_slider->curr);
-
-                            g_gui_base.update();
-                        }
-                    }
+                case FOC_App_Ratchet_Mode:
+                    g_foc_app.mode_ = FOC_App_Ratchet_Mode;
                     break;
-                }
-                case FUNC_ID_RETURN: {
-                    g_gui_base.effect_disappear();
-                    gui_switch(PAGE_ID_MAIN_MENU_LIST);
+                case FOC_App_Rebound_Mode:
+                    g_foc_app.mode_ = FOC_App_Rebound_Mode;
                     break;
-                }
+                case FOC_App_Normal_Mode:
                 default:
+                    g_foc_app.mode_ = FOC_App_Normal_Mode;
                     break;
             }
+            effect_center_string(pMenuList, "OK!", 0);
+        case FUNC_ID_RETURN: {
+            g_gui_base.effect_disappear();
+            gui_switch(PAGE_ID_MAIN_MENU_LIST);
+            break;
+        }
         default:
             break;
     }
 }
+
 
 /* ---------------- MOTOR MODE ---------------- */
 enum {
@@ -401,9 +347,8 @@ const menu_item_t menu_motor_mode[] = {
     {FUNC_ID_MOTOR_TORQUE_MODE,     "- Torque Mode",   0},
     {FUNC_ID_MOTOR_VELOCITY_MODE,   "- Velocity Mode", 0},
     {FUNC_ID_MOTOR_ANGLE_MODE,      "- Angle Mode",    0},
-    {FUNC_ID_RETURN,                "Return",        0},
+    {FUNC_ID_RETURN,                "Return",          0},
 };
-
 
 void gui_handler_motor_mode(MenuList* pMenuList) {
     switch (vkey_scan()) {
@@ -420,15 +365,15 @@ void gui_handler_motor_mode(MenuList* pMenuList) {
             switch (pMenuList->items_[pMenuList->selected_index_].id) {
                 case FUNC_ID_MOTOR_TORQUE_MODE:
                     g_foc.motion_type_ = FOC_Motion_Type_Torque;
-                    effect_done(pMenuList);
+                    gui_switch(PAGE_ID_MOTOR_APP_MENU_LIST);
                     break;
                 case FUNC_ID_MOTOR_VELOCITY_MODE:
                     g_foc.motion_type_ = FOC_Motion_Type_Velocity;
-                    effect_done(pMenuList);
+                    effect_center_string(pMenuList, "OK!", 0);
                     break;
                 case FUNC_ID_MOTOR_ANGLE_MODE:
                     g_foc.motion_type_ = FOC_Motion_Type_Angle;
-                    effect_done(pMenuList);
+                    effect_center_string(pMenuList, "OK!", 0);
                     break;
                 case FUNC_ID_RETURN: {
                     g_gui_base.effect_disappear();
@@ -445,36 +390,52 @@ void gui_handler_motor_mode(MenuList* pMenuList) {
 enum {
     FUNC_ID_EDIT_KP = FUNC_ID_RETURN + 1,
     FUNC_ID_EDIT_KI,
+    FUNC_ID_TORQUE_TARGET,
+    FUNC_ID_VELOCITY_TARGET,
+    FUNC_ID_ANGLE_TARGET,
+    // about mode
+    FUNC_ID_RATCHET_ATTRACTOR_NUM,
+    FUNC_ID_RATCHET_DAMP_RATIO,
+    FUNC_ID_REBOUND_INIT_ANGLE,
 };
 
-static SliderBase Torque_Kp = {"Editing Kp", 0.0f, 1.2f, 0.0f, 0.05f};
-// PIDSliderBase Torque_Ki = {"Forbidden", 0.0f, 0.0f, 0.0f, 0.0f};
 
-static SliderBase Velocity_Kp = {"Editing Kp", 0.0f, 0.5f, 0.05f, 0.01f};
-static SliderBase Velocity_Ki = {"Editing Ki", 0.0f, 2.0f, 1.0f, 0.1f};
+static SliderBase Torque_tar                   = {"Editing Torque", 0.0f, 3.0f, 0.0f, 0.1f};
+static SliderBase Torque_Kp                    = {"Editing Kp", 0.0f, 1.2f, 0.0f, 0.05f};
+static SliderBase Torque_ratchet_attractor_num = {"Ratchet Number", 2.0f, 18.0f, 6.0f, 2.0f};
+static SliderBase Torque_ratchet_damp_ratio    = {"Ratchet Damp Ratio", 1.0f, 10.0f, 1.0f, 1.0f};
+static SliderBase Torque_rebound_angle         = {"Rebound Angle", -3.14, 3.14, 0.0f, 0.02f};
 
-static SliderBase Angle_Kp = {"Editing Kp", 0.0f, 8.0f, 4.0f, 0.5f};
-// PIDSliderBase Angle_Ki = {"Forbidden", 0.0f, 0.0f, 0.0f, 0.0f};
+static SliderBase Velocity_tar                 = {"Editing Velocity", -50.0f, 50.0f, 0.0f, 5.0f};
+static SliderBase Velocity_Kp                  = {"Editing Kp", 0.0f, 0.5f, 0.05f, 0.01f};
+static SliderBase Velocity_Ki                  = {"Editing Ki", 0.0f, 2.0f, 1.0f, 0.1f};
 
-const menu_item_t menu_tor_pid[] = {
-    {FUNC_ID_EDIT_KP, "- Proportion", &Torque_Kp},
-    // {FUNC_ID_EDIT_KI, "- Integral",   &Torque_Ki},
-    {FUNC_ID_RETURN, "Return", 0},
+static SliderBase Angle_tar                    = {"Editing Angle", -50.0f, 50.0f, 0.0f, 5.0f};
+static SliderBase Angle_Kp                     = {"Editing Kp", 0.0f, 8.0f, 4.0f, 0.5f};
+
+const menu_item_t menu_tor_editor[] = {
+    {FUNC_ID_TORQUE_TARGET,         "- Torque Target",      &Torque_tar},
+    {FUNC_ID_EDIT_KP,               "- Proportional",       &Torque_Kp},
+    {FUNC_ID_RATCHET_ATTRACTOR_NUM, "- Ratchet Number",     &Torque_ratchet_attractor_num},
+    {FUNC_ID_RATCHET_DAMP_RATIO,    "- Ratchet Damp Ratio", &Torque_ratchet_damp_ratio},
+    {FUNC_ID_REBOUND_INIT_ANGLE,    "- Rebound Angle",      &Torque_rebound_angle},
+    {FUNC_ID_RETURN,                "Return",               0},
 };
 
-const menu_item_t menu_vel_pid[] = {
-    {FUNC_ID_EDIT_KP, "- Proportion", &Velocity_Kp},
-    {FUNC_ID_EDIT_KI, "- Integral",   &Velocity_Ki},
-    {FUNC_ID_RETURN, "Return", 0},
+const menu_item_t menu_vel_editor[] = {
+    {FUNC_ID_VELOCITY_TARGET,       "- Velocity Target",    &Velocity_tar},
+    {FUNC_ID_EDIT_KP,               "- Proportional",       &Velocity_Kp},
+    {FUNC_ID_EDIT_KI,               "- Integral",           &Velocity_Ki},
+    {FUNC_ID_RETURN,                "Return",               0},
 };
 
-const menu_item_t menu_ang_pid[] = {
-    {FUNC_ID_EDIT_KP, "- Proportion", &Angle_Kp},
-    // {FUNC_ID_EDIT_KI, "- Integral",   &Angle_Ki},
-    {FUNC_ID_RETURN, "Return", 0},
+const menu_item_t menu_ang_editor[] = {
+    {FUNC_ID_ANGLE_TARGET,          "- Angle Target",       &Angle_tar},
+    {FUNC_ID_EDIT_KP,               "- Proportional",       &Angle_Kp},
+    {FUNC_ID_RETURN,                "Return",               0},
 };
 
-void gui_handler_pid(MenuList* pMenuList)
+void gui_handler_editor(MenuList* pMenuList)
 {
     switch (vkey_scan()) {
         case VKEY_ID_NONE:
@@ -488,6 +449,27 @@ void gui_handler_pid(MenuList* pMenuList)
         case VKEY_ID_OK:
 
             switch (pMenuList->items_[pMenuList->selected_index_].id) {
+                case FUNC_ID_RATCHET_ATTRACTOR_NUM:
+                case FUNC_ID_RATCHET_DAMP_RATIO:
+                    if (g_foc_app.mode_ != FOC_App_Ratchet_Mode) {
+                        effect_center_string(pMenuList, "Forbidden!", -18);
+                        break;
+                    }
+                    /* fall through */
+                case FUNC_ID_REBOUND_INIT_ANGLE:
+                    if (g_foc_app.mode_ != FOC_App_Rebound_Mode) {
+                        effect_center_string(pMenuList, "Forbidden!", -18);
+                        break;
+                    }
+                    /* fall through */
+                case FUNC_ID_TORQUE_TARGET: // torque target only takes effect under torque normal mode
+                    if (g_foc_app.mode_ != FOC_App_Normal_Mode) {
+                        effect_center_string(pMenuList, "Forbidden!", -18);
+                        break;
+                    }
+                    /* fall through */
+                case FUNC_ID_VELOCITY_TARGET:
+                case FUNC_ID_ANGLE_TARGET:
                 case FUNC_ID_EDIT_KP:
                 case FUNC_ID_EDIT_KI: {
                     BOOL repaint = TRUE;
@@ -496,35 +478,54 @@ void gui_handler_pid(MenuList* pMenuList)
                         g_u8g2_buf_ptr[i] &= (i % 2 == 0 ? 0x55 : 0xAA);
 
                     g_gui_base.update();
-                    SliderBase* pid_slider;
+                    SliderBase* slider;
                     while (1) {
                         switch (vkey_scan()) {
                             case VKEY_ID_NONE:
                                 break;
                             case VKEY_ID_PREV:
-                                pid_slider = (SliderBase*)(pMenuList->items_[pMenuList->selected_index_].arg);
-                                if (pid_slider->curr > qfp_fadd(pid_slider->min, pid_slider->step)) {
-                                    pid_slider->curr = qfp_fsub(pid_slider->curr, pid_slider->step);
+                                slider = (SliderBase*)(pMenuList->items_[pMenuList->selected_index_].arg);
+                                if (slider->curr > qfp_fadd(slider->min, slider->step)) {
+                                    slider->curr = qfp_fsub(slider->curr, slider->step);
                                 } else {
-                                    pid_slider->curr = pid_slider->min;
+                                    slider->curr = slider->min;
                                 }
                                 repaint = TRUE;
                                 break;
                             case VKEY_ID_NEXT:
-                                pid_slider = (SliderBase*)(pMenuList->items_[pMenuList->selected_index_].arg);
-                                if (pid_slider->curr < qfp_fsub(pid_slider->max, pid_slider->step)) {
-                                    pid_slider->curr = qfp_fadd(pid_slider->curr, pid_slider->step);
+                                slider = (SliderBase*)(pMenuList->items_[pMenuList->selected_index_].arg);
+                                if (slider->curr < qfp_fsub(slider->max, slider->step)) {
+                                    slider->curr = qfp_fadd(slider->curr, slider->step);
                                 } else {
-                                    pid_slider->curr = pid_slider->max;
+                                    slider->curr = slider->max;
                                 }
                                 repaint = TRUE;
                                 break;
                             case VKEY_ID_OK:
                                 pMenuList->repaint_ = TRUE;
-                                // update PID
-                                g_tor_ctrl.pid.Kp = Torque_Kp.curr;
+                                // update parameters
+                                switch (g_foc_app.mode_) {
+                                case FOC_App_Ratchet_Mode:
+                                    g_foc_app.ratchet_.torque_ctrl_.pid.Kp = Torque_Kp.curr;
+                                    g_foc_app.ratchet_.attractor_num_ = Torque_ratchet_attractor_num.curr;
+                                    g_foc_app.ratchet_.damp_ratio_ = Torque_ratchet_damp_ratio.curr;
+                                    break;
+                                case FOC_App_Rebound_Mode:
+                                    g_foc_app.rebound_.torque_ctrl_.pid.Kp = Torque_Kp.curr;
+                                    g_foc_app.rebound_.rebound_angle_ = Torque_rebound_angle.curr;
+                                    break;
+                                case FOC_App_Normal_Mode:
+                                default:
+                                    g_foc_app.normal_.torque_ctrl_.target_torque = Torque_tar.curr;
+                                    g_foc_app.normal_.torque_ctrl_.pid.Kp = Torque_Kp.curr;
+                                    break;
+                                }
+
+                                g_vel_ctrl.target_speed = Velocity_tar.curr;
                                 g_vel_ctrl.pid.Kp = Velocity_Kp.curr;
                                 g_vel_ctrl.pid.Ki = Velocity_Ki.curr;
+
+                                g_ang_ctrl.target_angle = Angle_tar.curr;
                                 g_ang_ctrl.pid.Kp = Angle_Kp.curr;
                                 return;
                             default:
@@ -545,22 +546,22 @@ void gui_handler_pid(MenuList* pMenuList)
 
                             g_gui_base.draw_fill_rect(18, 36, 60, 8);
 
-                            pid_slider = (SliderBase*)(pMenuList->items_[pMenuList->selected_index_].arg);
+                            slider = (SliderBase*)(pMenuList->items_[pMenuList->selected_index_].arg);
 
                             g_gui_base.draw_rect(
                                 20, // x
                                 38, // y
                                 qfp_fmul(
                                     qfp_fdiv(
-                                        qfp_fsub(pid_slider->curr, pid_slider->min),
-                                        qfp_fsub(pid_slider->max, pid_slider->min)
+                                        qfp_fsub(slider->curr, slider->min),
+                                        qfp_fsub(slider->max, slider->min)
                                     ),
                                     56.0f
                                 ),  // w
                                 4   // h
                             );
-                            g_gui_base.draw_str(22, 30, pid_slider->description);
-                            g_gui_base.draw_num(81, 44, pid_slider->curr);
+                            g_gui_base.draw_str(22, 30, slider->description);
+                            g_gui_base.draw_num(81, 44, slider->curr);
 
                             g_gui_base.update();
                         }
@@ -707,11 +708,11 @@ void gui_handler_easing_chart(MenuList* pMenuList) {
 static page_t page_logo;
 static page_t page_about;
 static MenuList menu_list_main;
+static MenuList menu_list_motor_app;
 static MenuList menu_list_motor_mode;
-static MenuList menu_list_motor_target;
-static MenuList menu_list_tor_pid;
-static MenuList menu_list_vel_pid;
-static MenuList menu_list_ang_pid;
+static MenuList menu_list_tor_editor;
+static MenuList menu_list_vel_editor;
+static MenuList menu_list_ang_editor;
 static MenuList menu_list_easing;
 
 void gui_init(void) {
@@ -726,20 +727,20 @@ void gui_init(void) {
     PAGE_REGISTER(PAGE_ID_LOGO, page_logo);
     PAGE_REGISTER(PAGE_ID_ABOUT, page_about);
 
-    menu_list_main         = menu_list_init(menu_main, ARRAY_SIZE(menu_main), 4, 0, gui_handler_main);
-    menu_list_motor_target = menu_list_init(menu_motor_target, ARRAY_SIZE(menu_motor_target), 4, 0, gui_handler_motor_target);
-    menu_list_motor_mode   = menu_list_init(menu_motor_mode, ARRAY_SIZE(menu_motor_mode), 4, 0, gui_handler_motor_mode);
-    menu_list_tor_pid      = menu_list_init(menu_tor_pid, ARRAY_SIZE(menu_tor_pid), 4, 0, gui_handler_pid);
-    menu_list_vel_pid      = menu_list_init(menu_vel_pid, ARRAY_SIZE(menu_vel_pid), 4, 0, gui_handler_pid);
-    menu_list_ang_pid      = menu_list_init(menu_ang_pid, ARRAY_SIZE(menu_ang_pid), 4, 0, gui_handler_pid);
-    menu_list_easing       = menu_list_init(menu_easing, ARRAY_SIZE(menu_easing), 5, 0, gui_handler_easing_chart);
+    menu_list_main       = menu_list_init(menu_main, ARRAY_SIZE(menu_main), 4, 0, gui_handler_main);
+    menu_list_motor_app  = menu_list_init(menu_motor_app, ARRAY_SIZE(menu_motor_app), 4, 0, gui_handler_motor_app);
+    menu_list_motor_mode = menu_list_init(menu_motor_mode, ARRAY_SIZE(menu_motor_mode), 4, 0, gui_handler_motor_mode);
+    menu_list_tor_editor = menu_list_init(menu_tor_editor, ARRAY_SIZE(menu_tor_editor), 4, 0, gui_handler_editor);
+    menu_list_vel_editor = menu_list_init(menu_vel_editor, ARRAY_SIZE(menu_vel_editor), 4, 0, gui_handler_editor);
+    menu_list_ang_editor = menu_list_init(menu_ang_editor, ARRAY_SIZE(menu_ang_editor), 4, 0, gui_handler_editor);
+    menu_list_easing     = menu_list_init(menu_easing, ARRAY_SIZE(menu_easing), 5, 0, gui_handler_easing_chart);
 
     PAGE_REGISTER(PAGE_ID_MAIN_MENU_LIST, menu_list_main);
-    PAGE_REGISTER(PAGE_ID_MOTOR_TARGET_MENU_LIST, menu_list_motor_target);
+    PAGE_REGISTER(PAGE_ID_MOTOR_APP_MENU_LIST, menu_list_motor_app);
     PAGE_REGISTER(PAGE_ID_MOTOR_MODE_MENU_LIST, menu_list_motor_mode);
-    PAGE_REGISTER(PAGE_ID_TOR_PID_MENU_LIST, menu_list_tor_pid);
-    PAGE_REGISTER(PAGE_ID_VEL_PID_MENU_LIST, menu_list_vel_pid);
-    PAGE_REGISTER(PAGE_ID_ANG_PID_MENU_LIST, menu_list_ang_pid);
+    PAGE_REGISTER(PAGE_ID_TOR_EDITOR_MENU_LIST, menu_list_tor_editor);
+    PAGE_REGISTER(PAGE_ID_VEL_EDITOR_MENU_LIST, menu_list_vel_editor);
+    PAGE_REGISTER(PAGE_ID_ANG_EDITOR_MENU_LIST, menu_list_ang_editor);
     PAGE_REGISTER(PAGE_ID_EASING_CHART, menu_list_easing);
 
     gui_switch(PAGE_ID_FIRST);

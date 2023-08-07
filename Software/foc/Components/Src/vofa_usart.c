@@ -1,6 +1,7 @@
 #include "vofa_usart.h"
 
 #include "foc.h"
+#include "foc_app.h"
 #include "led.h"
 #include "vkey.h"
 
@@ -228,10 +229,32 @@ void USARTx_DMA_RX_IRQHandler(void) {
                     g_foc.motion_type_ = FOC_Motion_Type_Angle;
                     break;
                 case 0x0E: // set target Torque
-                    g_tor_ctrl.target_torque = recv_data.fdata;
+                    switch (g_foc_app.mode_) {
+                        case FOC_App_Ratchet_Mode:
+                            g_foc_app.ratchet_.torque_ctrl_.target_torque = recv_data.fdata;
+                            break;
+                        case FOC_App_Rebound_Mode:
+                            g_foc_app.rebound_.torque_ctrl_.target_torque = recv_data.fdata;
+                            break;
+                        case FOC_App_Normal_Mode:
+                        default:
+                            g_foc_app.normal_.torque_ctrl_.target_torque = recv_data.fdata;
+                            break;
+                    }
                     break;
                 case 0x0F: // set Torque Kp
-                    g_tor_ctrl.pid.Kp = recv_data.fdata;
+                    switch (g_foc_app.mode_) {
+                        case FOC_App_Ratchet_Mode:
+                            g_foc_app.ratchet_.torque_ctrl_.pid.Kp = recv_data.fdata;
+                            break;
+                        case FOC_App_Rebound_Mode:
+                            g_foc_app.rebound_.torque_ctrl_.pid.Kp = recv_data.fdata;
+                            break;
+                        case FOC_App_Normal_Mode:
+                        default:
+                            g_foc_app.normal_.torque_ctrl_.pid.Kp = recv_data.fdata;
+                            break;
+                    }
                     break;
                 case 0x11: // virtual key PREV
                     g_vkeys[VKEY_ID_PREV] = TRUE;

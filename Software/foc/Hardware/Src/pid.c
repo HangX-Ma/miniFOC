@@ -6,17 +6,16 @@
 
 // ref: https://docs.simplefoc.com/docs_chinese/pi_controller
 
-TorCtrlParam g_tor_ctrl;
 VelCtrlParam g_vel_ctrl;
 AngCtrlParam g_ang_ctrl;
 CurrCtrlParam g_Iq_ctrl;
 CurrCtrlParam g_Id_ctrl;
 
-float PID_torque(float err) {
+float PID_torque(TorCtrlParam *pCtrl) {
     float proportional, output;
 
     // u_p  = P *e(k)
-    proportional = qfp_fmul(g_tor_ctrl.pid.Kp, err);
+    proportional = qfp_fmul(pCtrl->pid.Kp, pCtrl->target_torque);
 
     // UPDATE: Voltage control with current estimation and Back-EMF compensation
     // Uq = Id*R + Ubemf = u_p * R(phase resistance [Ohs]) + v/KV
@@ -28,9 +27,9 @@ float PID_torque(float err) {
 
     output = proportional;
     if (g_foc.torque_type_ == FOC_Torque_Type_Voltage) {
-        output = constrain(output, -g_tor_ctrl.voltage_limit, g_tor_ctrl.voltage_limit);
+        output = constrain(output, -pCtrl->voltage_limit, pCtrl->voltage_limit);
     } else if (g_foc.torque_type_ == FOC_Torque_Type_Current) {
-        output = constrain(output, -g_tor_ctrl.current_limit, g_tor_ctrl.current_limit);
+        output = constrain(output, -pCtrl->current_limit, pCtrl->current_limit);
     } else {
         output = 0.0f;
     }
@@ -153,14 +152,6 @@ float PID_current(CurrCtrlParam *pCtrl, float err) {
 
 void pid_init(void) {
     pid_clear_history();
-    // init torque control parameters
-    g_tor_ctrl.pid.Kp = 0.0f;
-    g_tor_ctrl.pid.Ki = 0.0f;
-    g_tor_ctrl.pid.Kd = 0.0f;
-    // torque needs to be greater than 0.6 under current loop control
-    g_tor_ctrl.target_torque = 0.0f;
-    g_tor_ctrl.voltage_limit = FOC_VOLTAGE_LIMIT;
-    g_tor_ctrl.current_limit = FOC_CURRENT_LIMIT;
 
     // init velocity control parameters
     g_vel_ctrl.pid.Kp = 0.05f;

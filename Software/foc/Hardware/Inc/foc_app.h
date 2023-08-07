@@ -26,11 +26,45 @@
 #define __FOC_APP__H__
 
 #include "utils.h"
+#include "pid.h"
 
-extern float g_torque_rebound_init_angle;
+typedef struct FOCNormal {
+    TorCtrlParam torque_ctrl_;
+} FOCNormal;
 
-void torque_ratchet_mode(void);
-void torque_rebound_mode(void);
+typedef struct FOCRatchet {
+    // torque target is the attractor angle
+    TorCtrlParam torque_ctrl_;
+
+    float attractor_num_;    ///< total attractor number in one circle
+    float damp_ratio_;        ///< damp ratio, range [1, N]
+} FOCRatchet;
+
+typedef struct FOCRebound {
+    TorCtrlParam torque_ctrl_;
+
+    float rebound_angle_;
+} FOCRebound;
+
+typedef enum FOCAppMode {
+    FOC_App_Normal_Mode,
+    FOC_App_Ratchet_Mode,
+    FOC_App_Rebound_Mode,
+} FOCAppMode;
+
+typedef struct FOCApp {
+    FOCNormal normal_;
+    FOCRatchet ratchet_;
+    FOCRebound rebound_;
+
+    FOCAppMode mode_;
+} FOCApp;
+extern FOCApp g_foc_app;
+
+TorCtrlParam* torque_ratchet_mode(void);
+TorCtrlParam* torque_rebound_mode(void);
+
+void foc_app_init(void);
 
 
 #endif  //!__FOC_APP__H__

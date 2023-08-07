@@ -207,10 +207,12 @@ void encoder_reset(void) {
     // So the motor can stop after motion mode being switched.
     g_ang_ctrl.target_angle  = g_foc.state_.shaft_angle;
     g_vel_ctrl.target_speed  = 0.0f;
-    g_tor_ctrl.target_torque = 0.0f;
 
     // app
-    g_torque_rebound_init_angle = g_foc.state_.shaft_angle;
+    g_foc_app.normal_.torque_ctrl_.target_torque  = 0.0f;
+    g_foc_app.rebound_.rebound_angle_             = g_foc.state_.shaft_angle;
+    g_foc_app.rebound_.torque_ctrl_.target_torque = 0.0f;
+    g_foc_app.ratchet_.torque_ctrl_.target_torque = 0.0f;
 }
 
 void encoder_init(void) {
