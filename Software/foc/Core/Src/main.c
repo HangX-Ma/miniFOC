@@ -33,6 +33,7 @@
 
 #define FOC_MOTOR_INIT          (1)
 #define USART_FOC_CONTROL_INFO  (0)
+#define USART_FOC_DQ_INFO       (1)
 
 void SystemClock_Config(void);
 
@@ -122,9 +123,10 @@ int main(void) {
         foc_debugger_buf[1] = g_foc.state_.shaft_speed;
         foc_debugger_buf[2] = g_foc.state_.electrical_angle;
         vofa_usart_dma_send_config(foc_debugger_buf, 3);
-        // foc_debugger_buf[0] = g_foc.state_.q;
-        // foc_debugger_buf[1] = g_foc.state_.d;
-        // vofa_usart_dma_send_config(foc_debugger_buf, 2);
+#elif USART_FOC_DQ_INFO
+        foc_debugger_buf[0] = g_foc.state_.q;
+        foc_debugger_buf[1] = g_foc.state_.d;
+        vofa_usart_dma_send_config(foc_debugger_buf, 2);
 #endif
         LL_mDelay(10);
         // ------------ Encoder test ------------
