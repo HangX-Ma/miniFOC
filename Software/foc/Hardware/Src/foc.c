@@ -41,8 +41,19 @@ static void set_phase_voltage(float Uq, float Ud, float e_angle) {
     U_alpha = qfp_fsub(qfp_fmul(Ud, qfp_fcos(e_angle)), qfp_fmul(Uq, qfp_fsin(e_angle)));
     U_beta  = qfp_fadd(qfp_fmul(Ud, qfp_fsin(e_angle)), qfp_fmul(Uq, qfp_fcos(e_angle)));
 
-    // normalized U_ref range between [-1, 1]
-    U_ref = qfp_fdiv(qfp_fsqrt(qfp_fadd(qfp_fmul(U_alpha, U_alpha), qfp_fmul(U_beta, U_beta))), MOTOR_VM);
+    if (Ud) {
+        U_ref = qfp_fdiv(qfp_fsqrt(qfp_fadd(qfp_fmul(U_alpha, U_alpha), qfp_fmul(U_beta, U_beta))), MOTOR_VM);
+        // normalized U_ref range between [-1, 1]
+        e_angle = normalize_angle(qfp_fadd(e_angle, qfp_fatan2(Uq, Ud)));
+    } else {
+        U_ref = abs(qfp_fdiv(Uq, MOTOR_VM));
+        // We need to calculate the rotor's electric angle. THe rotor is _PI_2 head of the stator.
+        if (Uq > 0) {
+            e_angle = normalize_angle(qfp_fadd(e_angle, _PI_2));
+        } else {
+            e_angle = normalize_angle(qfp_fsub(e_angle, _PI_2));
+        }
+    }
 
     // SVPWM maximum distortion-free rotation voltage vector: sqrt(3)/3
     // The inscribed circle of a hexagon.
@@ -51,13 +62,6 @@ static void set_phase_voltage(float Uq, float Ud, float e_angle) {
     }
     if (U_ref < -0.577f) {
         U_ref = -0.577f;
-    }
-
-    // We need to calculate the rotor's electric angle. THe rotor is _PI_2 head of the stator.
-    if (Uq > 0) {
-        e_angle = normalize_angle(qfp_fadd(e_angle, _PI_2));
-    } else {
-        e_angle = normalize_angle(qfp_fsub(e_angle, _PI_2));
     }
 
     // calculate the sector
@@ -267,7 +271,6 @@ void FOC_CTRL_IRQHandler(void) {
                         torque_ctrl = torque_damp_mode();
                         break;
                     case FOC_App_Normal_Mode:
-                    default:
                         torque_ctrl = torque_normal_mode();
                         break;
                 }
@@ -285,6 +288,7 @@ void FOC_CTRL_IRQHandler(void) {
                 goto out;
         }
         if (g_foc.torque_type_ == FOC_Torque_Type_Voltage) {
+            RS_current = get_RS_current(g_foc.state_.electrical_angle);
             g_foc.voltage_.q = target_q;
             g_foc.voltage_.d = 0.0f;
         } else if (g_foc.torque_type_ == FOC_Torque_Type_Current) {
@@ -295,7 +299,7 @@ void FOC_CTRL_IRQHandler(void) {
             g_foc.voltage_.q = qfp_fadd(g_foc.voltage_.q, qfp_fmul(g_foc.voltage_.q, 0.001f));
             // save 'd' 'q' state for easy debug
             // g_foc.state_.q   = RS_current.Iq;
-            // g_foc.state_.d   = RS_current.Id
+            // g_foc.state_.d   = RS_current.Id;
             // g_foc.state_.q   = g_foc.voltage_.q;
             // g_foc.state_.d   = g_foc.voltage_.d;
         } else {

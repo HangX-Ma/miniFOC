@@ -80,7 +80,7 @@ static void current_monitor_adc_dma_init(void) {
     ADCx_DMA_InitStruct.PeriphOrM2MSrcDataSize = LL_DMA_PDATAALIGN_HALFWORD;
     ADCx_DMA_InitStruct.MemoryOrM2MDstDataSize = LL_DMA_MDATAALIGN_HALFWORD;
     ADCx_DMA_InitStruct.NbData                 = 2; // 2 channels, 2 half word
-    ADCx_DMA_InitStruct.Priority               = LL_DMA_PRIORITY_MEDIUM;
+    ADCx_DMA_InitStruct.Priority               = LL_DMA_PRIORITY_HIGH;
     LL_DMA_Init(DMA1, CURRENT_MONITOR_ADCx_DMAx_CHANNEL, &ADCx_DMA_InitStruct);
 
     //* start DMA
@@ -122,16 +122,14 @@ static void current_monitor_adc_init(void) {
     ADC_REG_InitStruct.ContinuousMode   = LL_ADC_REG_CONV_SINGLE;
     ADC_REG_InitStruct.DMATransfer      = LL_ADC_REG_DMA_TRANSFER_UNLIMITED;
     LL_ADC_REG_Init(ADC1, &ADC_REG_InitStruct);
-    // rising edge trigger
-    LL_ADC_REG_StartConversionExtTrig(ADC1, LL_ADC_REG_TRIG_EXT_RISING);
 
     /** Configure Regular Channel
      */
     LL_ADC_REG_SetSequencerRanks(ADC1, LL_ADC_REG_RANK_1, LL_ADC_CHANNEL_0);
-    LL_ADC_SetChannelSamplingTime(ADC1, LL_ADC_CHANNEL_0, LL_ADC_SAMPLINGTIME_71CYCLES_5);
+    LL_ADC_SetChannelSamplingTime(ADC1, LL_ADC_CHANNEL_0, LL_ADC_SAMPLINGTIME_28CYCLES_5);
 
     LL_ADC_REG_SetSequencerRanks(ADC1, LL_ADC_REG_RANK_2, LL_ADC_CHANNEL_1);
-    LL_ADC_SetChannelSamplingTime(ADC1, LL_ADC_CHANNEL_1, LL_ADC_SAMPLINGTIME_71CYCLES_5);
+    LL_ADC_SetChannelSamplingTime(ADC1, LL_ADC_CHANNEL_1, LL_ADC_SAMPLINGTIME_28CYCLES_5);
 }
 
 void current_mointor_init(void) {
@@ -149,6 +147,8 @@ void current_mointor_init(void) {
     // wait until ADC calibration done
     LL_ADC_StartCalibration(ADC1);
     while (LL_ADC_IsCalibrationOnGoing(ADC1) != RESET) {}
+    // rising edge trigger
+    LL_ADC_REG_StartConversionExtTrig(ADC1, LL_ADC_REG_TRIG_EXT_RISING);
 
     //* start TIM3
     LL_TIM_CC_EnableChannel(TIM3, LL_TIM_CHANNEL_CH2);
@@ -163,31 +163,66 @@ static void LPF_current(float *curr, float *prev) {
     *prev = *curr;
 }
 
+typedef struct {
+    float input_curr;
+    float input_prev;
+    float output_curr;
+    float output_prev;
+    float alpha;
+} HighPassFilter;
+static HighPassFilter hpf_adc1, hpf_adc2;
+
+static void hpf_reset(HighPassFilter *hpf) {
+    hpf->input_curr  = 0.0f;
+    hpf->input_prev  = 0.0f;
+    hpf->output_curr = 0.0f;
+    hpf->output_prev = 0.0f;
+    hpf->alpha       = 0.5f;
+}
+
+
+int16_t HPF_calculation(HighPassFilter *hpf){
+    hpf->output_curr =
+        qfp_fadd(
+            qfp_fmul(hpf->alpha, hpf->output_prev),
+            qfp_fmul(hpf->alpha, qfp_fsub(hpf->input_curr, hpf->input_prev))
+        );
+
+    hpf->output_prev = hpf->output_curr;
+    hpf->input_prev = hpf->input_curr;
+}
+
 #include "foc.h"
 // rotor and stator current (Iq and Id)
 static RotorStatorCurrent RS_current_prev = {0};
 RotorStatorCurrent get_RS_current(float e_angle) {
     PhaseCurrent phase_current;
     RotorStatorCurrent RS_current_curr;
-    float adc_val1, adc_val2;
     float I_alpha, I_beta;
 
-    adc_val1 = qfp_fdiv(qfp_fmul((float)current_monitor_adc.chx[0], ADCx_VOLTAGE_REFERENCE), (float)ADCx_RESOLUTION);
-    adc_val2 = qfp_fdiv(qfp_fmul((float)current_monitor_adc.chx[1], ADCx_VOLTAGE_REFERENCE), (float)ADCx_RESOLUTION);
+    hpf_adc1.input_curr = qfp_fdiv(qfp_fmul((float)current_monitor_adc.chx[0], ADCx_VOLTAGE_REFERENCE), (float)ADCx_RESOLUTION);
+    hpf_adc2.input_curr = qfp_fdiv(qfp_fmul((float)current_monitor_adc.chx[1], ADCx_VOLTAGE_REFERENCE), (float)ADCx_RESOLUTION);
+
+    HPF_calculation(&hpf_adc1);
+    HPF_calculation(&hpf_adc2);
 
     // debug
-    // g_foc.state_.q   = adc_val1;
-    // g_foc.state_.d   = adc_val2;
+    // g_foc.state_.q   = hpf_adc1.output_curr;
+    // g_foc.state_.d   = hpf_adc2.output_curr;
 
-    phase_current.Ia = qfp_fdiv(qfp_fdiv((qfp_fsub(adc_val1, ADCx_VOLTAGE_BIAS)), CURRENT_SENSE_REGISTER), INA199x1_GAIN);
-    phase_current.Ib = qfp_fdiv(qfp_fdiv((qfp_fsub(adc_val2, ADCx_VOLTAGE_BIAS)), CURRENT_SENSE_REGISTER), INA199x1_GAIN);
+    phase_current.Ia = qfp_fdiv(qfp_fdiv((qfp_fsub(hpf_adc1.output_curr, ADCx_VOLTAGE_BIAS)), CURRENT_SENSE_REGISTER), INA199x1_GAIN);
+    phase_current.Ib = qfp_fdiv(qfp_fdiv((qfp_fsub(hpf_adc2.output_curr, ADCx_VOLTAGE_BIAS)), CURRENT_SENSE_REGISTER), INA199x1_GAIN);
+
+    // debug
+    // g_foc.state_.q   = phase_current.Ia;
+    // g_foc.state_.d   = phase_current.Ib;
 
     I_alpha = phase_current.Ia;
     I_beta  = qfp_fadd(qfp_fmul(_1_SQRT3, phase_current.Ia), qfp_fmul(_2_SQRT3, phase_current.Ib));
 
     // debug
-    g_foc.state_.q   = I_alpha;
-    g_foc.state_.d   = I_beta;
+    // g_foc.state_.q   = I_alpha;
+    // g_foc.state_.d   = I_beta;
 
     RS_current_curr.Id = qfp_fadd(
                            qfp_fmul(I_alpha, qfp_fcos(e_angle)),
@@ -201,12 +236,19 @@ RotorStatorCurrent get_RS_current(float e_angle) {
     LPF_current(&RS_current_curr.Id, &RS_current_prev.Id);
     LPF_current(&RS_current_curr.Iq, &RS_current_prev.Iq);
 
+    // debug
+    g_foc.state_.q = RS_current_curr.Iq;
+    g_foc.state_.d = RS_current_curr.Id;
+
     return RS_current_curr;
 }
 
 void current_monitor_reset(void) {
     RS_current_prev.Id = 0.0f;
     RS_current_prev.Iq = 0.0f;
+
+    hpf_reset(&hpf_adc1);
+    hpf_reset(&hpf_adc2);
 }
 
 static float vofa_buf[2];

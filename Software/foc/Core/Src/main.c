@@ -72,7 +72,7 @@ int main(void) {
     bldc_init();
 
     // Current monitor will cause OLED display abnormally
-    // current_mointor_init();
+    current_mointor_init();
 
     encoder_init();
     pid_init();
@@ -128,7 +128,7 @@ int main(void) {
         foc_debugger_buf[1] = g_foc.state_.d;
         vofa_usart_dma_send_config(foc_debugger_buf, 2);
 #endif
-        LL_mDelay(10);
+        LL_mDelay(5);
         // ------------ Encoder test ------------
         // encoder_test();
         // ------------ Current Monitor test ------------

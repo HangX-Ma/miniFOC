@@ -28,8 +28,8 @@
 #include "utils.h"
 
 #define ADCx_VOLTAGE_REFERENCE                  3.3f
-#define ADCx_VOLTAGE_BIAS                       1.65f
-#define ADCx_RESOLUTION                         (4096 - 1)
+#define ADCx_VOLTAGE_BIAS                       1.69f
+#define ADCx_RESOLUTION                         4095
 
 #define CURRENT_SENSE_REGISTER                  0.01f
 #define INA199x1_GAIN                           50

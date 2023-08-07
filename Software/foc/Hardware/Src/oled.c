@@ -4,7 +4,6 @@
 #include "stm32f1xx_ll_bus.h"
 #include "stm32f1xx_ll_gpio.h"
 #include "stm32f1xx_ll_spi.h"
-#include "stm32f1xx_ll_dma.h"
 #include "stm32f1xx_ll_utils.h"
 
 u8g2_t u8g2;
@@ -93,7 +92,7 @@ uint8_t u8x8_byte_4wire_hw_spi(
 {
     switch (msg)
     {
-        case U8X8_MSG_BYTE_INIT: // init SPI and DMA
+        case U8X8_MSG_BYTE_INIT: // init SPI
             break;
         case U8X8_MSG_BYTE_SEND: // Use SPI to send 'arg_int' bytes
             for (int i = 0; i < arg_int; i++) {

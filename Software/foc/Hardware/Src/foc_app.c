@@ -47,7 +47,7 @@ TorCtrlParam* torque_damp_mode(void) {
 }
 
 TorCtrlParam* torque_normal_mode(void) {
-    return &foc_damp->torque_ctrl_;
+    return &g_foc_app.normal_.torque_ctrl_;
 }
 
 static void foc_app_reset_torque_ctrl(TorCtrlParam *pTorCtrl) {
