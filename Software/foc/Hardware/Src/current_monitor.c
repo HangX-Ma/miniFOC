@@ -32,10 +32,10 @@ static void current_monitor_tim3_init(void) {
     /* Peripheral clock enable */
     LL_APB1_GRP1_EnableClock(LL_APB1_GRP1_PERIPH_TIM3);
 
-    // ADC sampling frequency: 72 MHz / 7200 = 10 KHz
+    // ADC sampling frequency: 72 MHz / 7200 / 2 = 5 KHz
     TIM_InitStruct.Prescaler       = 36 - 1;
     TIM_InitStruct.CounterMode     = LL_TIM_COUNTERMODE_UP;
-    TIM_InitStruct.Autoreload      = 200 - 1;
+    TIM_InitStruct.Autoreload      = 400 - 1;
     TIM_InitStruct.ClockDivision   = LL_TIM_CLOCKDIVISION_DIV1;
     LL_TIM_Init(TIM3, &TIM_InitStruct);
 
@@ -186,8 +186,8 @@ RotorStatorCurrent get_RS_current(float e_angle) {
     I_beta  = qfp_fadd(qfp_fmul(_1_SQRT3, phase_current.Ia), qfp_fmul(_2_SQRT3, phase_current.Ib));
 
     // debug
-    // g_foc.state_.q   = I_alpha;
-    // g_foc.state_.d   = I_beta;
+    g_foc.state_.q   = I_alpha;
+    g_foc.state_.d   = I_beta;
 
     RS_current_curr.Id = qfp_fadd(
                            qfp_fmul(I_alpha, qfp_fcos(e_angle)),

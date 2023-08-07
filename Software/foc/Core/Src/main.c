@@ -85,8 +85,8 @@ int main(void) {
     foc_app_init();
 #endif
 
-    oled_init();
-    gui_init();
+    // oled_init();
+    // gui_init();
     //* Initialize all configured peripherals end
 
     /* Infinite loop */
@@ -134,7 +134,7 @@ int main(void) {
         // ------------ Current Monitor test ------------
         // current_monitor_test(bldc_test2_svpwm());
         // ------------ GUI test ------------
-        gui_render();
+        // gui_render();
     }
 }
 

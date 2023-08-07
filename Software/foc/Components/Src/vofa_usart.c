@@ -236,8 +236,10 @@ void USARTx_DMA_RX_IRQHandler(void) {
                         case FOC_App_Rebound_Mode:
                             g_foc_app.rebound_.torque_ctrl_.target_torque = recv_data.fdata;
                             break;
+                        case FOC_App_Damp_Mode:
+                            g_foc_app.damp_.torque_ctrl_.target_torque = recv_data.fdata;
+                            break;
                         case FOC_App_Normal_Mode:
-                        default:
                             g_foc_app.normal_.torque_ctrl_.target_torque = recv_data.fdata;
                             break;
                     }
@@ -251,7 +253,6 @@ void USARTx_DMA_RX_IRQHandler(void) {
                             g_foc_app.rebound_.torque_ctrl_.pid.Kp = recv_data.fdata;
                             break;
                         case FOC_App_Normal_Mode:
-                        default:
                             g_foc_app.normal_.torque_ctrl_.pid.Kp = recv_data.fdata;
                             break;
                     }

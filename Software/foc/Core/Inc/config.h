@@ -31,7 +31,7 @@
 
 
 // Contorl Period
-//  =>  Current Sensor:   10 KHz
+//  =>  Current Sensor:   5 KHz
 //  =>  Velocity Control: 1 KHz
 //  =>  Position Control: 1 KHz
 
