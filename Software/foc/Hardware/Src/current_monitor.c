@@ -177,11 +177,10 @@ static void hpf_reset(HighPassFilter *hpf) {
     hpf->input_prev  = 0.0f;
     hpf->output_curr = 0.0f;
     hpf->output_prev = 0.0f;
-    hpf->alpha       = 0.5f;
+    hpf->alpha       = 0.75f;
 }
 
-
-int16_t HPF_calculation(HighPassFilter *hpf){
+void HPF_calculation(HighPassFilter *hpf){
     hpf->output_curr =
         qfp_fadd(
             qfp_fmul(hpf->alpha, hpf->output_prev),
@@ -199,19 +198,20 @@ RotorStatorCurrent get_RS_current(float e_angle) {
     PhaseCurrent phase_current;
     RotorStatorCurrent RS_current_curr;
     float I_alpha, I_beta;
+    float adc1, adc2;
 
-    hpf_adc1.input_curr = qfp_fdiv(qfp_fmul((float)current_monitor_adc.chx[0], ADCx_VOLTAGE_REFERENCE), (float)ADCx_RESOLUTION);
-    hpf_adc2.input_curr = qfp_fdiv(qfp_fmul((float)current_monitor_adc.chx[1], ADCx_VOLTAGE_REFERENCE), (float)ADCx_RESOLUTION);
+    adc1 = qfp_fdiv(qfp_fmul((float)current_monitor_adc.chx[0], ADCx_VOLTAGE_REFERENCE), (float)ADCx_RESOLUTION);
+    adc2 = qfp_fdiv(qfp_fmul((float)current_monitor_adc.chx[1], ADCx_VOLTAGE_REFERENCE), (float)ADCx_RESOLUTION);
 
-    HPF_calculation(&hpf_adc1);
-    HPF_calculation(&hpf_adc2);
+    // HPF_calculation(&hpf_adc1);
+    // HPF_calculation(&hpf_adc2);
 
     // debug
     // g_foc.state_.q   = hpf_adc1.output_curr;
     // g_foc.state_.d   = hpf_adc2.output_curr;
 
-    phase_current.Ia = qfp_fdiv(qfp_fdiv((qfp_fsub(hpf_adc1.output_curr, ADCx_VOLTAGE_BIAS)), CURRENT_SENSE_REGISTER), INA199x1_GAIN);
-    phase_current.Ib = qfp_fdiv(qfp_fdiv((qfp_fsub(hpf_adc2.output_curr, ADCx_VOLTAGE_BIAS)), CURRENT_SENSE_REGISTER), INA199x1_GAIN);
+    phase_current.Ia = qfp_fdiv(qfp_fdiv((qfp_fsub(adc1, ADCx_VOLTAGE_BIAS)), CURRENT_SENSE_REGISTER), INA199x1_GAIN);
+    phase_current.Ib = qfp_fdiv(qfp_fdiv((qfp_fsub(adc2, ADCx_VOLTAGE_BIAS)), CURRENT_SENSE_REGISTER), INA199x1_GAIN);
 
     // debug
     // g_foc.state_.q   = phase_current.Ia;

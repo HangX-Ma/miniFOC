@@ -284,6 +284,7 @@ void FOC_CTRL_IRQHandler(void) {
                 goto out;
         }
         if (g_foc.torque_type_ == FOC_Torque_Type_Voltage) {
+            RS_current = get_RS_current(g_foc.state_.electrical_angle);
             g_foc.voltage_.q = target_q;
             g_foc.voltage_.d = 0.0f;
         } else if (g_foc.torque_type_ == FOC_Torque_Type_Current) {
@@ -293,10 +294,10 @@ void FOC_CTRL_IRQHandler(void) {
             // feed-forward control
             // g_foc.voltage_.q = qfp_fadd(g_foc.voltage_.q, qfp_fmul(g_foc.voltage_.q, 0.001f));
             // save 'd' 'q' state for easy debug
-            g_foc.state_.q   = RS_current.Iq;
-            g_foc.state_.d   = RS_current.Id;
-            // g_foc.state_.q   = g_foc.voltage_.q;
-            // g_foc.state_.d   = g_foc.voltage_.d;
+            // g_foc.state_.q   = RS_current.Iq;
+            // g_foc.state_.d   = RS_current.Id;
+            g_foc.state_.q   = g_foc.voltage_.q;
+            g_foc.state_.d   = g_foc.voltage_.d;
         } else {
             // avoid undefined situation. Prohibit the motor running.
             g_foc.voltage_.q = 0.0f;

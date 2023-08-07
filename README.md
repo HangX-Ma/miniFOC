@@ -104,18 +104,7 @@ You can check the pin set via [cubemx-settings](assets/cubemx-settings.png). Vof
 - Enhance the MainUI animation logic to follow the actual angle position.
 - Add **Damp Mode**.
 - Add damp feeling control for **Rebound Mode**
-- Add _**High Pass Filter**_ to filter out the steady 15 ms period sine noise obtained from current sensor's ADC sampling.
-
-<div align="center">
-    <img src="assets/before_hpf.png" alt="Before HPF process, HangX-Ma" width=600 />
-    <br>
-    <font size="2" color="#999"><u>Before HPF process, HangX-Ma</u></font>
-    <br>
-    <br>
-    <img src="assets/after_hpf.png" alt="After HPF process, HangX-Ma" width=600 />
-    <br>
-    <font size="2" color="#999"><u>After HPF process, HangX-Ma</u></font>
-</div>
+- Add _**High Pass Filter**_ but it is discarded afterwards because it filters out the useful information.
 
 ### 2023-08-05
 
