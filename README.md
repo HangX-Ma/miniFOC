@@ -36,20 +36,14 @@ You can check the pin set via [cubemx-settings](assets/cubemx-settings.png). Vof
 
 ## Driver Parameters
 
-<style>
-table
-{
-    margin: auto;
-}
-</style>
-
 | Item | Value |
 | :---: | :---: |
 | Input voltage range   | 8 V ~ 40 V |
-| Maximum current       | 1.5 A      |
-| Serial port baud rate | 115200     |
+| Maximum current       | 1.5 A |
+| Serial port baud rate | 115200 |
 | MCU                   | STM32F103C8T6, 64 KB flash, 20 KB RAM |
-| OLED | SSD1306, 128 x 64, 7 wires SPI|
+| OLED                  | SSD1306, 128 x 64, 7 wires SPI |
+| Motor                 | 2808, KV900, 12 V|
 
 ## Environment
 
