@@ -55,7 +55,7 @@ static void foc_app_reset_torque_ctrl(TorCtrlParam *pTorCtrl) {
     pTorCtrl->pid.Ki   = 0.0f; // unused in torque mode
     pTorCtrl->pid.Kd   = 0.0f; // unused in torque mode
     pTorCtrl->prev_err = 0.0f;
-    // torque needs to be greater than 0.6 under current loop control
+
     pTorCtrl->target_torque = 0.0f;
     pTorCtrl->voltage_limit = FOC_VOLTAGE_LIMIT;
     pTorCtrl->current_limit = FOC_CURRENT_LIMIT;

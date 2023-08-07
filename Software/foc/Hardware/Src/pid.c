@@ -33,15 +33,14 @@ float PID_torque(TorCtrlParam *pCtrl) {
 
     output = qfp_fadd(proportional, derivative);
 
-    // UPDATE: Voltage control with current estimation and Back-EMF compensation
-    // Uq = Id*R + Ubemf = output * R(phase resistance [Ohs]) + v/KV
-    output =
-        qfp_fadd(
-            qfp_fmul(output, qfp_fmul(CURRENT_SENSE_REGISTER, 100.0f /* Enlarged for easy debug */)),
-            qfp_fdiv(g_foc.state_.shaft_speed, (float)FOC_KV)
-        );
-
     if (g_foc.torque_type_ == FOC_Torque_Type_Voltage) {
+        // UPDATE: Voltage control with current estimation and Back-EMF compensation
+        // Uq = Id*R + Ubemf = output * R(phase resistance [Ohs]) + v/KV
+        output =
+            qfp_fadd(
+                qfp_fmul(output, qfp_fmul(CURRENT_SENSE_REGISTER, 100.0f /* Enlarged for easy debug */)),
+                qfp_fdiv(g_foc.state_.shaft_speed, (float)FOC_KV)
+            );
         output = constrain(output, -pCtrl->voltage_limit, pCtrl->voltage_limit);
     } else if (g_foc.torque_type_ == FOC_Torque_Type_Current) {
         output = constrain(output, -pCtrl->current_limit, pCtrl->current_limit);
@@ -194,7 +193,7 @@ void pid_init(void) {
 
     // init current control parameters
     // Iq
-    g_Iq_ctrl.pid.Kp = 0.6f;
+    g_Iq_ctrl.pid.Kp = 1.0f;
     g_Iq_ctrl.pid.Ki = 0.0f;
     g_Iq_ctrl.pid.Kd = 0.0f;
 
@@ -204,7 +203,7 @@ void pid_init(void) {
 
 
     // Id
-    g_Id_ctrl.pid.Kp = 0.6f;
+    g_Id_ctrl.pid.Kp = 1.0f;
     g_Id_ctrl.pid.Ki = 0.0f;
     g_Id_ctrl.pid.Kd = 0.0f;
 

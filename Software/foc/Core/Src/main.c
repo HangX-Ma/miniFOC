@@ -33,7 +33,7 @@
 
 #define FOC_MOTOR_INIT          (1)
 #define USART_FOC_CONTROL_INFO  (0)
-#define USART_FOC_DQ_INFO       (1)
+#define USART_FOC_DQ_INFO       (0)
 
 void SystemClock_Config(void);
 
@@ -72,7 +72,7 @@ int main(void) {
     bldc_init();
 
     // Current monitor will cause OLED display abnormally
-    current_mointor_init();
+    // current_mointor_init();
 
     encoder_init();
     pid_init();
@@ -85,8 +85,8 @@ int main(void) {
     foc_app_init();
 #endif
 
-    // oled_init();
-    // gui_init();
+    oled_init();
+    gui_init();
     //* Initialize all configured peripherals end
 
     /* Infinite loop */
@@ -134,7 +134,7 @@ int main(void) {
         // ------------ Current Monitor test ------------
         // current_monitor_test(bldc_test2_svpwm());
         // ------------ GUI test ------------
-        // gui_render();
+        gui_render();
     }
 }
 

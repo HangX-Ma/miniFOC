@@ -237,8 +237,8 @@ RotorStatorCurrent get_RS_current(float e_angle) {
     LPF_current(&RS_current_curr.Iq, &RS_current_prev.Iq);
 
     // debug
-    g_foc.state_.q = RS_current_curr.Iq;
-    g_foc.state_.d = RS_current_curr.Id;
+    // g_foc.state_.q = RS_current_curr.Iq;
+    // g_foc.state_.d = RS_current_curr.Id;
 
     return RS_current_curr;
 }
