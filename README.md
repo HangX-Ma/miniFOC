@@ -36,12 +36,20 @@ You can check the pin set via [cubemx-settings](assets/cubemx-settings.png). Vof
 
 ## Driver Parameters
 
-- **Input voltage range:** 8 V ~ 40 V (Drv8313, ME3116)
-- **Voltage supply:** 12V
-- **Maximum current:** 2 A (Drv8313)
-- **Serial port baud rate:** 115200
-- **MCU:** STM32F103C8T6, 64 KB flash, 20 KB RAM
-- **OLED:** SSD1306, 128 x 64, 7 wires SPI
+<style>
+table
+{
+    margin: auto;
+}
+</style>
+
+| Item | Value |
+| :---: | :---: |
+| Input voltage range   | 8 V ~ 40 V |
+| Maximum current       | 1.5 A      |
+| Serial port baud rate | 115200     |
+| MCU                   | STM32F103C8T6, 64 KB flash, 20 KB RAM |
+| OLED | SSD1306, 128 x 64, 7 wires SPI|
 
 ## Environment
 
@@ -62,10 +70,29 @@ You can check the pin set via [cubemx-settings](assets/cubemx-settings.png). Vof
 
 ## FOC Application
 
-- _**Torque Normal Mode:**_ Under torque control, you can set the `target torque` and `Kp` to adjust torque feedback force.
-- _**Torque Ratchet Mode:**_ Under torque control, the motor will act like a ratchet. You can change `Kp` to adjust the stiffness.
-- _**Torque Rebound Mode:**_ Under torque control, the motor will rebound to the specific angle. You can set the angle or change the rebound force by adjusting the `Kp` value.
-- _**Torque Damp Mode:**_ Under torque control, the motor will act like a knob with damp. If you increase the `target torque` value, the damp will increase. If you increase the `Kd` value, the knob will become smoother.
+- _**Torque Normal Mode**_
+
+    &emsp;&emsp; Under torque control, you can set the `target torque` and `Kp` to adjust torque feedback force.
+
+- _**Torque Ratchet Mode**_
+
+    &emsp;&emsp; Under torque control, the motor will act like a ratchet.
+
+    &emsp;&emsp; You can change `Kp` to adjust the stiffness.
+
+- _**Torque Rebound Mode**_
+
+    &emsp;&emsp; Under torque control, the motor will rebound to the specific angle.
+
+    &emsp;&emsp; You can set the angle or change the rebound force by adjusting the `Kp` value.
+
+- _**Torque Damp Mode**_
+
+    &emsp;&emsp; Under torque control, the motor will act like a knob with damp.
+
+    &emsp;&emsp; If you increase the `target torque` value, the damp will increase.
+
+    &emsp;&emsp; If you increase the `Kd` value, the knob will become smoother.
 
 ## Problem Found
 
