@@ -148,6 +148,10 @@ void gui_painter_logo(page_t* pg) {
                         target_torque = g_foc_app.rebound_.torque_ctrl_.target_torque;
                         g_gui_base.draw_str(X_PADDING + X_VAL_PADDING + 22, 12, "R");
                         break;
+                    case FOC_App_Damp_Mode:
+                        target_torque = g_foc_app.damp_.torque_ctrl_.target_torque;
+                        g_gui_base.draw_str(X_PADDING + X_VAL_PADDING + 22, 12, "D");
+                        break;
                     case FOC_App_Normal_Mode:
                     default:
                         target_torque = g_foc_app.normal_.torque_ctrl_.target_torque;
@@ -293,6 +297,7 @@ enum {
     FUNC_ID_APP_NORMAL_MODE = FUNC_ID_RETURN + 1,
     FUNC_ID_APP_RATCHET_MODE,
     FUNC_ID_APP_REBOUND_MODE,
+    FUNC_ID_APP_DAMP_MODE,
 };
 
 
@@ -300,6 +305,7 @@ const menu_item_t menu_motor_app[] = {
     {FUNC_ID_APP_NORMAL_MODE,  "- Normal Mode",  0},
     {FUNC_ID_APP_RATCHET_MODE, "- Ratchet Mode", 0},
     {FUNC_ID_APP_REBOUND_MODE, "- Rebound Mode", 0},
+    {FUNC_ID_APP_DAMP_MODE,    "- Damp Mode",    0},
     {FUNC_ID_RETURN,           "Return",         0},
 };
 
@@ -321,6 +327,10 @@ void gui_handler_motor_app(MenuList* pMenuList) {
                     break;
                 case FUNC_ID_APP_REBOUND_MODE:
                     g_foc_app.mode_ = FOC_App_Rebound_Mode;
+                    effect_center_string(pMenuList, "OK!", 0);
+                    break;
+                case FUNC_ID_APP_DAMP_MODE:
+                    g_foc_app.mode_ = FOC_App_Damp_Mode;
                     effect_center_string(pMenuList, "OK!", 0);
                     break;
                 case FUNC_ID_APP_NORMAL_MODE:
@@ -469,17 +479,22 @@ void gui_handler_editor(MenuList* pMenuList)
                     }
                     goto editor;
                 case FUNC_ID_TORQUE_TARGET: // torque target only takes effect under torque normal mode
-                    if (g_foc_app.mode_ != FOC_App_Normal_Mode) {
+                    if (!(g_foc_app.mode_ == FOC_App_Normal_Mode || g_foc_app.mode_ == FOC_App_Damp_Mode)) {
+                        effect_center_string(pMenuList, "Forbidden!", -18);
+                        break;
+                    }
+                    goto editor;
+                case FUNC_ID_EDIT_KP:
+                    if (g_foc_app.mode_ == FOC_App_Damp_Mode) {
                         effect_center_string(pMenuList, "Forbidden!", -18);
                         break;
                     }
                     /* fall through */
 editor:
-                case FUNC_ID_VELOCITY_TARGET:
-                case FUNC_ID_ANGLE_TARGET:
-                case FUNC_ID_EDIT_KP:
                 case FUNC_ID_EDIT_KI:
                 case FUNC_ID_EDIT_KD:
+                case FUNC_ID_VELOCITY_TARGET:
+                case FUNC_ID_ANGLE_TARGET:
                 {
                     BOOL repaint = TRUE;
                     // Blur the background
@@ -525,7 +540,13 @@ editor:
                                     g_foc_app.rebound_.rebound_angle_      = Torque_rebound_angle.curr;
                                     g_foc_app.rebound_.update_output_ratio(Torque_rebound_output_ratio.curr);
                                     break;
+                                case FOC_App_Damp_Mode:
+                                    // damp mode has no Kp config
+                                    g_foc_app.damp_.torque_ctrl_.target_torque = Torque_tar.curr;
+                                    g_foc_app.damp_.torque_ctrl_.pid.Kd = Torque_Kd.curr;
+                                    break;
                                 case FOC_App_Normal_Mode:
+                                    /* fall through */
                                 default:
                                     g_foc_app.normal_.torque_ctrl_.target_torque = Torque_tar.curr;
                                     g_foc_app.normal_.torque_ctrl_.pid.Kp        = Torque_Kp.curr;

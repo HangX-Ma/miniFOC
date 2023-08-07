@@ -48,16 +48,22 @@ typedef struct FOCRebound {
     void (*update_output_ratio)(float /* output ratio */);
 } FOCRebound;
 
+typedef struct FOCDamp {
+    TorCtrlParam torque_ctrl_;
+} FOCDamp;
+
 typedef enum FOCAppMode {
     FOC_App_Normal_Mode,
     FOC_App_Ratchet_Mode,
     FOC_App_Rebound_Mode,
+    FOC_App_Damp_Mode,
 } FOCAppMode;
 
 typedef struct FOCApp {
     FOCNormal normal_;
     FOCRatchet ratchet_;
     FOCRebound rebound_;
+    FOCDamp damp_;
 
     FOCAppMode mode_;
 } FOCApp;
@@ -65,6 +71,8 @@ extern FOCApp g_foc_app;
 
 TorCtrlParam* torque_ratchet_mode(void);
 TorCtrlParam* torque_rebound_mode(void);
+TorCtrlParam* torque_damp_mode(void);
+TorCtrlParam* torque_normal_mode(void);
 
 void foc_app_init(void);
 

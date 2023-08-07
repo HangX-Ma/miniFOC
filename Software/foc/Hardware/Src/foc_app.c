@@ -9,6 +9,7 @@
 FOCApp g_foc_app;
 static FOCRatchet *foc_ratchet;
 static FOCRebound *foc_rebound;
+static FOCDamp *foc_damp;
 
 // normalize angle to range [0, 2PI]
 static float normalize(float angle) {
@@ -23,8 +24,8 @@ float find_attractor(float angle){
     return qfp_fmul((float)idx, attractor_dist);
 }
 
-static float ratchet_normalized_angle = 0.0f; // normalized mechanical angle
-static float ratchet_attract_angle    = 0.0f; // current attract angle
+static float ratchet_normalized_angle; // normalized mechanical angle
+static float ratchet_attract_angle; // current attract angle
 TorCtrlParam* torque_ratchet_mode(void) {
     ratchet_normalized_angle = normalize(g_foc.state_.shaft_angle);
     ratchet_attract_angle = find_attractor(ratchet_normalized_angle);
@@ -41,6 +42,13 @@ TorCtrlParam* torque_rebound_mode(void) {
     return &foc_rebound->torque_ctrl_;
 }
 
+TorCtrlParam* torque_damp_mode(void) {
+    return &foc_damp->torque_ctrl_;
+}
+
+TorCtrlParam* torque_normal_mode(void) {
+    return &foc_damp->torque_ctrl_;
+}
 
 static void foc_app_reset_torque_ctrl(TorCtrlParam *pTorCtrl) {
     pTorCtrl->pid.Kp   = 0.0f;
@@ -67,17 +75,24 @@ void foc_app_init(void) {
     // init ratchet and set default value
     foc_app_reset_torque_ctrl(&g_foc_app.ratchet_.torque_ctrl_);
     foc_ratchet = &g_foc_app.ratchet_;
-    foc_ratchet->attractor_num_             = 6.0f; // 60 degree per attractor
-    foc_ratchet->torque_ctrl_.pid.Kp        = 0.1f;
+    foc_ratchet->attractor_num_      = 6.0f; // 60 degree per attractor
+    foc_ratchet->torque_ctrl_.pid.Kp = 0.1f;
 
     // set rebound angle to current shaft angle to avoid sudden motor rotation
     foc_app_reset_torque_ctrl(&g_foc_app.rebound_.torque_ctrl_);
     foc_rebound = &g_foc_app.rebound_;
-    foc_rebound->torque_ctrl_.pid.Kp        = 0.1f;
-    foc_rebound->torque_ctrl_.pid.Kd        = 0.0f;
-    foc_rebound->rebound_angle_             = g_foc.state_.shaft_angle;
-    foc_rebound->update_output_ratio          = update_output_ratio;
+    foc_rebound->torque_ctrl_.pid.Kp = 0.1f;
+    foc_rebound->rebound_angle_      = g_foc.state_.shaft_angle;
+    foc_rebound->update_output_ratio = update_output_ratio;
     update_output_ratio(1.0f /* output ratio */);
 
+    // init damp and set default value
+    foc_app_reset_torque_ctrl(&g_foc_app.damp_.torque_ctrl_);
+    foc_damp = &g_foc_app.damp_;
+    foc_damp->torque_ctrl_.pid.Kp        = 0.002f;  // needs to be small to provide small torque derivative change
+    foc_damp->torque_ctrl_.pid.Kd        = 0.0f;    // Increase it to make damp feeling smoother
+    foc_damp->torque_ctrl_.target_torque = 0.1f;    // Increase it to make damp feeling stronger
+
+    // init normal mode
     g_foc_app.mode_ = FOC_App_Normal_Mode;
 }

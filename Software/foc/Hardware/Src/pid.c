@@ -2,6 +2,7 @@
 #include "config.h"
 #include "qfplib-m3.h"
 #include "foc.h"
+#include "foc_app.h"
 #include "current_monitor.h"
 
 // ref: https://docs.simplefoc.com/docs_chinese/pi_controller
@@ -21,7 +22,10 @@ float PID_torque(TorCtrlParam *pCtrl) {
     derivative =
         qfp_fdiv(
             qfp_fmul(
-                qfp_fdiv(pCtrl->pid.Kd, 10.0f)/* enlarge Kd scale*/,
+                /* enlarge Kd scale if isn't in Damp Mode */
+                g_foc_app.mode_ == FOC_App_Damp_Mode
+                    ? pCtrl->pid.Kd
+                    : qfp_fdiv(pCtrl->pid.Kd, 10.0f),
                 qfp_fsub(pCtrl->target_torque, pCtrl->prev_err)
             ),
             pCtrl->ctrl_rate
@@ -214,6 +218,7 @@ void pid_clear_history(void) {
     g_foc_app.normal_.torque_ctrl_.prev_err  = 0.0f;
     g_foc_app.ratchet_.torque_ctrl_.prev_err = 0.0f;
     g_foc_app.rebound_.torque_ctrl_.prev_err = 0.0f;
+    g_foc_app.damp_.torque_ctrl_.prev_err    = 0.0f;
 
     g_vel_ctrl.prev_data.err        = 0.0f;
     g_vel_ctrl.prev_data.integral   = 0.0f;

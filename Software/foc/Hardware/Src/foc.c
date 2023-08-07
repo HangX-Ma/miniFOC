@@ -263,9 +263,12 @@ void FOC_CTRL_IRQHandler(void) {
                     case FOC_App_Rebound_Mode:
                         torque_ctrl = torque_rebound_mode();
                         break;
+                    case FOC_App_Damp_Mode:
+                        torque_ctrl = torque_damp_mode();
+                        break;
                     case FOC_App_Normal_Mode:
                     default:
-                        torque_ctrl = &g_foc_app.normal_.torque_ctrl_;
+                        torque_ctrl = torque_normal_mode();
                         break;
                 }
                 target_q = PID_torque(torque_ctrl);
