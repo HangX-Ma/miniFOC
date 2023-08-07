@@ -62,8 +62,10 @@ You can check the pin set via [cubemx-settings](assets/cubemx-settings.png). Vof
 
 ## FOC Application
 
-- <span style="color: #E06C75; font-weight: bold;">Torque Ratchet Mode:</span> Under torque control, the motor will act like a ratchet.
-- TODO
+- _**Torque Normal Mode:**_ Under torque control, you can set the `target torque` and `Kp` to adjust torque feedback force.
+- _**Torque Ratchet Mode:**_ Under torque control, the motor will act like a ratchet. You can change `Kp` to adjust the stiffness.
+- _**Torque Rebound Mode:**_ Under torque control, the motor will rebound to the specific angle. You can set the angle or change the rebound force by adjusting the `Kp` value.
+- _**Torque Damp Mode:**_ Under torque control, the motor will act like a knob with damp. If you increase the `target torque` value, the damp will increase. If you increase the `Kd` value, the knob will become smoother.
 
 ## Problem Found
 
@@ -74,6 +76,13 @@ You can check the pin set via [cubemx-settings](assets/cubemx-settings.png). Vof
 - `nFault` pin of the DRV8313 needs to be controlled and monitored by the MCU. Currently, only unplugging battery can release the DRV8313 off the fault state.
 
 ## Development Logs
+
+### 2023-08-06 to 2023-08-07
+
+- Reconstruct GUI logic to support mult-level menu and motor app mode switch.
+- Enhance the MainUI animation logic to follow the actual angle position.
+- Add **Damp Mode**.
+- Add damp feeling control for **Rebound Mode**
 
 ### 2023-08-05
 
