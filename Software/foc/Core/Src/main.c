@@ -22,6 +22,7 @@
 #include "current_monitor.h"
 #include "encoder.h"
 #include "foc.h"
+#include "foc_app.h"
 #include "pid.h"
 #include "led.h"
 #include "oled.h"
@@ -30,7 +31,7 @@
 #include "gui.h"
 
 
-#define FOC_MOTOR_INIT          (0)
+#define FOC_MOTOR_INIT          (1)
 #define USART_FOC_CONTROL_INFO  (0)
 
 void SystemClock_Config(void);
@@ -79,6 +80,8 @@ int main(void) {
     // Motor alignment start!
     LL_mDelay(500);
     g_foc.align_sensor();
+
+    foc_app_init();
 #endif
 
     oled_init();

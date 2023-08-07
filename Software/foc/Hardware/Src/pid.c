@@ -12,20 +12,31 @@ CurrCtrlParam g_Iq_ctrl;
 CurrCtrlParam g_Id_ctrl;
 
 float PID_torque(TorCtrlParam *pCtrl) {
-    float proportional, output;
+    float proportional, derivative , output;
 
     // u_p  = P *e(k)
     proportional = qfp_fmul(pCtrl->pid.Kp, pCtrl->target_torque);
 
+    // u_dk = D(ek - ek_1)/Ts
+    derivative =
+        qfp_fdiv(
+            qfp_fmul(
+                qfp_fdiv(pCtrl->pid.Kd, 10.0f)/* enlarge Kd scale*/,
+                qfp_fsub(pCtrl->target_torque, pCtrl->prev_err)
+            ),
+            pCtrl->ctrl_rate
+        );
+
+    output = qfp_fadd(proportional, derivative);
+
     // UPDATE: Voltage control with current estimation and Back-EMF compensation
-    // Uq = Id*R + Ubemf = u_p * R(phase resistance [Ohs]) + v/KV
-    proportional =
+    // Uq = Id*R + Ubemf = output * R(phase resistance [Ohs]) + v/KV
+    output =
         qfp_fadd(
-            qfp_fmul(proportional, qfp_fmul(CURRENT_SENSE_REGISTER, 100.0f /* Enlarged for easy debug */)),
+            qfp_fmul(output, qfp_fmul(CURRENT_SENSE_REGISTER, 100.0f /* Enlarged for easy debug */)),
             qfp_fdiv(g_foc.state_.shaft_speed, (float)FOC_KV)
         );
 
-    output = proportional;
     if (g_foc.torque_type_ == FOC_Torque_Type_Voltage) {
         output = constrain(output, -pCtrl->voltage_limit, pCtrl->voltage_limit);
     } else if (g_foc.torque_type_ == FOC_Torque_Type_Current) {
@@ -33,6 +44,8 @@ float PID_torque(TorCtrlParam *pCtrl) {
     } else {
         output = 0.0f;
     }
+
+    pCtrl->prev_err = pCtrl->target_torque;
 
     return output;
 }
@@ -196,7 +209,12 @@ void pid_init(void) {
     g_Id_ctrl.ctrl_rate     = FOC_CONTROL_RATE;
 }
 
+#include "foc_app.h"
 void pid_clear_history(void) {
+    g_foc_app.normal_.torque_ctrl_.prev_err  = 0.0f;
+    g_foc_app.ratchet_.torque_ctrl_.prev_err = 0.0f;
+    g_foc_app.rebound_.torque_ctrl_.prev_err = 0.0f;
+
     g_vel_ctrl.prev_data.err        = 0.0f;
     g_vel_ctrl.prev_data.integral   = 0.0f;
     g_vel_ctrl.prev_data.derivative = 0.0f;

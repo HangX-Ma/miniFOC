@@ -37,13 +37,15 @@ typedef struct FOCRatchet {
     TorCtrlParam torque_ctrl_;
 
     float attractor_num_;    ///< total attractor number in one circle
-    float damp_ratio_;        ///< damp ratio, range [1, N]
 } FOCRatchet;
 
 typedef struct FOCRebound {
-    TorCtrlParam torque_ctrl_;
+    TorCtrlParam torque_ctrl_; // increase 'Kd' will add the damp intensity
 
     float rebound_angle_;
+    float output_ratio_;        ///< output ratio, range [1, N]
+
+    void (*update_output_ratio)(float /* output ratio */);
 } FOCRebound;
 
 typedef enum FOCAppMode {

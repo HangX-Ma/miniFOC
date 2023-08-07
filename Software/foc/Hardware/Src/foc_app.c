@@ -43,13 +43,21 @@ TorCtrlParam* torque_rebound_mode(void) {
 
 
 static void foc_app_reset_torque_ctrl(TorCtrlParam *pTorCtrl) {
-    pTorCtrl->pid.Kp = 0.0f;
-    pTorCtrl->pid.Ki = 0.0f; // unused in torque mode
-    pTorCtrl->pid.Kd = 0.0f; // unused in torque mode
+    pTorCtrl->pid.Kp   = 0.0f;
+    pTorCtrl->pid.Ki   = 0.0f; // unused in torque mode
+    pTorCtrl->pid.Kd   = 0.0f; // unused in torque mode
+    pTorCtrl->prev_err = 0.0f;
     // torque needs to be greater than 0.6 under current loop control
     pTorCtrl->target_torque = 0.0f;
     pTorCtrl->voltage_limit = FOC_VOLTAGE_LIMIT;
     pTorCtrl->current_limit = FOC_CURRENT_LIMIT;
+    pTorCtrl->ctrl_rate     = FOC_CONTROL_RATE;
+}
+
+static void update_output_ratio(float output_ratio) {
+    foc_rebound->output_ratio_ = output_ratio;
+    foc_rebound->torque_ctrl_.voltage_limit = qfp_fdiv((float)FOC_VOLTAGE_LIMIT, foc_rebound->output_ratio_);
+    foc_rebound->torque_ctrl_.current_limit = qfp_fdiv((float)FOC_CURRENT_LIMIT, foc_rebound->output_ratio_);
 }
 
 void foc_app_init(void) {
@@ -60,16 +68,16 @@ void foc_app_init(void) {
     foc_app_reset_torque_ctrl(&g_foc_app.ratchet_.torque_ctrl_);
     foc_ratchet = &g_foc_app.ratchet_;
     foc_ratchet->attractor_num_             = 6.0f; // 60 degree per attractor
-    foc_ratchet->damp_ratio_                = 1.0f;
     foc_ratchet->torque_ctrl_.pid.Kp        = 0.1f;
-    foc_ratchet->torque_ctrl_.voltage_limit = qfp_fdiv((float)FOC_VOLTAGE_LIMIT, foc_ratchet->damp_ratio_);
-    foc_ratchet->torque_ctrl_.current_limit = qfp_fdiv((float)FOC_CURRENT_LIMIT, foc_ratchet->damp_ratio_);
 
     // set rebound angle to current shaft angle to avoid sudden motor rotation
     foc_app_reset_torque_ctrl(&g_foc_app.rebound_.torque_ctrl_);
     foc_rebound = &g_foc_app.rebound_;
     foc_rebound->torque_ctrl_.pid.Kp        = 0.1f;
+    foc_rebound->torque_ctrl_.pid.Kd        = 0.0f;
     foc_rebound->rebound_angle_             = g_foc.state_.shaft_angle;
+    foc_rebound->update_output_ratio          = update_output_ratio;
+    update_output_ratio(1.0f /* output ratio */);
 
     g_foc_app.mode_ = FOC_App_Normal_Mode;
 }

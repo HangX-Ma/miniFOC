@@ -114,8 +114,7 @@ void gui_painter_logo(page_t* pg) {
     (void)pg;
 
     float r = 18.0f;
-    float angle = 0.0f;
-    uint8_t step = 0;
+    float angle_prev = 0.0f, angle = 0.0f;
     float target_torque;
 
     while (vkey_scan() == VKEY_ID_NONE) {
@@ -180,16 +179,19 @@ void gui_painter_logo(page_t* pg) {
         g_gui_base.draw_disc_full(32, 38, 10);
         g_gui_base.update();
 
-        // draw a rotated ball
-        angle = qfp_fsub(qfp_fmul(qfp_fdiv(_2PI, 255.0f), (float)step), _PI);
+        // draw the outer ball location according to the current shaft angle
+        if (g_foc.state_.power_on) {
+            angle = normalize(g_foc.state_.shaft_angle);
+            angle_prev = angle;
+        } else {
+            // keep the outer ball stopped at previous position
+            angle = angle_prev;
+        }
         g_gui_base.draw_disc_full(
             32 + qfp_fmul(r, qfp_fcos(angle)),
             38 + qfp_fmul(r, qfp_fsin(angle)),
             3
         );
-        if (g_foc.state_.power_on) {
-            step += 1;
-        }
         g_gui_base.update();
     }
     g_gui_base.set_color(1);
@@ -313,23 +315,25 @@ void gui_handler_motor_app(MenuList* pMenuList) {
             break;
         case VKEY_ID_OK:
             switch (pMenuList->items_[pMenuList->selected_index_].id) {
-                case FOC_App_Ratchet_Mode:
+                case FUNC_ID_APP_RATCHET_MODE:
                     g_foc_app.mode_ = FOC_App_Ratchet_Mode;
+                    effect_center_string(pMenuList, "OK!", 0);
                     break;
-                case FOC_App_Rebound_Mode:
+                case FUNC_ID_APP_REBOUND_MODE:
                     g_foc_app.mode_ = FOC_App_Rebound_Mode;
+                    effect_center_string(pMenuList, "OK!", 0);
                     break;
-                case FOC_App_Normal_Mode:
-                default:
+                case FUNC_ID_APP_NORMAL_MODE:
                     g_foc_app.mode_ = FOC_App_Normal_Mode;
+                    effect_center_string(pMenuList, "OK!", 0);
                     break;
+                case FUNC_ID_RETURN: {
+                    g_gui_base.effect_disappear();
+                    gui_switch(PAGE_ID_MAIN_MENU_LIST);
+                    break;
+                }
             }
-            effect_center_string(pMenuList, "OK!", 0);
-        case FUNC_ID_RETURN: {
-            g_gui_base.effect_disappear();
-            gui_switch(PAGE_ID_MAIN_MENU_LIST);
             break;
-        }
         default:
             break;
     }
@@ -390,21 +394,23 @@ void gui_handler_motor_mode(MenuList* pMenuList) {
 enum {
     FUNC_ID_EDIT_KP = FUNC_ID_RETURN + 1,
     FUNC_ID_EDIT_KI,
+    FUNC_ID_EDIT_KD,
     FUNC_ID_TORQUE_TARGET,
     FUNC_ID_VELOCITY_TARGET,
     FUNC_ID_ANGLE_TARGET,
     // about mode
     FUNC_ID_RATCHET_ATTRACTOR_NUM,
-    FUNC_ID_RATCHET_DAMP_RATIO,
+    FUNC_ID_REBOUND_OUTPUT_RATIO,
     FUNC_ID_REBOUND_INIT_ANGLE,
 };
 
 
 static SliderBase Torque_tar                   = {"Editing Torque", 0.0f, 3.0f, 0.0f, 0.1f};
-static SliderBase Torque_Kp                    = {"Editing Kp", 0.0f, 1.2f, 0.0f, 0.05f};
+static SliderBase Torque_Kp                    = {"Editing Kp", 0.0f, 1.2f, 0.0f, 0.02f};
+static SliderBase Torque_Kd                    = {"Editing Kd", 0.0f, 0.5f, 0.0f, 0.01f};
 static SliderBase Torque_ratchet_attractor_num = {"Ratchet Number", 2.0f, 18.0f, 6.0f, 2.0f};
-static SliderBase Torque_ratchet_damp_ratio    = {"Ratchet Damp Ratio", 1.0f, 10.0f, 1.0f, 1.0f};
 static SliderBase Torque_rebound_angle         = {"Rebound Angle", -3.14, 3.14, 0.0f, 0.02f};
+static SliderBase Torque_rebound_output_ratio  = {"Rebound Output Ratio", 1.0f, 20.0f, 1.0f, 1.0f};
 
 static SliderBase Velocity_tar                 = {"Editing Velocity", -50.0f, 50.0f, 0.0f, 5.0f};
 static SliderBase Velocity_Kp                  = {"Editing Kp", 0.0f, 0.5f, 0.05f, 0.01f};
@@ -416,9 +422,10 @@ static SliderBase Angle_Kp                     = {"Editing Kp", 0.0f, 8.0f, 4.0f
 const menu_item_t menu_tor_editor[] = {
     {FUNC_ID_TORQUE_TARGET,         "- Torque Target",      &Torque_tar},
     {FUNC_ID_EDIT_KP,               "- Proportional",       &Torque_Kp},
-    {FUNC_ID_RATCHET_ATTRACTOR_NUM, "- Ratchet Number",     &Torque_ratchet_attractor_num},
-    {FUNC_ID_RATCHET_DAMP_RATIO,    "- Ratchet Damp Ratio", &Torque_ratchet_damp_ratio},
+    {FUNC_ID_EDIT_KD,               "- Derivative",         &Torque_Kd},
+    {FUNC_ID_RATCHET_ATTRACTOR_NUM, "- Attractor Number",   &Torque_ratchet_attractor_num},
     {FUNC_ID_REBOUND_INIT_ANGLE,    "- Rebound Angle",      &Torque_rebound_angle},
+    {FUNC_ID_REBOUND_OUTPUT_RATIO,  "- Output Ratio",         &Torque_rebound_output_ratio},
     {FUNC_ID_RETURN,                "Return",               0},
 };
 
@@ -447,31 +454,33 @@ void gui_handler_editor(MenuList* pMenuList)
             menu_list_callback_handler_switch_to_next(pMenuList);
             break;
         case VKEY_ID_OK:
-
             switch (pMenuList->items_[pMenuList->selected_index_].id) {
                 case FUNC_ID_RATCHET_ATTRACTOR_NUM:
-                case FUNC_ID_RATCHET_DAMP_RATIO:
                     if (g_foc_app.mode_ != FOC_App_Ratchet_Mode) {
                         effect_center_string(pMenuList, "Forbidden!", -18);
                         break;
                     }
-                    /* fall through */
+                    goto editor;
                 case FUNC_ID_REBOUND_INIT_ANGLE:
+                case FUNC_ID_REBOUND_OUTPUT_RATIO:
                     if (g_foc_app.mode_ != FOC_App_Rebound_Mode) {
                         effect_center_string(pMenuList, "Forbidden!", -18);
                         break;
                     }
-                    /* fall through */
+                    goto editor;
                 case FUNC_ID_TORQUE_TARGET: // torque target only takes effect under torque normal mode
                     if (g_foc_app.mode_ != FOC_App_Normal_Mode) {
                         effect_center_string(pMenuList, "Forbidden!", -18);
                         break;
                     }
                     /* fall through */
+editor:
                 case FUNC_ID_VELOCITY_TARGET:
                 case FUNC_ID_ANGLE_TARGET:
                 case FUNC_ID_EDIT_KP:
-                case FUNC_ID_EDIT_KI: {
+                case FUNC_ID_EDIT_KI:
+                case FUNC_ID_EDIT_KD:
+                {
                     BOOL repaint = TRUE;
                     // Blur the background
                     for (uint16_t i = 0; i < g_u8g2_buf_len; i++)
@@ -503,30 +512,34 @@ void gui_handler_editor(MenuList* pMenuList)
                                 break;
                             case VKEY_ID_OK:
                                 pMenuList->repaint_ = TRUE;
-                                // update parameters
+                                // update torque parameters
                                 switch (g_foc_app.mode_) {
                                 case FOC_App_Ratchet_Mode:
                                     g_foc_app.ratchet_.torque_ctrl_.pid.Kp = Torque_Kp.curr;
-                                    g_foc_app.ratchet_.attractor_num_ = Torque_ratchet_attractor_num.curr;
-                                    g_foc_app.ratchet_.damp_ratio_ = Torque_ratchet_damp_ratio.curr;
+                                    g_foc_app.ratchet_.torque_ctrl_.pid.Kd = Torque_Kd.curr;
+                                    g_foc_app.ratchet_.attractor_num_      = Torque_ratchet_attractor_num.curr;
                                     break;
                                 case FOC_App_Rebound_Mode:
                                     g_foc_app.rebound_.torque_ctrl_.pid.Kp = Torque_Kp.curr;
-                                    g_foc_app.rebound_.rebound_angle_ = Torque_rebound_angle.curr;
+                                    g_foc_app.rebound_.torque_ctrl_.pid.Kd = Torque_Kd.curr;
+                                    g_foc_app.rebound_.rebound_angle_      = Torque_rebound_angle.curr;
+                                    g_foc_app.rebound_.update_output_ratio(Torque_rebound_output_ratio.curr);
                                     break;
                                 case FOC_App_Normal_Mode:
                                 default:
                                     g_foc_app.normal_.torque_ctrl_.target_torque = Torque_tar.curr;
-                                    g_foc_app.normal_.torque_ctrl_.pid.Kp = Torque_Kp.curr;
+                                    g_foc_app.normal_.torque_ctrl_.pid.Kp        = Torque_Kp.curr;
+                                    g_foc_app.normal_.torque_ctrl_.pid.Kd        = Torque_Kd.curr;
                                     break;
                                 }
-
+                                // update velocity parameters
                                 g_vel_ctrl.target_speed = Velocity_tar.curr;
-                                g_vel_ctrl.pid.Kp = Velocity_Kp.curr;
-                                g_vel_ctrl.pid.Ki = Velocity_Ki.curr;
+                                g_vel_ctrl.pid.Kp       = Velocity_Kp.curr;
+                                g_vel_ctrl.pid.Ki       = Velocity_Ki.curr;
+                                // update angle parameters
 
                                 g_ang_ctrl.target_angle = Angle_tar.curr;
-                                g_ang_ctrl.pid.Kp = Angle_Kp.curr;
+                                g_ang_ctrl.pid.Kp       = Angle_Kp.curr;
                                 return;
                             default:
                                 break;

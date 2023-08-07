@@ -40,10 +40,12 @@ typedef struct PIDPrevData {
 
 typedef struct TorCtrlParam {
     PIDParam pid;
+    float prev_err;
 
     float target_torque;
     float voltage_limit;
     float current_limit;
+    float ctrl_rate;
 } TorCtrlParam;
 
 typedef struct VelCtrlParam {
