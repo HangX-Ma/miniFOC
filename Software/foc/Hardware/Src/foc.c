@@ -296,8 +296,8 @@ void FOC_CTRL_IRQHandler(void) {
             // save 'd' 'q' state for easy debug
             // g_foc.state_.q   = RS_current.Iq;
             // g_foc.state_.d   = RS_current.Id;
-            g_foc.state_.q   = g_foc.voltage_.q;
-            g_foc.state_.d   = g_foc.voltage_.d;
+            // g_foc.state_.q   = g_foc.voltage_.q;
+            // g_foc.state_.d   = g_foc.voltage_.d;
         } else {
             // avoid undefined situation. Prohibit the motor running.
             g_foc.voltage_.q = 0.0f;
@@ -350,6 +350,9 @@ void foc_init(void) {
     g_foc.state_.electrical_angle = 0.0f;
     g_foc.state_.q                = 0.0f;
     g_foc.state_.d                = 0.0f;
+    g_foc.state_.I.a              = 0.0f;
+    g_foc.state_.I.b              = 0.0f;
+    g_foc.state_.I.c              = 0.0f;
     g_foc.state_.power_on         = FALSE;
     g_foc.state_.switch_type      = TRUE;
 

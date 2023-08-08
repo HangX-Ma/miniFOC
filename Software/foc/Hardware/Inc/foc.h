@@ -36,11 +36,18 @@ typedef struct {
 } FOCProperty;
 
 typedef struct {
+    float a;
+    float b;
+    float c;
+} FOCCurrent;
+
+typedef struct {
     float shaft_angle;
     float shaft_speed;
     float electrical_angle;
     float q;
     float d;
+    FOCCurrent I;
     BOOL power_on;
     BOOL switch_type;
 } FOCState;

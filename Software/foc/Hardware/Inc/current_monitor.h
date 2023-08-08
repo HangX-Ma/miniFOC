@@ -37,9 +37,10 @@
 #define CURRENT_MONITOR_ADC_GPIO_PORT           GPIOA
 #define CURRENT_MONITOR_ADCx_IN0_PIN            LL_GPIO_PIN_0
 #define CURRENT_MONITOR_ADCx_IN1_PIN            LL_GPIO_PIN_1
+#define CURRENT_MONITOR_ADCx_IN2_PIN            LL_GPIO_PIN_2
 #define CURRENT_MONITOR_ADCx_DMAx_CHANNEL       LL_DMA_CHANNEL_1
 
-#define ADCx_CHANNEL_NUM                        2
+#define ADCx_CHANNEL_NUM                        3
 
 typedef struct CurrentMonitorADC {
     uint16_t chx[ADCx_CHANNEL_NUM];

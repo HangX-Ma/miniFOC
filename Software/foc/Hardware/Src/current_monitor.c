@@ -79,7 +79,7 @@ static void current_monitor_adc_dma_init(void) {
     ADCx_DMA_InitStruct.MemoryOrM2MDstIncMode  = LL_DMA_MEMORY_INCREMENT;
     ADCx_DMA_InitStruct.PeriphOrM2MSrcDataSize = LL_DMA_PDATAALIGN_HALFWORD;
     ADCx_DMA_InitStruct.MemoryOrM2MDstDataSize = LL_DMA_MDATAALIGN_HALFWORD;
-    ADCx_DMA_InitStruct.NbData                 = 2; // 2 channels, 2 half word
+    ADCx_DMA_InitStruct.NbData                 = ADCx_CHANNEL_NUM; // 3 channels, 3 half word
     ADCx_DMA_InitStruct.Priority               = LL_DMA_PRIORITY_HIGH;
     LL_DMA_Init(DMA1, CURRENT_MONITOR_ADCx_DMAx_CHANNEL, &ADCx_DMA_InitStruct);
 
@@ -103,8 +103,9 @@ static void current_monitor_adc_init(void) {
     /**ADC1 GPIO Configuration
         PA0-WKUP    ------> ADC1_IN0
         PA1         ------> ADC1_IN1
+        PA2         ------> ADC1_IN2
     */
-    GPIO_InitStruct.Pin  = CURRENT_MONITOR_ADCx_IN0_PIN | CURRENT_MONITOR_ADCx_IN1_PIN;
+    GPIO_InitStruct.Pin  = CURRENT_MONITOR_ADCx_IN0_PIN | CURRENT_MONITOR_ADCx_IN1_PIN | CURRENT_MONITOR_ADCx_IN2_PIN;
     GPIO_InitStruct.Mode = LL_GPIO_MODE_ANALOG;
     LL_GPIO_Init(CURRENT_MONITOR_ADC_GPIO_PORT, &GPIO_InitStruct);
 
@@ -116,7 +117,7 @@ static void current_monitor_adc_init(void) {
     LL_ADC_CommonInit(__LL_ADC_COMMON_INSTANCE(ADC1), &ADC_CommonInitStruct);
 
     ADC_REG_InitStruct.TriggerSource    = LL_ADC_REG_TRIG_EXT_TIM3_TRGO;
-    ADC_REG_InitStruct.SequencerLength  = LL_ADC_REG_SEQ_SCAN_ENABLE_2RANKS;
+    ADC_REG_InitStruct.SequencerLength  = LL_ADC_REG_SEQ_SCAN_ENABLE_3RANKS;
     ADC_REG_InitStruct.SequencerDiscont = LL_ADC_REG_SEQ_DISCONT_DISABLE;
     // otherwise, TIM3 cannot trigger ADC conversion after the first time trigger
     ADC_REG_InitStruct.ContinuousMode   = LL_ADC_REG_CONV_SINGLE;
@@ -126,10 +127,13 @@ static void current_monitor_adc_init(void) {
     /** Configure Regular Channel
      */
     LL_ADC_REG_SetSequencerRanks(ADC1, LL_ADC_REG_RANK_1, LL_ADC_CHANNEL_0);
-    LL_ADC_SetChannelSamplingTime(ADC1, LL_ADC_CHANNEL_0, LL_ADC_SAMPLINGTIME_28CYCLES_5);
+    LL_ADC_SetChannelSamplingTime(ADC1, LL_ADC_CHANNEL_0, LL_ADC_SAMPLINGTIME_13CYCLES_5);
 
     LL_ADC_REG_SetSequencerRanks(ADC1, LL_ADC_REG_RANK_2, LL_ADC_CHANNEL_1);
-    LL_ADC_SetChannelSamplingTime(ADC1, LL_ADC_CHANNEL_1, LL_ADC_SAMPLINGTIME_28CYCLES_5);
+    LL_ADC_SetChannelSamplingTime(ADC1, LL_ADC_CHANNEL_1, LL_ADC_SAMPLINGTIME_13CYCLES_5);
+
+    LL_ADC_REG_SetSequencerRanks(ADC1, LL_ADC_REG_RANK_3, LL_ADC_CHANNEL_2);
+    LL_ADC_SetChannelSamplingTime(ADC1, LL_ADC_CHANNEL_2, LL_ADC_SAMPLINGTIME_13CYCLES_5);
 }
 
 void current_mointor_init(void) {
@@ -198,13 +202,16 @@ RotorStatorCurrent get_RS_current(float e_angle) {
     PhaseCurrent phase_current;
     RotorStatorCurrent RS_current_curr;
     float I_alpha, I_beta;
-    float adc1, adc2;
+    float adc1, adc2, adc3;
 
     adc1 = qfp_fdiv(qfp_fmul((float)current_monitor_adc.chx[0], ADCx_VOLTAGE_REFERENCE), (float)ADCx_RESOLUTION);
     adc2 = qfp_fdiv(qfp_fmul((float)current_monitor_adc.chx[1], ADCx_VOLTAGE_REFERENCE), (float)ADCx_RESOLUTION);
+    adc3 = qfp_fdiv(qfp_fmul((float)current_monitor_adc.chx[2], ADCx_VOLTAGE_REFERENCE), (float)ADCx_RESOLUTION);
 
-    // HPF_calculation(&hpf_adc1);
-    // HPF_calculation(&hpf_adc2);
+    // debug
+    g_foc.state_.I.a = adc1;
+    g_foc.state_.I.b = adc2;
+    g_foc.state_.I.c = adc3;
 
     // debug
     // g_foc.state_.q   = hpf_adc1.output_curr;
