@@ -213,19 +213,17 @@ RotorStatorCurrent get_RS_current(float e_angle) {
     g_foc.state_.I.b = adc2;
     g_foc.state_.I.c = adc3;
 
-    // debug
-    // g_foc.state_.q   = hpf_adc1.output_curr;
-    // g_foc.state_.d   = hpf_adc2.output_curr;
-
     phase_current.Ia = qfp_fdiv(qfp_fdiv((qfp_fsub(adc1, ADCx_VOLTAGE_BIAS)), CURRENT_SENSE_REGISTER), INA199x1_GAIN);
     phase_current.Ib = qfp_fdiv(qfp_fdiv((qfp_fsub(adc2, ADCx_VOLTAGE_BIAS)), CURRENT_SENSE_REGISTER), INA199x1_GAIN);
+    phase_current.Ic = qfp_fdiv(qfp_fdiv((qfp_fsub(adc3, ADCx_VOLTAGE_BIAS)), CURRENT_SENSE_REGISTER), INA199x1_GAIN);
 
-    // debug
-    // g_foc.state_.q   = phase_current.Ia;
-    // g_foc.state_.d   = phase_current.Ib;
+    // signal filtering using identity a + b + c = 0. Assumes measurement error is normally distributed.
+    float mid = qfp_fdiv(qfp_fadd(qfp_fadd(phase_current.Ia, phase_current.Ib), phase_current.Ic), 3.0f);
+    float a = qfp_fsub(phase_current.Ia, mid);
+    float b = qfp_fsub(phase_current.Ib, mid);
 
     I_alpha = phase_current.Ia;
-    I_beta  = qfp_fadd(qfp_fmul(_1_SQRT3, phase_current.Ia), qfp_fmul(_2_SQRT3, phase_current.Ib));
+    I_beta  = qfp_fadd(qfp_fmul(_1_SQRT3, a), qfp_fmul(_2_SQRT3, b));
 
     // debug
     // g_foc.state_.q   = I_alpha;

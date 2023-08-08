@@ -49,6 +49,7 @@ typedef struct CurrentMonitorADC {
 typedef struct PhaseCurrent {
     float Ia;
     float Ib;
+    float Ic;
 } PhaseCurrent;
 
 typedef struct RotorStatorCurrent {
