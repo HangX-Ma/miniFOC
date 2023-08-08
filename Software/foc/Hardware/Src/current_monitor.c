@@ -80,7 +80,7 @@ static void current_monitor_adc_dma_init(void) {
     ADCx_DMA_InitStruct.PeriphOrM2MSrcDataSize = LL_DMA_PDATAALIGN_HALFWORD;
     ADCx_DMA_InitStruct.MemoryOrM2MDstDataSize = LL_DMA_MDATAALIGN_HALFWORD;
     ADCx_DMA_InitStruct.NbData                 = ADCx_CHANNEL_NUM; // 3 channels, 3 half word
-    ADCx_DMA_InitStruct.Priority               = LL_DMA_PRIORITY_HIGH;
+    ADCx_DMA_InitStruct.Priority               = LL_DMA_PRIORITY_MEDIUM;
     LL_DMA_Init(DMA1, CURRENT_MONITOR_ADCx_DMAx_CHANNEL, &ADCx_DMA_InitStruct);
 
     //* start DMA

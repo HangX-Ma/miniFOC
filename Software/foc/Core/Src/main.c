@@ -32,9 +32,9 @@
 
 
 #define FOC_MOTOR_INIT          (1)
-#define USART_FOC_CONTROL_INFO  (0)
+#define USART_FOC_CONTROL_INFO  (1)
 #define USART_FOC_DQ_INFO       (0)
-#define USART_FOC_CURRENT_INFO  (1)
+#define USART_FOC_CURRENT_INFO  (0)
 
 void SystemClock_Config(void);
 
