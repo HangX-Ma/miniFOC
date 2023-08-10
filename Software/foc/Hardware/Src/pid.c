@@ -193,7 +193,7 @@ void pid_init(void) {
 
     // init current control parameters
     // Iq
-    g_Iq_ctrl.pid.Kp = 1.0f;
+    g_Iq_ctrl.pid.Kp = 0.0f;
     g_Iq_ctrl.pid.Ki = 0.0f;
     g_Iq_ctrl.pid.Kd = 0.0f;
 
@@ -203,7 +203,7 @@ void pid_init(void) {
 
 
     // Id
-    g_Id_ctrl.pid.Kp = 1.0f;
+    g_Id_ctrl.pid.Kp = 0.0f;
     g_Id_ctrl.pid.Ki = 0.0f;
     g_Id_ctrl.pid.Kd = 0.0f;
 

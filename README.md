@@ -98,6 +98,22 @@ You can check the pin set via [cubemx-settings](assets/cubemx-settings.png). Vof
 
 ## Development Logs
 
+### 2023-08-10
+
+- Fix the problem caused by TIM3 configuration, which will lead to OLED abnormal display.
+    > I remove the `LL_TIM_CC_EnableChannel` function, which actually used in capture/compare mode! It is a coincidence that the OLED pins happened to be coincided with the configured channel.
+- Change current sampling to three phases version.
+- Move FOC state update in ADC1 DMA transfer complete interrupt. This will fit the current sampling demand and meet the inner ring frequency requirements.
+- Current sensors are combined with a strange 100 Hz sine- wave noise. I cannot fix it currently.
+
+<div align="center">
+    <img src="assets/strange_noise.png" alt="Strange 100 Hz sine-wave current noise
+, HangX-Ma" width=600 />
+    <br>
+    <font size="2" color="#999"><u>Strange 100 Hz sine-wave current noise
+, HangX-Ma</u></font>
+</div>
+
 ### 2023-08-06 to 2023-08-07
 
 - Reconstruct GUI logic to support mult-level menu and motor app mode switch.

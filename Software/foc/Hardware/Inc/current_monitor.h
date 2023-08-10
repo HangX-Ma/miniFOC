@@ -39,6 +39,7 @@
 #define CURRENT_MONITOR_ADCx_IN1_PIN            LL_GPIO_PIN_1
 #define CURRENT_MONITOR_ADCx_IN2_PIN            LL_GPIO_PIN_2
 #define CURRENT_MONITOR_ADCx_DMAx_CHANNEL       LL_DMA_CHANNEL_1
+#define CURRENT_MONITOR_ADCx_IRQHandler         DMA1_Channel1_IRQHandler
 
 #define ADCx_CHANNEL_NUM                        3
 
@@ -56,6 +57,8 @@ typedef struct RotorStatorCurrent {
     float Id;
     float Iq;
 } RotorStatorCurrent;
+
+extern RotorStatorCurrent g_RS_current;
 
 RotorStatorCurrent get_RS_current(float e_angle);
 void current_monitor_reset(void);

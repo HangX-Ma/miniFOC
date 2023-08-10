@@ -245,14 +245,9 @@ static void vel_ctrl_tim2_init(void) {
 static float shaft_speed;
 static TorCtrlParam *torque_ctrl;
 static float target_q;
-static RotorStatorCurrent RS_current;
 
 void FOC_CTRL_IRQHandler(void) {
     if (LL_TIM_IsActiveFlag_UPDATE(TIM2) != RESET) {
-        g_foc.state_.shaft_angle      = g_encoder.get_shaft_angle();
-        g_foc.state_.electrical_angle = g_foc.get_electrical_angle(g_foc.state_.shaft_angle);
-        g_foc.state_.shaft_speed      = g_encoder.get_shaft_velocity();
-
         switch (g_foc.motion_type_) {
             case FOC_Motion_Type_Torque:
                 // select foc app mode
@@ -284,18 +279,14 @@ void FOC_CTRL_IRQHandler(void) {
                 goto out;
         }
         if (g_foc.torque_type_ == FOC_Torque_Type_Voltage) {
-            RS_current = get_RS_current(g_foc.state_.electrical_angle);
             g_foc.voltage_.q = target_q;
             g_foc.voltage_.d = 0.0f;
         } else if (g_foc.torque_type_ == FOC_Torque_Type_Current) {
-            RS_current = get_RS_current(g_foc.state_.electrical_angle);
-            g_foc.voltage_.q = PID_current(&g_Iq_ctrl, qfp_fsub(target_q, RS_current.Iq));
-            g_foc.voltage_.d = PID_current(&g_Id_ctrl, /* target_d = 0.0f */ -RS_current.Id);
+            g_foc.voltage_.q = PID_current(&g_Iq_ctrl, qfp_fsub(target_q, g_RS_current.Iq));
+            g_foc.voltage_.d = PID_current(&g_Id_ctrl, /* target_d = 0.0f */ -g_RS_current.Id);
             // feed-forward control
-            // g_foc.voltage_.q = qfp_fadd(g_foc.voltage_.q, qfp_fmul(g_foc.voltage_.q, 0.001f));
+            g_foc.voltage_.q = qfp_fadd(g_foc.voltage_.q, qfp_fmul(g_foc.voltage_.q, 0.001f));
             // save 'd' 'q' state for easy debug
-            // g_foc.state_.q   = RS_current.Iq;
-            // g_foc.state_.d   = RS_current.Id;
             // g_foc.state_.q   = g_foc.voltage_.q;
             // g_foc.state_.d   = g_foc.voltage_.d;
         } else {

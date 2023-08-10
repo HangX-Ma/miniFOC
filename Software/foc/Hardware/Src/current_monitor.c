@@ -83,6 +83,10 @@ static void current_monitor_adc_dma_init(void) {
     ADCx_DMA_InitStruct.Priority               = LL_DMA_PRIORITY_MEDIUM;
     LL_DMA_Init(DMA1, CURRENT_MONITOR_ADCx_DMAx_CHANNEL, &ADCx_DMA_InitStruct);
 
+    // enable DMA transfer complete interrupt
+    LL_DMA_EnableIT_TC(DMA1, CURRENT_MONITOR_ADCx_DMAx_CHANNEL);
+    LL_DMA_ClearFlag_TC1(DMA1);
+
     //* start DMA
     LL_DMA_EnableChannel(DMA1, CURRENT_MONITOR_ADCx_DMAx_CHANNEL);
 }
@@ -155,20 +159,20 @@ void current_mointor_init(void) {
     LL_ADC_REG_StartConversionExtTrig(ADC1, LL_ADC_REG_TRIG_EXT_RISING);
 
     //* start TIM3
-    LL_TIM_CC_EnableChannel(TIM3, LL_TIM_CHANNEL_CH2);
     LL_TIM_EnableCounter(TIM3);
     LL_TIM_EnableAllOutputs(TIM3);
 
-    LL_mDelay(1);
+    LL_mDelay(500);
 }
 
 /* ================ LOW PASS FILTER ================ */
 static void LPF_current(float *curr, float *prev) {
-    *curr = qfp_fadd(qfp_fmul(0.95f, *prev), qfp_fmul(0.05f, *curr));
+    *curr = qfp_fadd(qfp_fmul(0.99f, *prev), qfp_fmul(0.01f, *curr));
     *prev = *curr;
 }
 
 /* ================ HIGHT PASS FILTER ================ */
+#define HIGH_PASS_FILTER    (0)
 #if HIGH_PASS_FILTER
 typedef struct {
     float input_curr;
@@ -177,14 +181,14 @@ typedef struct {
     float output_prev;
     float alpha;
 } HighPassFilter;
-static HighPassFilter hpf_Iq, hpf_Id;
+static HighPassFilter hpf_a, hpf_b, hpf_c;
 
 static void hpf_reset(HighPassFilter *hpf) {
     hpf->input_curr  = 0.0f;
     hpf->input_prev  = 0.0f;
     hpf->output_curr = 0.0f;
     hpf->output_prev = 0.0f;
-    hpf->alpha       = 0.75f;
+    hpf->alpha       = 0.5f;
 }
 
 void HPF_calculation(HighPassFilter *hpf){
@@ -201,12 +205,15 @@ void HPF_calculation(HighPassFilter *hpf){
 
 /* ================ CURRENT MONITOR ================ */
 #include "foc.h"
+#include "encoder.h"
+#define DC_CURRENT      (1)
 
 // rotor and stator current (Iq and Id)
 static RotorStatorCurrent RS_current_prev = {0};
 RotorStatorCurrent get_RS_current(float e_angle) {
     PhaseCurrent phase_current;
     RotorStatorCurrent RS_current_curr;
+    RotorStatorCurrent output;
     float I_alpha, I_beta;
     float adc1, adc2, adc3;
 
@@ -215,13 +222,23 @@ RotorStatorCurrent get_RS_current(float e_angle) {
     adc3 = qfp_fdiv(qfp_fmul((float)current_monitor_adc.chx[1], ADCx_VOLTAGE_REFERENCE), (float)ADCx_RESOLUTION);
 
     // debug
-    // g_foc.state_.I.a = adc1;
-    // g_foc.state_.I.b = adc2;
-    // g_foc.state_.I.c = adc3;
+    g_foc.state_.I.a = adc1;
+    g_foc.state_.I.b = adc2;
+    g_foc.state_.I.c = adc3;
 
-    phase_current.Ia = -qfp_fdiv(qfp_fdiv((qfp_fsub(adc1, ADCx_VOLTAGE_BIAS)), CURRENT_SENSE_REGISTER), INA199x1_GAIN);
-    phase_current.Ib = -qfp_fdiv(qfp_fdiv((qfp_fsub(adc2, ADCx_VOLTAGE_BIAS)), CURRENT_SENSE_REGISTER), INA199x1_GAIN);
-    phase_current.Ic = -qfp_fdiv(qfp_fdiv((qfp_fsub(adc3, ADCx_VOLTAGE_BIAS)), CURRENT_SENSE_REGISTER), INA199x1_GAIN);
+    phase_current.Ia = qfp_fdiv(qfp_fdiv((qfp_fsub(adc1, ADCx_VOLTAGE_BIAS)), CURRENT_SENSE_REGISTER), INA199x1_GAIN);
+    phase_current.Ib = qfp_fdiv(qfp_fdiv((qfp_fsub(adc2, ADCx_VOLTAGE_BIAS)), CURRENT_SENSE_REGISTER), INA199x1_GAIN);
+    phase_current.Ic = qfp_fdiv(qfp_fdiv((qfp_fsub(adc3, ADCx_VOLTAGE_BIAS)), CURRENT_SENSE_REGISTER), INA199x1_GAIN);
+
+    // hpf_a.input_curr = phase_current.Ia;
+    // hpf_b.input_curr = phase_current.Ib;
+    // hpf_c.input_curr = phase_current.Ic;
+    // HPF_calculation(&hpf_a);
+    // HPF_calculation(&hpf_b);
+    // HPF_calculation(&hpf_c);
+    // phase_current.Ia = hpf_a.output_curr;
+    // phase_current.Ib = hpf_b.output_curr;
+    // phase_current.Ic = hpf_c.output_curr;
 
     // debug
     // g_foc.state_.I.a = phase_current.Ia;
@@ -233,13 +250,14 @@ RotorStatorCurrent get_RS_current(float e_angle) {
     float a = qfp_fsub(phase_current.Ia, mid);
     float b = qfp_fsub(phase_current.Ib, mid);
 
-    I_alpha = phase_current.Ia;
+    I_alpha = a;
     I_beta  = qfp_fadd(qfp_fmul(_1_SQRT3, a), qfp_fmul(_2_SQRT3, b));
 
     // debug
     // g_foc.state_.q   = I_alpha;
     // g_foc.state_.d   = I_beta;
 
+#if FOC_CURRENT
     RS_current_curr.Iq = qfp_fadd(
                            qfp_fmul(I_alpha, qfp_fcos(e_angle)),
                            qfp_fmul(I_beta, qfp_fsin(e_angle))
@@ -253,16 +271,35 @@ RotorStatorCurrent get_RS_current(float e_angle) {
     LPF_current(&RS_current_curr.Iq, &RS_current_prev.Iq);
     LPF_current(&RS_current_curr.Id, &RS_current_prev.Id);
 
-    // debug
-    g_foc.state_.q = RS_current_curr.Iq;
-    g_foc.state_.d = RS_current_curr.Id;
+#elif DC_CURRENT
+    RS_current_curr.Iq = qfp_fmul(
+            g_encoder.dir_,
+            qfp_fsqrt(qfp_fadd(qfp_fmul(I_alpha, I_alpha), qfp_fmul(I_beta, I_beta)))
+        );
+    RS_current_curr.Id = 0.0f;
+    // LPF
+    LPF_current(&RS_current_curr.Iq, &RS_current_prev.Iq);
 
-    return RS_current_curr;
+    output.Iq = RS_current_curr.Iq;
+    output.Id = RS_current_curr.Id;
+
+#endif
+    // debug
+    // g_foc.state_.q = output.Iq;
+    // g_foc.state_.d = output.Id;
+
+    return output;
 }
 
 void current_monitor_reset(void) {
     RS_current_prev.Id = 0.0f;
     RS_current_prev.Iq = 0.0f;
+
+#if HIGH_PASS_FILTER
+    hpf_reset(&hpf_a);
+    hpf_reset(&hpf_b);
+    hpf_reset(&hpf_c);
+#endif
 }
 
 static float vofa_buf[2];
@@ -275,3 +312,17 @@ void current_monitor_test(float e_angle) {
 
     LL_mDelay(1);
 }
+
+RotorStatorCurrent g_RS_current;
+void CURRENT_MONITOR_ADCx_IRQHandler(void) {
+    if (LL_DMA_IsActiveFlag_TC1(DMA1) != RESET) {
+        g_foc.state_.shaft_angle      = g_encoder.get_shaft_angle();
+        g_foc.state_.electrical_angle = g_foc.get_electrical_angle(g_foc.state_.shaft_angle);
+        g_foc.state_.shaft_speed      = g_encoder.get_shaft_velocity();
+
+        g_RS_current = get_RS_current(g_foc.state_.electrical_angle);
+
+        LL_DMA_ClearFlag_TC1(DMA1);
+    }
+}
+
