@@ -162,11 +162,14 @@ void current_mointor_init(void) {
     LL_mDelay(1);
 }
 
+/* ================ LOW PASS FILTER ================ */
 static void LPF_current(float *curr, float *prev) {
-    *curr = qfp_fadd(qfp_fmul(0.9f, *prev), qfp_fmul(0.1f, *curr));
+    *curr = qfp_fadd(qfp_fmul(0.95f, *prev), qfp_fmul(0.05f, *curr));
     *prev = *curr;
 }
 
+/* ================ HIGHT PASS FILTER ================ */
+#if HIGH_PASS_FILTER
 typedef struct {
     float input_curr;
     float input_prev;
@@ -174,7 +177,7 @@ typedef struct {
     float output_prev;
     float alpha;
 } HighPassFilter;
-static HighPassFilter hpf_adc1, hpf_adc2;
+static HighPassFilter hpf_Iq, hpf_Id;
 
 static void hpf_reset(HighPassFilter *hpf) {
     hpf->input_curr  = 0.0f;
@@ -194,8 +197,11 @@ void HPF_calculation(HighPassFilter *hpf){
     hpf->output_prev = hpf->output_curr;
     hpf->input_prev = hpf->input_curr;
 }
+#endif
 
+/* ================ CURRENT MONITOR ================ */
 #include "foc.h"
+
 // rotor and stator current (Iq and Id)
 static RotorStatorCurrent RS_current_prev = {0};
 RotorStatorCurrent get_RS_current(float e_angle) {
@@ -205,17 +211,22 @@ RotorStatorCurrent get_RS_current(float e_angle) {
     float adc1, adc2, adc3;
 
     adc1 = qfp_fdiv(qfp_fmul((float)current_monitor_adc.chx[0], ADCx_VOLTAGE_REFERENCE), (float)ADCx_RESOLUTION);
-    adc2 = qfp_fdiv(qfp_fmul((float)current_monitor_adc.chx[1], ADCx_VOLTAGE_REFERENCE), (float)ADCx_RESOLUTION);
-    adc3 = qfp_fdiv(qfp_fmul((float)current_monitor_adc.chx[2], ADCx_VOLTAGE_REFERENCE), (float)ADCx_RESOLUTION);
+    adc2 = qfp_fdiv(qfp_fmul((float)current_monitor_adc.chx[2], ADCx_VOLTAGE_REFERENCE), (float)ADCx_RESOLUTION);
+    adc3 = qfp_fdiv(qfp_fmul((float)current_monitor_adc.chx[1], ADCx_VOLTAGE_REFERENCE), (float)ADCx_RESOLUTION);
 
     // debug
-    g_foc.state_.I.a = adc1;
-    g_foc.state_.I.b = adc2;
-    g_foc.state_.I.c = adc3;
+    // g_foc.state_.I.a = adc1;
+    // g_foc.state_.I.b = adc2;
+    // g_foc.state_.I.c = adc3;
 
-    phase_current.Ia = qfp_fdiv(qfp_fdiv((qfp_fsub(adc1, ADCx_VOLTAGE_BIAS)), CURRENT_SENSE_REGISTER), INA199x1_GAIN);
-    phase_current.Ib = qfp_fdiv(qfp_fdiv((qfp_fsub(adc2, ADCx_VOLTAGE_BIAS)), CURRENT_SENSE_REGISTER), INA199x1_GAIN);
-    phase_current.Ic = qfp_fdiv(qfp_fdiv((qfp_fsub(adc3, ADCx_VOLTAGE_BIAS)), CURRENT_SENSE_REGISTER), INA199x1_GAIN);
+    phase_current.Ia = -qfp_fdiv(qfp_fdiv((qfp_fsub(adc1, ADCx_VOLTAGE_BIAS)), CURRENT_SENSE_REGISTER), INA199x1_GAIN);
+    phase_current.Ib = -qfp_fdiv(qfp_fdiv((qfp_fsub(adc2, ADCx_VOLTAGE_BIAS)), CURRENT_SENSE_REGISTER), INA199x1_GAIN);
+    phase_current.Ic = -qfp_fdiv(qfp_fdiv((qfp_fsub(adc3, ADCx_VOLTAGE_BIAS)), CURRENT_SENSE_REGISTER), INA199x1_GAIN);
+
+    // debug
+    // g_foc.state_.I.a = phase_current.Ia;
+    // g_foc.state_.I.b = phase_current.Ib;
+    // g_foc.state_.I.c = phase_current.Ic;
 
     // signal filtering using identity a + b + c = 0. Assumes measurement error is normally distributed.
     float mid = qfp_fdiv(qfp_fadd(qfp_fadd(phase_current.Ia, phase_current.Ib), phase_current.Ic), 3.0f);
@@ -229,21 +240,22 @@ RotorStatorCurrent get_RS_current(float e_angle) {
     // g_foc.state_.q   = I_alpha;
     // g_foc.state_.d   = I_beta;
 
-    RS_current_curr.Id = qfp_fadd(
+    RS_current_curr.Iq = qfp_fadd(
                            qfp_fmul(I_alpha, qfp_fcos(e_angle)),
                            qfp_fmul(I_beta, qfp_fsin(e_angle))
                          );
 
-    RS_current_curr.Iq = qfp_fsub(
+    RS_current_curr.Id = qfp_fsub(
                            qfp_fmul(I_beta, qfp_fcos(e_angle)),
                            qfp_fmul(I_alpha, qfp_fsin(e_angle))
                          );
-    LPF_current(&RS_current_curr.Id, &RS_current_prev.Id);
+    // low pass filter
     LPF_current(&RS_current_curr.Iq, &RS_current_prev.Iq);
+    LPF_current(&RS_current_curr.Id, &RS_current_prev.Id);
 
     // debug
-    // g_foc.state_.q = RS_current_curr.Iq;
-    // g_foc.state_.d = RS_current_curr.Id;
+    g_foc.state_.q = RS_current_curr.Iq;
+    g_foc.state_.d = RS_current_curr.Id;
 
     return RS_current_curr;
 }
@@ -251,9 +263,6 @@ RotorStatorCurrent get_RS_current(float e_angle) {
 void current_monitor_reset(void) {
     RS_current_prev.Id = 0.0f;
     RS_current_prev.Iq = 0.0f;
-
-    hpf_reset(&hpf_adc1);
-    hpf_reset(&hpf_adc2);
 }
 
 static float vofa_buf[2];

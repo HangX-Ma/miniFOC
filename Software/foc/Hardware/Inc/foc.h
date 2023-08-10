@@ -49,6 +49,7 @@ typedef struct {
     float d;
     FOCCurrent I;
     BOOL power_on;
+    BOOL init_done;
     BOOL switch_type;
 } FOCState;
 

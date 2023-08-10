@@ -57,10 +57,9 @@ typedef struct RotorStatorCurrent {
     float Iq;
 } RotorStatorCurrent;
 
-void current_mointor_init(void);
 RotorStatorCurrent get_RS_current(float e_angle);
 void current_monitor_reset(void);
-
+void current_mointor_init(void);
 void current_monitor_test(float e_angle);
 
 #endif  //!__CURRENT_MONITOR__H__

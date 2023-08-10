@@ -354,6 +354,7 @@ void foc_init(void) {
     g_foc.state_.I.b              = 0.0f;
     g_foc.state_.I.c              = 0.0f;
     g_foc.state_.power_on         = FALSE;
+    g_foc.state_.init_done        = FALSE;
     g_foc.state_.switch_type      = TRUE;
 
     g_foc.ctrl_.start             = foc_start;

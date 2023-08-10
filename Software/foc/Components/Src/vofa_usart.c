@@ -177,12 +177,15 @@ void USARTx_DMA_RX_IRQHandler(void) {
             switch (cmd) {
                 case 0x01:                         // control motor start/stop
                     if (recv_data.chars[0] == 1) { // start
-                        LED_STATE_ON();
-                        current_monitor_reset();
-                        g_foc.ctrl_.start();
+                        if (g_foc.state_.init_done) {
+                            LED_STATE_ON();
+                            g_foc.ctrl_.start();
+                        }
                     } else if (recv_data.chars[0] == 2) { // stop
-                        LED_STATE_OFF();
-                        g_foc.ctrl_.stop();
+                        if (g_foc.state_.init_done) {
+                            LED_STATE_OFF();
+                            g_foc.ctrl_.stop();
+                        }
                     }
                     break;
                 case 0x02: // set velocity

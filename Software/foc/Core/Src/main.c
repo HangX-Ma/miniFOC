@@ -32,8 +32,8 @@
 
 
 #define FOC_MOTOR_INIT          (1)
-#define USART_FOC_CONTROL_INFO  (1)
-#define USART_FOC_DQ_INFO       (0)
+#define USART_FOC_CONTROL_INFO  (0)
+#define USART_FOC_DQ_INFO       (1)
 #define USART_FOC_CURRENT_INFO  (0)
 
 void SystemClock_Config(void);
@@ -84,6 +84,7 @@ int main(void) {
     g_foc.align_sensor();
 
     foc_app_init();
+    g_foc.state_.init_done = TRUE;
 #endif
 
     // oled_init();
